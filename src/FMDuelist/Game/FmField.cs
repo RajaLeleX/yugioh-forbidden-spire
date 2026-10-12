@@ -161,6 +161,8 @@ public static class FmField
         NotifyChanged();
     }
 
+    public static void PlaceAll(Player player) { foreach (var z in Slots) PlaceZone(player, z); }
+
     /// <summary>Zones 2 and 3 stand in a row to the right of Osty's spot.</summary>
     public static void PlaceZone(Player player, FmSlot slot)
     {
@@ -169,7 +171,7 @@ public static class FmField
         var me = room?.GetCreatureNode(player.Creature);
         var node = slot.Creature(player) is { } c ? room?.GetCreatureNode(c) : null;
         if (me == null || node == null) return;
-        float gap = FmPractice.Active ? FmPractice.ZoneGap : 150f, step = FmPractice.Active ? FmPractice.ZoneStep : 190f;
+        float gap = FmPractice.Compact ? FmPractice.ZoneGap : 150f, step = FmPractice.Compact ? FmPractice.ZoneStep : 190f;
         node.Position = me.Position + new Godot.Vector2(me.Hitbox.Size.X * 0.5f + gap + slot.Index * step, -75f);
     }
 

@@ -75,6 +75,12 @@ public static class FmStoryAct1
     static Control? _bgRoot;
 
     /// <summary>The duelist stands as their picture (the stand-in body hidden) in front of their place.</summary>
+    /// <summary>Half the width of the dressed duelist's picture (his zones keep clear of it).</summary>
+    public static float HalfWidth;
+
+    /// <summary>A story duel is on (its layout is the compact one, like the Free Duel).</summary>
+    public static bool InDuel => FmRival.Active && ForMonster(FmRival.Current?.Monster) != null;
+
     public static void Dress(Creature duelist, StoryDuel d)
     {
         try
@@ -84,13 +90,21 @@ public static class FmStoryAct1
             if (node.Visuals.GetCurrentBody() is { } body) body.Visible = false;
             if (FmScene.Tex("duelist_" + d.Key) is { } tex)
             {
-                float h = 470f;
+                float h = 330f;
                 var spr = new Sprite2D { Texture = tex, Scale = Vector2.One * (h / tex.GetHeight()), Position = new Vector2(0, -h / 2), Centered = true };
+                HalfWidth = tex.GetWidth() * (h / tex.GetHeight()) * 0.5f;
                 node.Visuals.AddChild(spr);
                 spr.Modulate = new Color(1, 1, 1, 0);
                 var t = spr.CreateTween(); t.TweenProperty(spr, "modulate:a", 1f, 0.5);
             }
             Background(d.Bg);
+            // you at the left and the duelist at the right, each with three evenly spaced zones in front
+            if (FmRival.Current is { } cur && FmPractice.Duelist != cur && duelist.CombatState?.Players.FirstOrDefault() is { } p)
+            {
+                FmPractice.Place(p, duelist);
+                FmRival.PlaceZones();
+                FmField.PlaceAll(p);
+            }
         }
         catch (Exception ex) { Log.Warn("[FMDuelist] dress duelist: " + ex.Message); }
     }
@@ -106,7 +120,11 @@ public static class FmStoryAct1
             Texture = tex, ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.KeepAspectCovered,
             MouseFilter = Control.MouseFilterEnum.Ignore, Modulate = new Color(0.85f, 0.85f, 0.85f, 0),
         };
-        rect.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+        // the container has no size of its own: cover the same area as the game's background (or the screen)
+        var size = room.Background.Size;
+        if (size.X < 10 || size.Y < 10) size = room.GetViewportRect().Size;
+        rect.Position = room.Background.Position;
+        rect.Size = size;
         container.AddChild(rect);
         container.MoveChild(rect, room.Background.GetIndex() + 1);
         _bgRoot = rect;

@@ -132,8 +132,9 @@ public static class FmRival
         for (int i = 0; i < 3; i++)
             if (Slots[i].RivalCreature is { } c && room.GetCreatureNode(c) is { } n)
             {
-                float gap = FmPractice.Active ? FmPractice.ZoneGap : 150f, step = FmPractice.Active ? FmPractice.ZoneStep : 190f;
-                n.Position = pn.Position + new Vector2(-pn.Hitbox.Size.X * 0.5f - gap - (2 - i) * step, -75f);
+                float gap = FmPractice.Compact ? FmPractice.ZoneGap : 150f, step = FmPractice.Compact ? FmPractice.ZoneStep : 190f;
+                float half = Math.Max(pn.Hitbox.Size.X * 0.5f, FmStoryAct1.InDuel ? FmStoryAct1.HalfWidth : 0f);
+                n.Position = pn.Position + new Vector2(-half - gap - (2 - i) * step, -75f);
             }
     }
 

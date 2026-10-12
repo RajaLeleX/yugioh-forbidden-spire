@@ -50,6 +50,8 @@ public static class FmPractice
     // ---------------- the field: one half each ----------------
     /// <summary>Zone spacing in the Free Duel (tighter than a boss fight's, so both rows fit).</summary>
     public const float ZoneGap = 105f, ZoneStep = 165f;
+    /// <summary>The Free Duel and the story duels use the compact layout (both duelists at the screen's edges).</summary>
+    public static bool Compact => Active || FmStoryAct1.InDuel;
     static CanvasLayer? _labels;
 
     /// <summary>You stand at the far left and Duel Master K at the far right, each with your own three zones in front.</summary>
@@ -58,15 +60,7 @@ public static class FmPractice
         try
         {
             var room = MegaCrit.Sts2.Core.Nodes.Rooms.NCombatRoom.Instance;
-            if (room?.GetCreatureNode(player.Creature) is not { } me || room.GetCreatureNode(rival) is not { } him) return;
-            var view = room.GetViewportRect().Size;
-            var toWorld = room.GetViewport().GetCanvasTransform().AffineInverse();
-            float y = me.GlobalPosition.Y;
-            me.GlobalPosition = new Vector2((toWorld * new Vector2(view.X * 0.12f, 0)).X - me.Size.X * 0.5f, y);
-            him.GlobalPosition = new Vector2((toWorld * new Vector2(view.X * 0.88f, 0)).X - him.Size.X * 0.5f, y);
-            // Osty (your first zone) follows you
-            foreach (var pet in player.Creature.Pets)
-                if (room.GetCreatureNode(pet) is { } pn && pet.Monster is not FmZonePet) pn.GlobalPosition = me.GlobalPosition + new Vector2(me.Hitbox.Size.X * 0.5f + ZoneGap * 0.4f, 0);
+            if (!Place(player, rival) || room?.GetCreatureNode(player.Creature) is not { } me || room.GetCreatureNode(rival) is not { } him) return;
             ShowLabels(me, him);
             // not a real run: no top bar (gold, floor, potions, map, deck) and no relic row
             if (MegaCrit.Sts2.Core.Nodes.NRun.Instance?.GlobalUi is { } ui)
@@ -76,6 +70,21 @@ public static class FmPractice
             }
         }
         catch (Exception ex) { Log.Warn("[FMDuelist] free duel layout: " + ex.Message); }
+    }
+
+    /// <summary>You at 12% of the screen and your rival at 88%; Osty (your first zone) follows you.</summary>
+    public static bool Place(MegaCrit.Sts2.Core.Entities.Players.Player player, Creature rival)
+    {
+        var room = MegaCrit.Sts2.Core.Nodes.Rooms.NCombatRoom.Instance;
+        if (room?.GetCreatureNode(player.Creature) is not { } me || room.GetCreatureNode(rival) is not { } him) return false;
+        var view = room.GetViewportRect().Size;
+        var toWorld = room.GetViewport().GetCanvasTransform().AffineInverse();
+        float y = me.GlobalPosition.Y;
+        me.GlobalPosition = new Vector2((toWorld * new Vector2(view.X * 0.12f, 0)).X - me.Size.X * 0.5f, y);
+        him.GlobalPosition = new Vector2((toWorld * new Vector2(view.X * 0.88f, 0)).X - him.Size.X * 0.5f, y);
+        foreach (var pet in player.Creature.Pets)
+            if (room.GetCreatureNode(pet) is { } pn && pet.Monster is not FmZonePet) pn.GlobalPosition = me.GlobalPosition + new Vector2(me.Hitbox.Size.X * 0.5f + ZoneGap * 0.4f, 0);
+        return true;
     }
 
     /// <summary>FM's YOU / COM tags over each Duel Master K.</summary>

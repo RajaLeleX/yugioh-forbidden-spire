@@ -169,7 +169,8 @@ public static class FmField
         var me = room?.GetCreatureNode(player.Creature);
         var node = slot.Creature(player) is { } c ? room?.GetCreatureNode(c) : null;
         if (me == null || node == null) return;
-        node.Position = me.Position + new Godot.Vector2(me.Hitbox.Size.X * 0.5f + 150f + slot.Index * 190f, -75f);
+        float gap = FmPractice.Active ? FmPractice.ZoneGap : 150f, step = FmPractice.Active ? FmPractice.ZoneStep : 190f;
+        node.Position = me.Position + new Godot.Vector2(me.Hitbox.Size.X * 0.5f + gap + slot.Index * step, -75f);
     }
 
     public static void TogglePosition(FmSlot slot)

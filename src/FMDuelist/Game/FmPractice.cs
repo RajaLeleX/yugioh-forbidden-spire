@@ -47,6 +47,69 @@ public static class FmPractice
 
     public static readonly FmRival.Duelist Duelist = new(typeof(FmPracticeEncounter), typeof(FmMirrorDK), "Duel Master K", -1, 8000, 0);
 
+    // ---------------- the field: one half each ----------------
+    /// <summary>Zone spacing in the Free Duel (tighter than a boss fight's, so both rows fit).</summary>
+    public const float ZoneGap = 105f, ZoneStep = 165f;
+    static CanvasLayer? _labels;
+
+    /// <summary>You stand at the far left and Duel Master K at the far right, each with your own three zones in front.</summary>
+    public static void Layout(MegaCrit.Sts2.Core.Entities.Players.Player player, Creature rival)
+    {
+        try
+        {
+            var room = MegaCrit.Sts2.Core.Nodes.Rooms.NCombatRoom.Instance;
+            if (room?.GetCreatureNode(player.Creature) is not { } me || room.GetCreatureNode(rival) is not { } him) return;
+            var view = room.GetViewportRect().Size;
+            var toWorld = room.GetViewport().GetCanvasTransform().AffineInverse();
+            float y = me.GlobalPosition.Y;
+            me.GlobalPosition = new Vector2((toWorld * new Vector2(view.X * 0.12f, 0)).X - me.Size.X * 0.5f, y);
+            him.GlobalPosition = new Vector2((toWorld * new Vector2(view.X * 0.88f, 0)).X - him.Size.X * 0.5f, y);
+            // Osty (your first zone) follows you
+            foreach (var pet in player.Creature.Pets)
+                if (room.GetCreatureNode(pet) is { } pn && pet.Monster is not FmZonePet) pn.GlobalPosition = me.GlobalPosition + new Vector2(me.Hitbox.Size.X * 0.5f + ZoneGap * 0.4f, 0);
+            ShowLabels(me, him);
+            // not a real run: no top bar (gold, floor, potions, map, deck) and no relic row
+            if (MegaCrit.Sts2.Core.Nodes.NRun.Instance?.GlobalUi is { } ui)
+            {
+                ui.TopBar.Visible = false;
+                ui.RelicInventory.Visible = false;
+            }
+        }
+        catch (Exception ex) { Log.Warn("[FMDuelist] free duel layout: " + ex.Message); }
+    }
+
+    /// <summary>FM's YOU / COM tags over each Duel Master K.</summary>
+    static void ShowLabels(MegaCrit.Sts2.Core.Nodes.Combat.NCreature me, MegaCrit.Sts2.Core.Nodes.Combat.NCreature him)
+    {
+        RemoveLabels();
+        if (Engine.GetMainLoop() is not SceneTree tree) return;
+        _labels = new CanvasLayer { Layer = 6 };
+        tree.Root.AddChild(_labels);
+        void Tag(MegaCrit.Sts2.Core.Nodes.Combat.NCreature who, string tag, string name, Color color)
+        {
+            var r = who.Hitbox.GetGlobalRect();
+            var screen = who.GetViewport().GetCanvasTransform() * new Vector2(r.GetCenter().X, r.Position.Y);
+            var box = new PanelContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
+            box.AddThemeStyleboxOverride("panel", new StyleBoxFlat { BgColor = color, BorderColor = Colors.White, BorderWidthBottom = 3, BorderWidthTop = 3, BorderWidthLeft = 3, BorderWidthRight = 3, CornerRadiusBottomLeft = 6, CornerRadiusBottomRight = 6, CornerRadiusTopLeft = 6, CornerRadiusTopRight = 6, ContentMarginLeft = 14, ContentMarginRight = 14, ContentMarginTop = 2, ContentMarginBottom = 2 });
+            var l = new Label { Text = $"{tag}  {name}", MouseFilter = Control.MouseFilterEnum.Ignore };
+            l.AddThemeFontSizeOverride("font_size", 26);
+            l.AddThemeColorOverride("font_color", Colors.White);
+            l.AddThemeConstantOverride("outline_size", 6);
+            l.AddThemeColorOverride("font_outline_color", Colors.Black);
+            box.AddChild(l);
+            _labels!.AddChild(box);
+            box.Position = screen - new Vector2(130, 70);
+        }
+        Tag(me, "YOU", "Duel Master K", new Color(0.75f, 0.05f, 0.05f, 0.9f));
+        Tag(him, "COM", "Duel Master K", new Color(0.1f, 0.2f, 0.75f, 0.9f));
+    }
+
+    public static void RemoveLabels()
+    {
+        if (_labels != null && GodotObject.IsInstanceValid(_labels)) _labels.QueueFree();
+        _labels = null;
+    }
+
     // ---------------- the premade decks ----------------
     static readonly int[][] Spells =
     {
@@ -101,6 +164,12 @@ public static class FmPractice
     /// <summary>The practice duel is over: results, then straight back to the main menu.</summary>
     public static async Task Finish(bool won, MegaCrit.Sts2.Core.Entities.Players.Player player, int comLp, int turns)
     {
+        try
+        {
+            var loser = won ? FmRival.Priest : player.Creature;
+            if (loser != null) await CreatureCmd.TriggerAnim(loser, "Dead", 1.4f);
+        }
+        catch (Exception ex) { Log.Warn("[FMDuelist] practice death anim: " + ex.Message); }
         try { await FmDuelEnd.Show(won, player, comLp, "Duel Master K", turns, spoils: false); }
         catch (Exception ex) { Log.Warn("[FMDuelist] practice results: " + ex.Message); }
         Active = false;
@@ -156,6 +225,54 @@ public static class FmPractice
     {
         if (_picker != null && GodotObject.IsInstanceValid(_picker)) _picker.QueueFree();
         _picker = null;
+    }
+}
+
+/// <summary>
+/// Giving up in the Free Duel counts as losing it: your Duel Master K falls, "YOU LOSE" and the results play,
+/// then it's back to the main menu (instead of the run just fading out).
+/// </summary>
+[HarmonyPatch(typeof(RunManager), nameof(RunManager.Abandon))]
+static class FmPracticeGiveUpPatch
+{
+    static bool Prefix()
+    {
+        if (!FmPractice.Active) return true;
+        var state = RunManager.Instance.DebugOnlyGetState();
+        var player = state?.Players.FirstOrDefault();
+        if (player == null) return true;
+        try { MegaCrit.Sts2.Core.Nodes.Screens.Capstones.NCapstoneContainer.Instance?.Close(); } catch { }
+        int turns = player.Creature.CombatState?.RoundNumber ?? 1;
+        int comLp = Math.Max(0, FmRival.Priest?.CurrentHp ?? 0);
+        FmRival.Active = false;
+        TaskHelper.RunSafely(FmPractice.Finish(false, player, comLp, turns));
+        return false;
+    }
+}
+
+/// <summary>
+/// Leaving a run by any route (give up, death, quitting to the menu) clears every duel overlay the mod puts on
+/// screen: his hand and set traps, the YOU/COM tags, the commentary line, your field row.
+/// </summary>
+[HarmonyPatch]
+static class FmLeaveRunCleanupPatch
+{
+    static IEnumerable<System.Reflection.MethodBase> TargetMethods()
+    {
+        foreach (var n in new[] { nameof(NGame.ReturnToMainMenu), nameof(NGame.ReturnToMainMenuAfterRun), nameof(NGame.GoToTimelineAfterRun) })
+            if (AccessTools.Method(typeof(NGame), n) is { } m) yield return m;
+    }
+
+    static void Prefix()
+    {
+        try
+        {
+            FmRival.Reset();
+            FmRival.ClearBanner();
+            FmPractice.RemoveLabels();
+            FmField.ResetCombat();
+        }
+        catch (Exception ex) { Log.Warn("[FMDuelist] leave-run cleanup: " + ex.Message); }
     }
 }
 

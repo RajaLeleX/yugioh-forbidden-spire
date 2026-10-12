@@ -93,6 +93,7 @@ public static class FmRival
         await FmRules.Raw(() => CreatureCmd.SetMaxAndCurrentHp(Priest, LifePoints));
         // three monster zones for him (invisible stand-ins under his cards)
         MonsterModel[] zones = { ModelDb.Monster<FmRivalZone1>(), ModelDb.Monster<FmRivalZone2>(), ModelDb.Monster<FmRivalZone3>() };
+        if (Current == FmPractice.Duelist) FmPractice.Layout(player, Priest);
         for (int i = 0; i < 3; i++)
         {
             var c = await CreatureCmd.Add(zones[i].ToMutable(), combat, CombatSide.Enemy, null);
@@ -112,6 +113,7 @@ public static class FmRival
     {
         Active = false; Bound = false; Priest = null; Current = null; Deck.Clear(); Hand.Clear(); Traps.Clear();
         FmRivalHand.Hide();
+        FmPractice.RemoveLabels();
         foreach (var s in Slots) { s.Clear(); s.RivalCreature = null; }
     }
 
@@ -129,7 +131,10 @@ public static class FmRival
         if (room == null || Priest == null || room.GetCreatureNode(Priest) is not { } pn) return;
         for (int i = 0; i < 3; i++)
             if (Slots[i].RivalCreature is { } c && room.GetCreatureNode(c) is { } n)
-                n.Position = pn.Position + new Vector2(-pn.Hitbox.Size.X * 0.5f - 150f - (2 - i) * 190f, -75f);
+            {
+                float gap = FmPractice.Active ? FmPractice.ZoneGap : 150f, step = FmPractice.Active ? FmPractice.ZoneStep : 190f;
+                n.Position = pn.Position + new Vector2(-pn.Hitbox.Size.X * 0.5f - gap - (2 - i) * step, -75f);
+            }
     }
 
     static readonly int[] Usable = { 336, 337, 338, 339, 340, 341, 342, 343, 344, 345, 346, 347, 681, 682, 683, 684, 685, 686 };
@@ -630,6 +635,13 @@ public static class FmRival
     }
 
     static CanvasLayer? _bannerLayer;
+
+    /// <summary>Clears the commentary line at once (leaving a run).</summary>
+    public static void ClearBanner()
+    {
+        if (_bannerLayer != null && GodotObject.IsInstanceValid(_bannerLayer)) _bannerLayer.QueueFree();
+        _bannerLayer = null; _bannerLabel = null;
+    }
     static Label? _bannerLabel;
     static Tween? _bannerTween;
 

@@ -25,7 +25,7 @@ public static class FmTutorial
         {
             if (Open) return;
             var rs = player.RunState;
-            if (rs.CurrentActIndex != 0 || player.Creature.CombatState?.RoundNumber != 1) return;
+            if (FmPractice.Active || rs.CurrentActIndex != 0 || player.Creature.CombatState?.RoundNumber != 1) return;
             var act = rs.MapPointHistory.Count > 0 ? rs.MapPointHistory[0] : null;
             int fights = act?.Count(e => e.Rooms.Any(r => r.RoomType is RoomType.Monster or RoomType.Elite or RoomType.Boss)) ?? 0;
             if (fights > 1) return;

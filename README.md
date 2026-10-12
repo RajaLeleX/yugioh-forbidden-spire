@@ -1,12 +1,33 @@
 # Yugioh: Forbidden Spire
 
-**Version 0.5 (beta)**: a Slay the Spire 2 mod.
+**Version 0.7 (beta)**: a Slay the Spire 2 mod.
 
 Play the Necrobinder as **Duel Master K** and climb the Spire with Duel Monsters from *Yu-Gi-Oh! Forbidden Memories*. You summon monsters, fuse cards and battle with Attack and Defense positions instead of playing Strikes and Defends. Bosses are full duels against Priest Seto.
 
 ## You need your own copy of Forbidden Memories
 
 The mod ships **no game content** from Forbidden Memories. Card data, card art, fusions, music and the intro movie are all read at runtime from **your own Forbidden Memories disc image** (`.bin`). The mod finds the disc path in `settings.cfg` next to the mod (key `FM_DISC=`) or searches common emulator folders.
+
+## New in 0.7 (beta)
+
+- **The Forbidden Memories intro** plays when a new run starts:
+  - Heishin finds the forbidden treasure and laughs over the hieroglyph tablet
+  - then the title appears with track 02
+  - the dialogue is read from your disc and shown in Forbidden Memories' own font, with its type-on effect
+  - click once to show a text box in full, and again to continue (0.4 s cooldown)
+  - a Skip button is included
+  - note: the intro's pictures aren't read from the disc yet, so without local copies the scene plays text-only for now
+- **End of every duel**, Forbidden Memories style:
+  - a "YOU WIN!" or "YOU LOSE" animation with the win or lose jingle
+  - a two-page "Results of Duel" table with the Results of Duel music
+  - the first page shows cards used, remaining LP, winner, Duel Skill rank (POW/TEC, S–D) and spoils
+  - the second page shows the victory condition, turns, and offense and defense statistics
+  - the card reward follows the results
+- **Duel the Duel Master K** replaces the Compendium:
+  - a free practice duel against a mirror Duel Master K
+  - pick level 1, 2 or 3 (Act 1, 2 or 3 deck strength); both duelists use copies of the same premade deck
+  - track 39 loops during the duel
+  - no rewards, and you return to the main menu afterwards
 
 ## Features in 0.5 (beta)
 
@@ -51,5 +72,5 @@ The mod ships **no game content** from Forbidden Memories. Card data, card art, 
 
 ## Notes
 
-- Mod id: `FMDuelist`, manifest version `0.5.0`.
+- Mod id: `FMDuelist`, manifest version `0.7.0`.
 - This is a fan project. *Yu-Gi-Oh! Forbidden Memories* belongs to Konami, and *Slay the Spire 2* belongs to Mega Crit.

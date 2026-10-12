@@ -49,6 +49,10 @@ public static class FmRival
         new(typeof(QueenBoss), typeof(Queen), "Final Priest Seto", 36, 8000, 2),             // Seto 3rd, before DarkNite
     };
 
+    /// <summary>The bosses plus the main menu's practice opponent.</summary>
+    public static IEnumerable<Duelist> AllDuelists => Bosses.Append(FmPractice.Duelist);
+    public static bool IsDuelist(Creature? c) => c?.Monster != null && AllDuelists.Any(b => b.Monster == c.Monster.GetType());
+
     public static Duelist? Current;
     public static int LifePoints => Current?.LifePoints ?? 8000;
 
@@ -77,10 +81,13 @@ public static class FmRival
     public static async Task Begin(Player player, ICombatState combat)
     {
         Reset();
-        foreach (var b in Bosses)
+        foreach (var b in AllDuelists)
             if (combat.Enemies.FirstOrDefault(e => e.Monster != null && e.Monster.GetType() == b.Monster) is { } boss) { Priest = boss; Current = b; break; }
         if (Priest == null || Current == null || !FmData.Loaded) return;
         Active = true;
+        FmDuelStats.Reset();
+        if (Current == FmPractice.Duelist && NCombatRoom.Instance?.GetCreatureNode(Priest) is { } mirror)
+            mirror.Visuals.Scale = new Vector2(-Math.Abs(mirror.Visuals.Scale.X), mirror.Visuals.Scale.Y); // the mirror Duel Master K faces you
         // the boss's own buffs and passives don't belong in a duel
         foreach (var pw in Priest.Powers.ToList()) await PowerCmd.Remove(pw);
         await FmRules.Raw(() => CreatureCmd.SetMaxAndCurrentHp(Priest, LifePoints));
@@ -132,6 +139,7 @@ public static class FmRival
 
     static void BuildDeck()
     {
+        if (Current == FmPractice.Duelist) { Deck.Clear(); Deck.AddRange(FmPractice.Deck(FmPractice.Level)); return; }
         int index = Current?.DuelistIndex ?? 7;
         if (!_weights.TryGetValue(index, out var weights)) _weights[index] = weights = ReadWeights(index);
         Deck.Clear();
@@ -201,6 +209,8 @@ public static class FmRival
         }
         int a = att.Atk;
         Creature attOwner = playerAttacks ? player.Creature : Priest!, defOwner = playerAttacks ? Priest! : player.Creature;
+        int defValue = def.Position == FmPosition.Attack ? def.Atk : def.Def, defHp = defOwner.CurrentHp;
+        int attId = att.MonsterId, defId = def.MonsterId;
         Task Destroy(FmSlot s) => s.Rival ? DestroyRival(s) : DestroyMine(s, player);
         if (def.Position == FmPosition.Attack)
         {
@@ -215,6 +225,7 @@ public static class FmRival
             if (a > d) await Destroy(def);
             else if (a < d) await Lp(ctx, attOwner, d - a);
         }
+        FmDuelStats.Battle(playerAttacks, a, defValue, def.MonsterId != defId || def.MonsterId == 0, att.MonsterId != attId || att.MonsterId == 0, defOwner.CurrentHp < defHp);
         FmField.NotifyChanged();
     }
 
@@ -223,7 +234,7 @@ public static class FmRival
     {
         if (await SpringHisTrap(mine, player)) return;
         if (SlotOf(target) is { MonsterId: not 0 } theirs) await Battle(ctx, player, mine, theirs, true);
-        else if (target == Priest && !HasMonster) await Lp(ctx, Priest, mine.Atk);
+        else if (target == Priest && !HasMonster) { FmDuelStats.DirectAttack(true, mine.Atk); await Lp(ctx, Priest, mine.Atk); }
     }
 
     /// <summary>Raigeki / Dark Hole on his side: his monsters are destroyed, he takes no damage.</summary>
@@ -244,6 +255,7 @@ public static class FmRival
             if (i >= 0) used.Add(i);
         }
         if (used.Count == 0) return;
+        FmDuelStats.Com.CardsUsed += used.Count;
         foreach (var i in used.OrderByDescending(i => i)) Hand.RemoveAt(i);
         // ...while the cursor picks that many of the 5 face-down cards on show
         var shown = Enumerable.Range(0, _visible).OrderBy(_ => Rng.Next()).Take(used.Count).OrderBy(i => i).ToList();
@@ -559,6 +571,7 @@ public static class FmRival
                 Banner($"{FmData.Get(s.MonsterId).Name} attacks you directly!");
                 var to = NCombatRoom.Instance?.GetCreatureNode(player.Creature)?.Hitbox.GetGlobalRect().GetCenter() ?? from;
                 await FmAttackVfx.Play(s.MonsterId, from, to);
+                FmDuelStats.DirectAttack(false, s.Atk);
                 await Lp(ctx, player.Creature, s.Atk);
             }
             else
@@ -581,6 +594,7 @@ public static class FmRival
             bool hits = t.kind == FmTrapKind.DestroyAny || (t.kind == FmTrapKind.DestroyLe && attacker.Atk <= t.value);
             if (!hits) continue;
             FmField.Traps.RemoveAt(i);
+            FmDuelStats.Traps++;
             FmSfx.Play(FmSfx.Trap);
             Banner($"Your {FmData.Get(id).Name} destroys {FmData.Get(attacker.MonsterId).Name}!");
             FmField.NotifyChanged();

@@ -24,6 +24,8 @@ public static partial class FmMusic
     static partial void OnRoomEnteredImpl(AbstractRoom room, Player owner)
     {
         if (!FmRules.IsFmPlayer(owner) || FmAudio.Bgm == null) return;
+        // the Free Duel with Duel Master K: silent until the duel starts, then track 39 on a loop
+        if (FmPractice.Active) { if (room.RoomType == RoomType.Monster) Play(FmPractice.MusicTrack); else Stop(); return; }
         if (room is RestSiteRoom) { Play(FmMedia.RestSiteTrack); return; }
         // each act's starting room (the Ancient before floor 1)
         if (room.RoomType == RoomType.Event && owner.RunState.ActFloor == 0)
@@ -94,6 +96,19 @@ public static partial class FmMusic
         if (_playing != target) return;   // something else took over
         await tree.ToSignal(tree.CreateTimer(gapSeconds), SceneTreeTimer.SignalName.Timeout);
         if (_playing == target) PlayOnce(second);
+    }
+
+    /// <summary>Plays one track once, then loops another as soon as it finishes (e.g. the win jingle, then the results music).</summary>
+    public static async void PlayOnceThenLoop(int first, int second)
+    {
+        PlayOnce(first);
+        if (Engine.GetMainLoop() is not SceneTree tree) return;
+        int target = first;
+        for (int i = 0; i < 200 && !(_playing == target && _player != null && GodotObject.IsInstanceValid(_player) && _player.Playing); i++)
+            await tree.ToSignal(tree.CreateTimer(0.05), SceneTreeTimer.SignalName.Timeout);
+        while (_playing == target && _player != null && GodotObject.IsInstanceValid(_player) && _player.Playing)
+            await tree.ToSignal(tree.CreateTimer(0.1), SceneTreeTimer.SignalName.Timeout);
+        if (_playing == target) { _once = false; Play(second); }
     }
 
     /// <summary>Plays as soon as the disc's music bank has loaded (the menu can open before it has).</summary>

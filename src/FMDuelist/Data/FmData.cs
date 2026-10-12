@@ -65,7 +65,7 @@ public static class FmData
             DiscPath = FindDiscPath() ?? throw new FileNotFoundException("Forbidden Memories disc image not found (set FM_DISC in %APPDATA%/FMDuelist/settings.cfg)");
             using var disc = new FmDisc(DiscPath);
             if (!disc.Has("/SLUS_014.11")) throw new InvalidDataException("This disc is not Yu-Gi-Oh! Forbidden Memories (NTSC-U, SLUS-01411)");
-            var slus = disc.ReadFile("/SLUS_014.11");
+            var slus = _slus = disc.ReadFile("/SLUS_014.11");
             _wa = disc.ReadFile("/DATA/WA_MRG.MRG");
             for (int i = 0; i < CardCount; i++)
             {
@@ -161,4 +161,8 @@ public static class FmData
     }
 
     public static byte[]? Wa => _wa;
+
+    private static byte[]? _slus;
+    /// <summary>The game's executable (card stats, text and the story script).</summary>
+    public static byte[]? Slus => _slus;
 }

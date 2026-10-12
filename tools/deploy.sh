@@ -14,6 +14,7 @@ cp ~/fmsts/dist/FMDuelist/FMDuelist.dll ~/fmsts/dist/FMDuelist/FMDuelist.json ~/
 [ -f ~/fmsts/devdata/duel_master_k.png ] && cp ~/fmsts/devdata/duel_master_k.png "$G/duel_master_k.png"
 [ -f ~/fmsts/devdata/seto_standard.png ] && cp ~/fmsts/devdata/seto_standard.png "$G/seto_standard.png"
 [ -f ~/fmsts/devdata/card_back.png ] && cp ~/fmsts/devdata/card_back.png "$G/card_back.png"
+[ -d ~/fmsts/devdata/story ] && mkdir -p "$G/story" && cp ~/fmsts/devdata/story/*.png "$G/story/"
 PYTHONPATH=. python -m um win launch --steam 2868840 >/dev/null 2>&1
 sleep "${1:-28}"
 grep -i "FMDuelist\|Exception" "$APPDATA/SlayTheSpire2/logs/godot.log" | head -${2:-15}

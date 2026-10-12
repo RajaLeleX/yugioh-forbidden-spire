@@ -68,7 +68,7 @@ public sealed class MillenniumPuzzle : RelicModel
         _scaled.Clear();
         foreach (var e in Owner.Creature.CombatState!.Enemies) await ScaleEnemy(e);
         // boss duel: the Kin Priest duels by FM rules
-        if (Owner.Creature.CombatState!.Enemies.Any(e => e.Monster != null && FmRival.Bosses.Any(b => b.Monster == e.Monster.GetType()))) await FmRival.Begin(Owner, Owner.Creature.CombatState!);
+        if (Owner.Creature.CombatState!.Enemies.Any(e => e.Monster != null && FmRival.AllDuelists.Any(b => b.Monster == e.Monster.GetType()))) await FmRival.Begin(Owner, Owner.Creature.CombatState!);
         // Doom items cast a Shadow Spell instead (see FmShadow)
         try { await FmShadow.CombatStart(Owner, new MegaCrit.Sts2.Core.GameActions.Multiplayer.BlockingPlayerChoiceContext()); }
         catch (Exception ex) { MegaCrit.Sts2.Core.Logging.Log.Warn("[FMDuelist] shadow start: " + ex.Message); }
@@ -352,6 +352,44 @@ public sealed class MillenniumPuzzle : RelicModel
             EnemyDefensePatch.StillUses(applier, power.Title.GetFormattedText());
     }
 
+    // --- Forbidden Memories duel bookkeeping and the end of a duel ---
+    public override Task AfterCardPlayed(PlayerChoiceContext choiceContext, CardPlay cardPlay)
+    {
+        if (FmRival.Active && cardPlay.Card is FmCardBase fc && cardPlay.Card.Owner == Owner)
+        {
+            FmDuelStats.You.CardsUsed++;
+            if (fc is FmSpellCard { Kind: FmSpellKind.Equip }) FmDuelStats.Equips++;
+            else if (fc is FmSpellCard) FmDuelStats.Magic++;
+        }
+        return Task.CompletedTask;
+    }
+
+    public override bool ShouldDie(Creature creature)
+    {
+        // the practice duel never ends the run: whoever falls, the results show and you go back to the main menu
+        if (!FmPractice.Active || !FmRival.Active) return true;
+        if (creature == Owner.Creature || creature == FmRival.Priest)
+        {
+            bool won = creature == FmRival.Priest;
+            int turns = Owner.Creature.CombatState?.RoundNumber ?? 1;
+            int comLp = Math.Max(0, FmRival.Priest?.CurrentHp ?? 0);
+            FmRival.Active = false;
+            MegaCrit.Sts2.Core.Helpers.TaskHelper.RunSafely(FmPractice.Finish(won, Owner, won ? 0 : comLp, turns));
+            return false;
+        }
+        return true;
+    }
+
+    public override async Task BeforeDeath(Creature creature)
+    {
+        if (!FmRival.Active || FmPractice.Active || FmRival.Current == null) return;
+        if (creature != Owner.Creature && creature != FmRival.Priest) return;
+        bool won = creature == FmRival.Priest;
+        int turns = Owner.Creature.CombatState?.RoundNumber ?? 1;
+        int comLp = won ? 0 : Math.Max(0, FmRival.Priest?.CurrentHp ?? 0);
+        await FmDuelEnd.Show(won, Owner, comLp, FmRival.Current.Name, turns);
+    }
+
     public override Task AfterCardGeneratedForCombat(CardModel card, Player? creator)
     {
         if (creator == null && card.Owner == Owner && EnemyDefensePatch.DefenderNow(Owner.Creature.CombatState) is { } d)
@@ -441,7 +479,7 @@ public sealed class MillenniumPuzzle : RelicModel
 
     public override Task AfterCombatVictory(CombatRoom room)
     {
-        if (room.RoomType == RoomType.Boss) FmMusic.PlayOnce(FmMedia.BossFanfareTrack);
+        // the boss duel's win jingle and results music play in FmDuelEnd
         return Task.CompletedTask;
     }
 

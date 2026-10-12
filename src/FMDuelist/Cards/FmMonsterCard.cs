@@ -109,6 +109,7 @@ public static class FmFusion
     /// <summary>Returns the monster that ends up summoned. Material cards other than the played one go to the discard pile.</summary>
     public static async Task<int> Resolve(PlayerChoiceContext ctx, List<CardModel> chain, Player owner, CardModel played, int fieldMonster)
     {
+        if (FmRival.Active && chain.Count > 1) { FmDuelStats.Fusions++; FmDuelStats.You.CardsUsed += chain.Count - 1; }
         int cur = fieldMonster, first = fieldMonster, atkBonus = 0, defBonus = 0, fusions = 0;
         FmField.PendingEquips.Clear();
         var steps = new List<FmFusionStep>();

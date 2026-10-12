@@ -14,6 +14,23 @@ public static class FmText
         return d;
     }
 
+    /// <summary>
+    /// One text box of the story script: characters until a control code (0xFA ends the box, other bytes from 0xC0
+    /// are script commands); 0xFE is a line break inside the box.
+    /// </summary>
+    public static string ReadStory(byte[] buf, int pos)
+    {
+        var sb = new System.Text.StringBuilder();
+        while (pos >= 0 && pos < buf.Length)
+        {
+            byte b = buf[pos++];
+            if (b == 0xFE) { sb.Append('\n'); continue; }
+            if (!Map.TryGetValue(b, out char c)) break;
+            sb.Append(c);
+        }
+        return sb.ToString().Trim();
+    }
+
     public static string Read(byte[] buf, int pos)
     {
         var sb = new System.Text.StringBuilder();

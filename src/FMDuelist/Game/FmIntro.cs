@@ -49,6 +49,8 @@ public static class FmIntro
     }
 
     public static bool Playing => _playing;
+    /// <summary>The black screen after the intro is still up (the menu's buttons wait for it).</summary>
+    public static bool Covering;
     public static void Skip() => _skip = true;
 
     /// <summary>Plays the intro fullscreen at the movie's 15 fps with its XA audio. Any click or key skips.</summary>
@@ -137,6 +139,7 @@ public static class FmIntro
     {
         try
         {
+            Covering = true;
             black.MouseFilter = Control.MouseFilterEnum.Ignore;
             // the logo screen is hidden for good, so the title can come up after one second of black
             HideLogos(tree.Root);
@@ -149,9 +152,11 @@ public static class FmIntro
             }
             var t = black.CreateTween();
             t.TweenProperty(black, "modulate:a", 0f, 0.5);
+            Covering = false;
             await t.ToSignal(t, Tween.SignalName.Finished);
         }
         catch (Exception ex) { Log.Warn("[FMDuelist] intro fade: " + ex.Message); }
+        Covering = false;
         if (GodotObject.IsInstanceValid(layer)) layer.QueueFree();
     }
 
@@ -237,6 +242,7 @@ static class MenuBackdropPatch
                 buttons.Position += new Vector2(delta, 0);
                 buttons.SetMeta("fm_centred", true);
                 if (menu.GetNodeOrNull<Control>("%ContinueRunInfo") is { } info) info.Position += new Vector2(delta, 0);
+                FmMenuButtons.Apply(menu);
             }
             catch (Exception ex) { Log.Warn("[FMDuelist] menu centre: " + ex.Message); }
         }

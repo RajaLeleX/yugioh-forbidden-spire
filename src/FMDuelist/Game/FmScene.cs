@@ -57,7 +57,7 @@ void fragment() {
     public static readonly Dictionary<string, string> Names = new()
     {
         ["teana"] = "Teana", ["jono"] = "Jono", ["seto"] = "Seto", ["simon"] = "Simon Muran", ["heishin"] = "Heishin",
-        ["guard"] = "Guard", ["servant"] = "Servant", ["k"] = "K",
+        ["guard"] = "Guard", ["servant"] = "Servant", ["k"] = "K", ["v1"] = "Villager 1", ["v2"] = "Villager 2", ["v3"] = "Villager 3",
     };
 
     FmScene(SceneTree tree)
@@ -257,7 +257,8 @@ void fragment() {
     public static string? SpeakerOf(string id) => id.Split('_')[0] switch
     {
         "tea" => "teana", "jono" => "jono", "seto" => "seto", "simon" => "simon", "hei" => "heishin",
-        "serv" or "guard" => "guard", "isis" => "servant", _ => null,
+        "serv" or "guard" => "guard", "isis" => "servant", "sm" => "simon", "te" => "teana", "jo" => "jono",
+        "v1" => "v1", "v2" => "v2", "v3" => "v3", _ => null,
     };
 
     /// <summary>One text box: a line from the disc by id (speaker known), or a line written for the mod.</summary>

@@ -31,6 +31,18 @@ public sealed class MillenniumPuzzle : RelicModel
     public override bool SpawnsPets => true;
 
     private readonly HashSet<Creature> _scaled = new();
+    private int _storyStage;
+
+    /// <summary>How far the Act 1 story ending has got (see FmAct1Story.Stage*), saved with the run.</summary>
+    [MegaCrit.Sts2.Core.Saves.Runs.SavedProperty]
+    public int StoryStage { get => _storyStage; set { AssertMutable(); _storyStage = value; } }
+
+    /// <summary>Act 1 is Forbidden Memories' story on one straight path.</summary>
+    public override MegaCrit.Sts2.Core.Map.ActMap ModifyGeneratedMap(MegaCrit.Sts2.Core.Runs.IRunState runState, MegaCrit.Sts2.Core.Map.ActMap map, int actIndex)
+        => actIndex == 0 && runState.Players.Contains(Owner) ? new FmStoryActMap() : map;
+
+    public override bool TryModifyRewards(Player player, List<MegaCrit.Sts2.Core.Rewards.Reward> rewards, AbstractRoom? room)
+        => Mine(player) && FmAct1Story.HeishinRewards(player, rewards, room);
     private readonly List<(Creature attacker, int trapId, decimal hit)> _sprung = new();
 
     private bool Mine(Player? p) => p == Owner;
@@ -44,6 +56,9 @@ public sealed class MillenniumPuzzle : RelicModel
     public override Task AfterRoomEntered(AbstractRoom room)
     {
         Track(); FmInput.Ensure(); FmMusic.OnRoomEntered(room, Owner);
+        // the start of the story: Simon scolds the prince (before the starting choice)
+        if (room is EventRoom er && er.CanonicalEvent is MegaCrit.Sts2.Core.Models.Events.Neow && Owner.RunState.CurrentActIndex == 0 && !FmPractice.Active)
+            MegaCrit.Sts2.Core.Helpers.TaskHelper.RunSafely(FmAct1Story.SimonScolds());
         _shopDragonPending = false;
         if (room.RoomType == RoomType.Shop && Owner.RunState.CurrentActIndex == 0 && Owner.PlayerRng.Rewards.NextFloat() < FmSheet.Act1ShopDragonChance)
             _shopDragonPending = true;
@@ -75,8 +90,19 @@ public sealed class MillenniumPuzzle : RelicModel
             try { await FmAct1Story.PreBoss(); } catch (Exception ex) { MegaCrit.Sts2.Core.Logging.Log.Warn("[FMDuelist] pre-boss scene: " + ex.Message); }
             FmMusic.OnRoomEntered(Owner.RunState.CurrentRoom!, Owner);
         }
+        // Act 1 story duels: the duelist's lines first
+        var storyDuel = Owner.Creature.CombatState!.Enemies.Select(e => FmStoryAct1.ForMonster(e.Monster?.GetType())).FirstOrDefault(d => d != null);
+        if (storyDuel != null && !FmPractice.Active)
+        {
+            try { await FmAct1Story.PreDuel(storyDuel); } catch (Exception ex) { MegaCrit.Sts2.Core.Logging.Log.Warn("[FMDuelist] pre-duel: " + ex.Message); }
+            FmMusic.OnRoomEntered(Owner.RunState.CurrentRoom!, Owner);
+        }
         // boss duel: the Kin Priest duels by FM rules
         if (Owner.Creature.CombatState!.Enemies.Any(e => e.Monster != null && FmRival.AllDuelists.Any(b => b.Monster == e.Monster.GetType()))) await FmRival.Begin(Owner, Owner.Creature.CombatState!);
+        if (storyDuel != null && FmRival.Priest != null) FmStoryAct1.Dress(FmRival.Priest, storyDuel);
+        // the secret level: Heishin's unwinnable duel
+        if (Owner.Creature.CombatState!.Enemies.Any(FmAct1Story.IsHeishin))
+            await FmAct1Story.StartHeishin(new MegaCrit.Sts2.Core.GameActions.Multiplayer.BlockingPlayerChoiceContext(), Owner);
         // Doom items cast a Shadow Spell instead (see FmShadow)
         try { await FmShadow.CombatStart(Owner, new MegaCrit.Sts2.Core.GameActions.Multiplayer.BlockingPlayerChoiceContext()); }
         catch (Exception ex) { MegaCrit.Sts2.Core.Logging.Log.Warn("[FMDuelist] shadow start: " + ex.Message); }
@@ -401,12 +427,7 @@ public sealed class MillenniumPuzzle : RelicModel
 
     public override async Task BeforeDeath(Creature creature)
     {
-        // Act 1 story: beating Seto leads into Heishin's invasion; losing to Heishin leads into the Puzzle
-        if (FmRival.Active && !FmPractice.Active && FmRival.Current == FmRival.Bosses[0] && creature == FmRival.Priest && FmAct1Story.Enabled(Owner))
-        {
-            await FmAct1Story.AfterSeto(Owner, Owner.Creature.CombatState?.RoundNumber ?? 1);
-            return;
-        }
+        // Act 1 story: losing to Heishin leads into the Puzzle
         if (FmAct1Story.State == FmAct1Story.Phase.HeishinDuel && creature == Owner.Creature)
         {
             await FmAct1Story.AfterHeishin(Owner);
@@ -417,7 +438,10 @@ public sealed class MillenniumPuzzle : RelicModel
         bool won = creature == FmRival.Priest;
         int turns = Owner.Creature.CombatState?.RoundNumber ?? 1;
         int comLp = won ? 0 : Math.Max(0, FmRival.Priest?.CurrentHp ?? 0);
-        await FmDuelEnd.Show(won, Owner, comLp, FmRival.Current.Name, turns);
+        var duel = FmRival.Current;
+        await FmDuelEnd.Show(won, Owner, comLp, duel.Name, turns);
+        // a story duelist's closing lines
+        if (won && FmStoryAct1.ForMonster(duel.Monster) is { } sd) await FmAct1Story.PostDuel(sd);
     }
 
     public override Task AfterCardGeneratedForCombat(CardModel card, Player? creator)
@@ -506,8 +530,6 @@ public sealed class MillenniumPuzzle : RelicModel
             foreach (var z in FmRival.Slots) if (z.RivalCreature is { IsAlive: true } zc) await CreatureCmd.Kill(zc);
             FmRival.Active = false;
         }
-        if (FmAct1Story.State == FmAct1Story.Phase.HeishinPending && creature.Monster is MegaCrit.Sts2.Core.Models.Monsters.KinPriest)
-            await FmAct1Story.StartHeishin(ctx, Owner);
     }
 
     public override Task AfterCombatVictory(CombatRoom room)
@@ -521,6 +543,7 @@ public sealed class MillenniumPuzzle : RelicModel
         FmField.ResetCombat();
         FmRival.Reset();
         FmAct1Story.Reset();
+        FmStoryAct1.ClearBackground();
         return Task.CompletedTask;
     }
 }

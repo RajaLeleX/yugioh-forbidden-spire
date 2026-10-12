@@ -50,7 +50,7 @@ public static class FmRival
     };
 
     /// <summary>The bosses plus the main menu's practice opponent.</summary>
-    public static IEnumerable<Duelist> AllDuelists => Bosses.Append(FmPractice.Duelist).Append(FmAct1Story.Heishin);
+    public static IEnumerable<Duelist> AllDuelists => Bosses.Append(FmPractice.Duelist).Append(FmAct1Story.Heishin).Concat(FmStoryAct1.Duelists);
     public static bool IsDuelist(Creature? c) => c?.Monster != null && AllDuelists.Any(b => b.Monster == c.Monster.GetType());
 
     public static Duelist? Current;

@@ -42,6 +42,8 @@ public static class FmStoryIntro
     }
 
     static bool _skip;
+    /// <summary>The intro is about to play or playing (story scenes wait for it).</summary>
+    public static bool Playing;
 
     public static async Task Play()
     {
@@ -170,6 +172,11 @@ public static class FmStoryIntro
 [HarmonyPatch(typeof(NGame), nameof(NGame.StartNewSingleplayerRun))]
 static class FmStoryIntroPatch
 {
+    static void Prefix(CharacterModel character)
+    {
+        if (character is Necrobinder && !FmPractice.Active) FmStoryIntro.Playing = true;
+    }
+
     static void Postfix(CharacterModel character, ref Task<RunState> __result)
     {
         if (character is not Necrobinder || FmPractice.Active) return;
@@ -178,8 +185,12 @@ static class FmStoryIntroPatch
 
     static async Task<RunState> After(Task<RunState> start)
     {
-        var state = await start;
-        if (!FmPractice.Active) await FmStoryIntro.Play();
-        return state;
+        try
+        {
+            var state = await start;
+            if (!FmPractice.Active) await FmStoryIntro.Play();
+            return state;
+        }
+        finally { FmStoryIntro.Playing = false; }
     }
 }

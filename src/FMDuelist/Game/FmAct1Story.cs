@@ -3,32 +3,33 @@ using Godot;
 using MegaCrit.Sts2.Core.Animation;
 using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Commands;
-using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Logging;
+using MegaCrit.Sts2.Core.Map;
 using MegaCrit.Sts2.Core.Models;
-using MegaCrit.Sts2.Core.Models.Encounters;
 using MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine;
-using MegaCrit.Sts2.Core.Nodes.Rooms;
-using MegaCrit.Sts2.Core.ValueProps;
+using MegaCrit.Sts2.Core.Rooms;
+using MegaCrit.Sts2.Core.Runs;
 using FMDuelist.Cards;
 using FMDuelist.Data;
 using FMDuelist.Powers;
+using FMDuelist.Relics;
 
 namespace FMDuelist.Game;
 
 /// <summary>
-/// The end of Act 1, retold from Forbidden Memories' own script (read from the player's disc):
-///  - before the boss: the festival in the town plaza, Seto beating Jono, then the wait at the duel ground;
-///  - after beating Young Priest Seto: his farewell, Jono and Teana celebrating, then Heishin's invasion of the palace;
-///  - the unwinnable duel with High Mage Heishin (his first-duel deck, the Umi field, track 35). Losing it doesn't end
-///    the run: your Life Points are restored;
-///  - Simon Muran begs you to shatter the Puzzle (refusing only loops back), you wake inside it, Simon gives you the
-///    last of his power (a Bright Castle card reward), then "coming soon" for Acts 2 and 3.
-/// The duels with Jono and Teana are left out entirely.
+/// Act 1's story, retold from Forbidden Memories' own script (read from the player's disc):
+///  - the start: Simon Muran scolds the prince and the prince runs away (before the starting choice);
+///  - each story duel opens with that duelist's lines at the duel ground (Simon at the palace) and closes with theirs;
+///  - the festival "?" point: the town plaza and Seto beating Jono;
+///  - before the boss: waiting for Seto at the duel ground;
+///  - after the boss's rewards: Seto's farewell, Jono and Teana celebrating, Heishin's invasion, then a secret level:
+///    the unwinnable duel with High Mage Heishin (his first-duel deck, the Umi field, track 35);
+///  - losing it isn't a game over: Simon has you shatter the Puzzle (refusing only loops back), you wake inside it,
+///    Simon's gift (Bright Castle) is the reward, then "coming soon" and Act 2.
 /// </summary>
 static partial class FmAct1Story
 {
@@ -36,14 +37,16 @@ static partial class FmAct1Story
     public const int BrightCastle = 668, Umi = 334;
     const int PlazaTrack = 52, DuelGroundTrack = 15, PalaceTrack = 40, HeishinTrack = 27, SetoNightTrack = 24, LossTrack = 26, PuzzleTrack = 5, HeishinDuelTrack = 35;
 
-    public static readonly FmRival.Duelist Heishin = new(typeof(TheKinBoss), typeof(FmHeishin), "High Mage Heishin", 8, 8000, 0);
+    public static readonly FmRival.Duelist Heishin = new(typeof(FmHeishinEncounter), typeof(FmHeishin), "High Mage Heishin", 8, 8000, 0);
 
-    public enum Phase { None, HeishinPending, HeishinDuel, Lost }
+    public enum Phase { None, HeishinDuel, Lost }
     public static Phase State;
-    static int _savedHp, _startRound;
-    static Vector2? _setoSpot;
+    static int _startRound;
 
-    public static void Reset() { State = Phase.None; _setoSpot = null; }
+    /// <summary>How far the Act 1 ending has got (saved with the run on the Millennium Puzzle).</summary>
+    public const int StageNone = 0, StageHeishin = 1, StagePuzzleDone = 2, StageDone = 3;
+
+    public static void Reset() { State = Phase.None; }
 
     public static bool Enabled(Player p) => FmRules.IsFmPlayer(p) && !FmPractice.Active && p.RunState.CurrentActIndex == 0;
     public static bool IsHeishin(Creature? c) => c?.Monster is FmHeishin;
@@ -55,8 +58,96 @@ static partial class FmAct1Story
 
     static void Music(int track) { try { FmMusic.Play(track); } catch (Exception ex) { Log.Warn("[FMDuelist] story music: " + ex.Message); } }
 
-    // ---------------- before the boss ----------------
-    public static async Task PreBoss()
+    static MillenniumPuzzle? Puzzle(Player p) => p.GetRelic<MillenniumPuzzle>();
+
+    // ---------------- the start: Simon scolds the prince, who runs away ----------------
+    public static async Task SimonScolds()
+    {
+        while (FmStoryIntro.Playing) await Task.Delay(100);
+        if (await FmScene.Open() is not { } s) return;
+        try
+        {
+            Music(PalaceTrack);
+            await s.Bg("bg_palace"); await s.Chr("chr_simon_palace", "simon");
+            await s.Say("sm_dear"); await s.Say("sm_royal"); await s.Say("sm_shame");
+            // the prince runs away
+            await s.Lit("k", "(You run away!)");
+            await s.Say("sm_stop");
+            await s.Chr(null);
+            await s.Say("sm_drat");
+        }
+        catch (Exception ex) { Log.Warn("[FMDuelist] Simon's scolding: " + ex); }
+        await s.Close();
+    }
+
+    // ---------------- the story duels ----------------
+    public static async Task PreDuel(FmStoryAct1.StoryDuel d)
+    {
+        if (await FmScene.Open() is not { } s) return;
+        try
+        {
+            Music(d.Key == "simon" ? PalaceTrack : DuelGroundTrack);
+            await s.Bg(d.Bg); await s.Chr(d.Chr, d.Key);
+            switch (d.Key)
+            {
+                case "simon":
+                    await s.Lit("simon", $"Prince {Name}.\nYou've returned...");
+                    await s.Say("sm_night"); await s.Say("sm_ifplay"); await s.Say("sm_tryhand"); await s.Say("sm_iflose"); await s.Say("sm_worthy");
+                    await s.Say("sm_hoho"); await s.Say("sm_dontthink"); await s.Say("sm_prepare");
+                    break;
+                case "teana":
+                    await s.Say("te_waiting"); await s.Say("te_jono"); await s.Say("te_duel"); await s.Say("te_play");
+                    break;
+                case "v1":
+                    await s.Say("v1_fest"); await s.Say("v1_rather"); await s.Say("v1_takeme"); await s.Say("v1_play");
+                    break;
+                case "v2":
+                    await s.Say("v2_rare"); await s.Say("v2_pretty"); await s.Say("v2_beat"); await s.Say("v2_lose"); await s.Say("v2_play");
+                    break;
+                case "v3":
+                    await s.Say("v3_talk"); await s.Say("v3_unless"); await s.Say("v3_play");
+                    break;
+                case "jono":
+                    await s.Say("jo_geez"); await s.Say("jo_admit");
+                    await s.Lit("jono", $"Hey, {Name},\nHow about a game until\nthat guy comes back?");
+                    await s.Say("jo_letsdo"); await s.Say("jo_lostlast");
+                    break;
+            }
+        }
+        catch (Exception ex) { Log.Warn("[FMDuelist] pre-duel scene: " + ex); }
+        await s.Close();
+    }
+
+    public static async Task PostDuel(FmStoryAct1.StoryDuel d)
+    {
+        if (await FmScene.Open() is not { } s) return;
+        try
+        {
+            await s.Bg(d.Bg); await s.Chr(d.Chr, d.Key);
+            switch (d.Key)
+            {
+                case "simon": await s.Say("sm_won"); await s.Say("sm_taught"); await s.Say("sm_fair"); break;
+                case "teana": await s.Say("te_ouch"); await s.Say("te_again"); break;
+                case "v1": await s.Say("v1_wellwell"); break;
+                case "v2": await s.Say("v2_owe"); break;
+                case "v3":
+                    await s.Say("v3_lost"); await s.Say("v3_day");
+                    // Teana hears about the festival
+                    await s.Chr("chr_teana_room", "teana");
+                    await s.Say("te_fest"); await s.Say("te_checkout"); await s.Say("te_findjono");
+                    break;
+                case "jono":
+                    await s.Lit("jono", $"Geez, {Name}!\nYou whipped me!\nY'know... you are good!");
+                    await s.Say("jo_favor");
+                    break;
+            }
+        }
+        catch (Exception ex) { Log.Warn("[FMDuelist] after-duel scene: " + ex); }
+        await s.Close();
+    }
+
+    // ---------------- the festival ("?" point) ----------------
+    public static async Task Festival()
     {
         if (await FmScene.Open() is not { } s) return;
         try
@@ -85,10 +176,20 @@ static partial class FmAct1Story
             await s.Chr("chr_jono_cols", "jono");
             await s.Say("jono_believe"); await s.Say("tea_charmer");
             await s.Lit("jono", $"I got a feeling {Name}\nwill put him in his place.\nWon't ya, buddy?");
-            await s.Hide(0.8);
-            // the duel ground
+        }
+        catch (Exception ex) { Log.Warn("[FMDuelist] festival scene: " + ex); }
+        await s.Close();
+        try { if (RunManager.Instance.DebugOnlyGetState() is { } st && st.CurrentRoom is { } r && st.Players.FirstOrDefault() is { } p) FmMusic.OnRoomEntered(r, p); } catch { }
+    }
+
+    // ---------------- before the boss: waiting at the duel ground ----------------
+    public static async Task PreBoss()
+    {
+        if (await FmScene.Open() is not { } s) return;
+        try
+        {
             Music(DuelGroundTrack);
-            await s.Bg("bg_room"); await s.Chr("chr_jono_room", "jono");
+            await s.Bg("bg_room"); await s.Chr("chr_jono_cols", "jono");
             await s.Say("jono_wait"); await s.Say("jono_tough"); await s.Say("jono_listen"); await s.Say("jono_fact");
             await s.Say("jono_butmage"); await s.Say("jono_chance");
             await s.Lit("jono", $"Listen, {Name}...\nDon't underestimate the guy.");
@@ -104,13 +205,9 @@ static partial class FmAct1Story
         await s.Close();
     }
 
-    // ---------------- after beating Young Priest Seto ----------------
-    /// <summary>Runs before Seto falls: results, his farewell, the celebration and Heishin's invasion. Heishin joins the
-    /// field right away, so the combat carries on into his duel once Seto is gone.</summary>
-    public static async Task AfterSeto(Player player, int turns)
+    // ---------------- after the boss's rewards: on to the secret level ----------------
+    public static async Task PostBoss(Player player)
     {
-        await FmDuelEnd.Show(true, player, 0, FmRival.Current?.Name ?? "Young Priest Seto", turns);
-        if (FmRival.Priest != null && NCombatRoom.Instance?.GetCreatureNode(FmRival.Priest) is { } pn) _setoSpot = pn.GlobalPosition;
         if (await FmScene.Open() is { } s)
         {
             try
@@ -185,33 +282,19 @@ static partial class FmAct1Story
             catch (Exception ex) { Log.Warn("[FMDuelist] Act 1 ending scene: " + ex); }
             await s.Close();
         }
-        // Heishin takes the field now, so the combat goes on when Seto falls
-        try
-        {
-            if (player.Creature.CombatState is { } combat)
-            {
-                var h = await CreatureCmd.Add(ModelDb.Monster<FmHeishin>().ToMutable(), combat, CombatSide.Enemy, null);
-                if (_setoSpot is { } spot && NCombatRoom.Instance?.GetCreatureNode(h) is { } hn) hn.GlobalPosition = spot;
-                State = Phase.HeishinPending;
-            }
-        }
-        catch (Exception ex) { Log.Error("[FMDuelist] Heishin join: " + ex); State = Phase.None; }
+        if (Puzzle(player) is { } pz) pz.StoryStage = StageHeishin;
+        // the secret level: Heishin's duel, straight away (no map)
+        await RunManager.Instance.EnterRoomDebug(RoomType.Boss, MapPointType.Boss, ModelDb.Encounter<FmHeishinEncounter>().ToMutable());
     }
 
-    /// <summary>Seto is gone: the duel with Heishin begins (his deck, the Umi field, track 35).</summary>
+    /// <summary>The secret level begins: Heishin's deck, the Umi field, track 35.</summary>
     public static async Task StartHeishin(PlayerChoiceContext ctx, Player player)
     {
-        if (State != Phase.HeishinPending || player.Creature.CombatState is not { } combat) return;
+        if (player.Creature.CombatState is not { } combat) return;
         State = Phase.HeishinDuel;
-        _savedHp = player.Creature.CurrentHp;
         _startRound = combat.RoundNumber;
-        // a fresh field for the new duel
-        foreach (var z in FmField.Living(player).ToList()) z.Clear();
-        FmField.ResetCombat();
-        await FmRival.Begin(player, combat);
         Music(HeishinDuelTrack);
         FmRival.Banner("High Mage Heishin challenges you!");
-        // Heishin's field: Umi
         try
         {
             if (Activator.CreateInstance(FmSheet.TypeFor(Umi)) is FmSpellCard umi)
@@ -239,60 +322,42 @@ static partial class FmAct1Story
         int turns = TurnsIntoDuel(player.Creature.CombatState);
         int comLp = Math.Max(1, FmRival.Priest?.CurrentHp ?? 8000);
         await FmDuelEnd.Show(false, player, comLp, Heishin.Name, turns, spoils: false);
-        // not a game over: the duelist is back as he was before the duel
-        try { await FmRules.Raw(() => CreatureCmd.SetCurrentHp(player.Creature, Math.Max(1, _savedHp))); } catch (Exception ex) { Log.Warn("[FMDuelist] restore LP: " + ex.Message); }
-        if (await FmScene.Open() is not { } s) return;
-        try
+        // not a game over: the duelist is back on his feet
+        try { await FmRules.Raw(() => CreatureCmd.SetCurrentHp(player.Creature, player.Creature.MaxHp)); } catch (Exception ex) { Log.Warn("[FMDuelist] restore LP: " + ex.Message); }
+        if (await FmScene.Open() is { } s)
         {
-            Music(LossTrack);
-            await s.Bg("bg_pillars"); await s.Chr("chr_heishin_pillars", "heishin");
-            await s.Say("hei_foolish"); await s.Say("hei_rip");
-            await s.Still("act1_heishin_simon");
-            await s.Say("hei_orelse"); await s.Say("simon_shatter"); await s.Say("simon_vile"); await s.Say("hei_hands");
-            await s.Say("simon_puzzle"); await s.Say("simon_dontgive");
-            // Simon won't take no for an answer
-            while (await Choose(s, 1, "Don't shatter the puzzle", "Shatter the puzzle") == 0)
-                await s.Lit("simon", "But Prince.....\nThe Puzzle");
-            await s.Still("act1_puzzle_shatter");
-            await s.Say("hei_no");
-            await s.Flash();
-            Music(PuzzleTrack);
-            await s.Bg("bg_inside", 1.0);
-            await s.Wait(1.0);
-            await s.Chr("chr_simon_inside", "simon");
-            await s.Say("simon_awoken"); await s.Say("simon_precise"); await s.Say("simon_sorry"); await s.Say("simon_allow");
-            await s.Say("simon_destroy"); await s.Say("simon_oneday"); await s.Say("simon_sleep"); await s.Say("simon_someone");
-            await s.Say("simon_guide");
-            await s.Lit("simon", "I won't be able to reach you\nwhen you wake up, but please\ntake the remainder of my power.");
-            // Simon's gift: a Bright Castle, picked up like a card reward
-            s.SetVisible(false);
-            await GiveBrightCastle(player);
-            s.SetVisible(true);
-            await s.Say("simon_rest");
-            await s.Caption("World Tournament and Final Arc (Act 2 and 3) coming soon, for now Acts 2 and 3 will not include cutscenes but battles can still be played till the end! Good luck!", 2.0);
+            try
+            {
+                await s.Wait(1.5);
+                Music(LossTrack);
+                await s.Bg("bg_pillars"); await s.Chr("chr_heishin_pillars", "heishin");
+                await s.Say("hei_foolish"); await s.Say("hei_rip");
+                await s.Still("act1_heishin_simon");
+                await s.Say("hei_orelse"); await s.Say("simon_shatter"); await s.Say("simon_vile"); await s.Say("hei_hands");
+                await s.Say("simon_puzzle"); await s.Say("simon_dontgive");
+                // Simon won't take no for an answer
+                while (await Choose(s, 1, "Don't shatter the puzzle", "Shatter the puzzle") == 0)
+                    await s.Lit("simon", "But Prince.....\nThe Puzzle");
+                await s.Still("act1_puzzle_shatter");
+                await s.Say("hei_no");
+                await s.Flash();
+                Music(PuzzleTrack);
+                await s.Bg("bg_inside", 1.0);
+                await s.Wait(1.0);
+                await s.Chr("chr_simon_inside", "simon");
+                await s.Say("simon_awoken"); await s.Say("simon_precise"); await s.Say("simon_sorry"); await s.Say("simon_allow");
+                await s.Say("simon_destroy"); await s.Say("simon_oneday"); await s.Say("simon_sleep"); await s.Say("simon_someone");
+                await s.Say("simon_guide");
+                await s.Lit("simon", "I won't be able to reach you\nwhen you wake up, but please\ntake the remainder of my power.");
+                await s.Say("simon_rest");
+                await s.Hide(1.0);
+            }
+            catch (Exception ex) { Log.Warn("[FMDuelist] Act 1 puzzle scene: " + ex); }
+            await s.Close();
         }
-        catch (Exception ex) { Log.Warn("[FMDuelist] Act 1 puzzle scene: " + ex); }
-        await s.Close();
-        // the story is over: Heishin and his zones leave, and the boss rewards follow as usual
+        if (Puzzle(player) is { } pz) pz.StoryStage = StagePuzzleDone;
+        // the story is over: Heishin leaves, and the reward (Simon's Bright Castle) follows
         TaskHelper.RunSafely(EndCombat(player));
-    }
-
-    static async Task GiveBrightCastle(Player player)
-    {
-        try
-        {
-            var card = player.RunState.CreateCard(ModelDb.GetById<CardModel>(ModelDb.GetId(FmSheet.TypeFor(BrightCastle))), player);
-            var ctx = new BlockingPlayerChoiceContext();
-            var pick = await MegaCrit.Sts2.Core.Commands.CardSelectCmd.FromChooseACardScreen(ctx, new[] { card }, player, canSkip: false) ?? card;
-            await CardPileCmd.Add(pick, PileType.Deck);
-            Log.Info("[FMDuelist] Simon's gift: Bright Castle added to the deck");
-        }
-        catch (Exception ex)
-        {
-            Log.Warn("[FMDuelist] Bright Castle reward screen: " + ex.Message);
-            try { await CardPileCmd.Add(player.RunState.CreateCard(ModelDb.GetById<CardModel>(ModelDb.GetId(FmSheet.TypeFor(BrightCastle))), player), PileType.Deck); }
-            catch (Exception ex2) { Log.Warn("[FMDuelist] Bright Castle: " + ex2.Message); }
-        }
     }
 
     static async Task EndCombat(Player player)
@@ -306,6 +371,26 @@ static partial class FmAct1Story
         }
         catch (Exception ex) { Log.Error("[FMDuelist] end story combat: " + ex); }
         FmRival.Reset();
+    }
+
+    /// <summary>Heishin's room gives only Simon's gift: a Bright Castle card reward (take it or skip it).</summary>
+    public static bool HeishinRewards(Player player, List<MegaCrit.Sts2.Core.Rewards.Reward> rewards, AbstractRoom? room)
+    {
+        if (room is not CombatRoom cr || cr.Encounter is not FmHeishinEncounter) return false;
+        rewards.Clear();
+        var card = player.RunState.CreateCard(ModelDb.GetById<CardModel>(ModelDb.GetId(FmSheet.TypeFor(BrightCastle))), player);
+        var opts = new CardCreationOptions(new[] { card }, CardCreationSource.Encounter, CardRarityOddsType.Uniform);
+        rewards.Add(new MegaCrit.Sts2.Core.Rewards.CardReward(new[] { card }, CardCreationSource.Encounter, player, opts));
+        return true;
+    }
+
+    /// <summary>The last word before Act 2.</summary>
+    public static async Task ComingSoon()
+    {
+        if (await FmScene.Open() is not { } s) return;
+        try { await s.Caption("World Tournament and Final Arc (Act 2 and 3) coming soon, for now Acts 2 and 3 will not include cutscenes but battles can still be played till the end! Good luck!", 2.0); }
+        catch (Exception ex) { Log.Warn("[FMDuelist] coming soon: " + ex.Message); }
+        await s.Close();
     }
 }
 

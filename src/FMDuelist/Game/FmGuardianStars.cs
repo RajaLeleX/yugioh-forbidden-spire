@@ -78,6 +78,18 @@ public static partial class FmGuardianStars
             }
             Table("relics", RelicIcons.Keys);
             Table("potions", PotionIcons.Keys);
+            // named after their Guardian Star (FM's ten: Sun, Moon, Mercury, Venus, Mars, Jupiter, Saturn, Uranus, Pluto, Neptune)
+            string Star(string n) => char.ToUpperInvariant(n[0]) + n[1..];
+            string[] kinds = { "Talisman", "Sigil", "Charm", "Emblem" };
+            var used = new Dictionary<string, int>();
+            var rt = new Dictionary<string, string>();
+            foreach (var (key, star) in RelicIcons)
+            {
+                int k = used.GetValueOrDefault(star); used[star] = k + 1;
+                rt[key + ".title"] = $"{Star(star)} {kinds[k % kinds.Length]}";
+            }
+            loc.GetTable("relics").MergeWith(rt);
+            loc.GetTable("potions").MergeWith(PotionIcons.ToDictionary(kv => kv.Key + ".title", kv => $"{Star(kv.Value)} Elixir"));
             // potions whose "lose it at end of turn" no longer matters (the bonus is for this turn anyway)
             loc.GetTable("potions").MergeWith(new Dictionary<string, string>
             {

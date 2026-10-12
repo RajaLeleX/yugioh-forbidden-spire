@@ -9,6 +9,57 @@ ENC[' '] = 0
 
 # id -> start of the line (only the opening words are needed to find it)
 LINES = {
+    # the opening: Simon scolds the prince
+    'sm_dear': "My dear prince!|Are you going",
+    'sm_royal': "You are of royal blood!",
+    'sm_shame': "...Have you no shame!?",
+    'sm_stop': "Wait! Stop, my prince!",
+    'sm_drat': "Drat!|He's gone...",
+    # Simon's duel at the palace
+    'sm_night': "It is well into the night...",
+    'sm_ifplay': "Dear prince...|If you still wish",
+    'sm_tryhand': "...then try your hand",
+    'sm_iflose': "If you lose, you must",
+    'sm_worthy': "I'm sure you'll find",
+    'sm_hoho': "Ho ho ho. My dear prince...",
+    'sm_dontthink': "You don't really think",
+    'sm_prepare': "Prepare yourself!",
+    'sm_won': "You won...",
+    'sm_taught': "T'would seem that|I taught you well",
+    'sm_fair': "You've won fair and square.",
+    # Teana
+    'te_waiting': "I've been waiting for you...",
+    'te_jono': "Jono was also here",
+    'te_duel': "How about a duel?",
+    'te_play': "Okay, let's play!|Hope you're",
+    'te_ouch': "Ouch!|Looks like I lost.",
+    'te_again': "I'll play you again when",
+    'te_fest': "Hey, did you know that|there's a festival",
+    'te_checkout': "Come on! Let's check it out!",
+    'te_findjono': "I'll bet we'll find Jono|there!",
+    # the villagers
+    'v1_fest': "Y'know, there's some kinda festival",
+    'v1_rather': "But we'd rather play games",
+    'v1_takeme': "Wanna take me on?",
+    'v1_play': "Okay, let's play!",
+    'v1_wellwell': "Well, well...|Let's play again",
+    'v2_rare': "Hey. Did you find yourself",
+    'v2_pretty': "I managed to find a pretty",
+    'v2_beat': "If you want it, you'll have",
+    'v2_lose': "But if you lose, you'll have",
+    'v2_play': "All right, let's play!",
+    'v2_owe': "You won...|I guess I owe you a card.",
+    'v3_talk': "You talkin' to me, boy?",
+    'v3_unless': "Unless ya wanna challenge me...",
+    'v3_play': "Okay, boy. Let's play!",
+    'v3_lost': "Hmph! I reckon I lost...",
+    'v3_day': "Looks like this just|isn't my day...",
+    # Jono
+    'jo_geez': "Geez... Who does that mage",
+    'jo_admit': "I gotta admit, though...",
+    'jo_letsdo': "All right! Let's do it!",
+    'jo_lostlast': "I may have lost the last game...",
+    'jo_favor': "Do me a favor and beat|that mage, willya?",
     # town plaza at night
     'tea_lots': "Wow... there're lots of",
     'tea_mages': "Look, the mages are about to",
@@ -163,7 +214,7 @@ files = {p.split(';')[0]: (l, sz) for p, l, sz, _ in disc.walk()}
 d = disc.read(*files['/SLUS_014.11'])
 lo, hi = 0x1A0000, 0x1AA000
 out = []
-AFTER = {'isis_no': 0x1A5170, 'seto_simon': 0x1A5460}
+AFTER = {'isis_no': 0x1A5170, 'seto_simon': 0x1A5460, 'v1_play': 0x1A2E90, 'v2_play': 0x1A2F20, 'sm_won': 0x1A2080, 'te_play': 0x1A2D70, 'te_fest': 0x1A2C50}
 for k, s in LINES.items():
     i = d.find(enc(s), AFTER.get(k, lo), hi)
     if i < 0:

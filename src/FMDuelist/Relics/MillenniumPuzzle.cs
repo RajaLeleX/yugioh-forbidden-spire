@@ -77,7 +77,7 @@ public sealed class MillenniumPuzzle : RelicModel
 
     public override async Task AfterCreatureAddedToCombat(Creature creature)
     {
-        if (creature.IsEnemy) await ScaleEnemy(creature);
+        if (creature.IsEnemy) { await ScaleEnemy(creature); await FmStatRework.StripCaps(creature.CombatState); }
     }
 
     private async Task ScaleEnemy(Creature e)
@@ -416,6 +416,7 @@ public sealed class MillenniumPuzzle : RelicModel
     {
         if (Mine(player))
         {
+            _ = FmStatRework.StripCaps(player.Creature.CombatState);
             FmField.SummonedThisTurn = false;
             FmField.SummonsThisTurn = 0;
             FmField.MassSpellThisTurn = false;

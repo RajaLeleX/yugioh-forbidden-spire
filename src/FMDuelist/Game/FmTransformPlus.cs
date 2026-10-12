@@ -95,7 +95,9 @@ static class FmTransformPlusPatch
     [HarmonyPostfix, HarmonyPatch(typeof(CardModel), nameof(CardModel.IsUpgradable), MethodType.Getter)]
     static void Upgradable(CardModel __instance, ref bool __result)
     {
-        if (!__result && __instance is FmCardBase && __instance.Owner is { } o && FmRules.IsFmPlayer(o)) __result = true;
+        // only real Forbidden Memories cards that sit in one of your piles (never the Attack/Defense/zone choice cards)
+        if (!__result && __instance is FmCardBase && __instance.Pile != null && FmSheet.PoolTypes.Contains(__instance.GetType())
+            && __instance.Owner is { } o && FmRules.IsFmPlayer(o)) __result = true;
     }
 
     /// <summary>Upgrading an FM card transforms it instead (Transform +).</summary>
@@ -103,9 +105,11 @@ static class FmTransformPlusPatch
     static void Upgrade(ref IEnumerable<CardModel> cards, CardPreviewStyle style)
     {
         var list = cards.ToList();
-        var fm = list.Where(c => c is FmCardBase && c.Owner is { } o && FmRules.IsFmPlayer(o)).ToList();
-        if (fm.Count == 0) return;
+        var fm = list.Where(c => c is FmCardBase && FmSheet.PoolTypes.Contains(c.GetType()) && c.Owner is { } o && FmRules.IsFmPlayer(o)).ToList();
+        // the helper cards (positions, zones) never upgrade or transform
+        list = list.Where(c => !(c is FmCardBase && !FmSheet.PoolTypes.Contains(c.GetType()))).ToList();
         cards = list.Except(fm).ToList();
+        if (fm.Count == 0) return;
         foreach (var card in fm)
             if (FmTransformPlus.Pick(card) is { } replacement)
                 TaskHelper.RunSafely(CardCmd.Transform(card, replacement, style));

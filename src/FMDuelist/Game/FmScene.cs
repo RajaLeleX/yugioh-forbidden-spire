@@ -244,7 +244,8 @@ void fragment() {
         _plateText.Text = Names.TryGetValue(who, out var n) ? n : who;
         _plate.Visible = true;
         // the portrait box shows whoever speaks from off the picture
-        string? icon = _onScreen.Contains(who) || who == "k" || Tex("icon_" + who) == null ? null : who;
+        // the speaker's portrait always shows, so it's clear who is talking
+        string? icon = who == "k" || Tex("icon_" + who) == null ? null : who;
         if (icon == _iconKey) return;
         if (icon == null) { WarpTo(_icon, 1, 0.25); _iconKey = null; return; }
         _icon.Texture = Tex("icon_" + icon);

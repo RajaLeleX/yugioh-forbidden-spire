@@ -92,6 +92,20 @@ public static class FmStoryIntro
             }
             var boxBg = stage.GetChild<Control>(stage.GetChildCount() - 1);
             var text = new FmTextBox(stage, boxRect, sh);
+            // who is speaking: Heishin's name plate and portrait box (FM's spot, above the text box on the right)
+            float k = sw / 1440f;
+            var speaker = new Control { Modulate = new Color(1, 1, 1, 0), MouseFilter = Control.MouseFilterEnum.Ignore };
+            stage.AddChild(speaker);
+            if (FmScene.Tex("icon_heishin") is { } hicon)
+                speaker.AddChild(new TextureRect { Texture = hicon, Position = new Vector2(1074 * k, (700 - 225 - 49) * k), Size = new Vector2(213, 225) * k, ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.Scale, MouseFilter = Control.MouseFilterEnum.Ignore });
+            var plate = new PanelContainer { Position = new Vector2(28 * k, boxY - 34 * k), MouseFilter = Control.MouseFilterEnum.Ignore };
+            plate.AddThemeStyleboxOverride("panel", new StyleBoxFlat { BgColor = new Color(0.1f, 0.11f, 0.22f, 0.95f), BorderColor = new Color(0.72f, 0.66f, 0.5f), BorderWidthBottom = 3, BorderWidthTop = 3, BorderWidthLeft = 3, BorderWidthRight = 3, ContentMarginLeft = 16 * k, ContentMarginRight = 16 * k, ContentMarginTop = 2 * k, ContentMarginBottom = 2 * k });
+            var plateText = new Label { Text = "Heishin", MouseFilter = Control.MouseFilterEnum.Ignore };
+            plateText.AddThemeFontOverride("font", new SystemFont { FontNames = new[] { "Lucida Console", "Consolas", "Courier New" }, FontWeight = 700 });
+            plateText.AddThemeFontSizeOverride("font_size", (int)(30 * k));
+            plateText.AddThemeColorOverride("font_color", new Color(1f, 0.86f, 0.35f));
+            plate.AddChild(plateText);
+            speaker.AddChild(plate);
             // clicks: first shows the whole box, second goes on (0.4 s cooldown inside the text box)
             black.GuiInput += e => { if (e is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left }) text.Click(); };
 
@@ -120,6 +134,7 @@ public static class FmStoryIntro
             // 2) his face: "This is it..." / "I've found it at last..." / "The forbidden treasure..."
             Fade(close, 1, 0.4); Flicker(close);
             await Hold(0.9);
+            Fade(speaker, 1, 0.3);
             await Say(L(0)); await Say(L(1)); await Say(L(2));
             text.Clear(); Fade(close, 0, 0.4);
             await Hold(1.2);
@@ -130,7 +145,7 @@ public static class FmStoryIntro
             await Hold(0.25);
             await Say(L(3)); await Say(L(4));
             // 4) the title, on track 02
-            text.Clear();
+            text.Clear(); Fade(speaker, 0, 0.5);
             if (!_skip) FmMusic.PlayOnce(TitleTrack);
             Fade(tablet, 0, 2.0); Fade(boxBg, 0, 2.0); Fade(text.Root, 0, 2.0);
             await Hold(4.0);

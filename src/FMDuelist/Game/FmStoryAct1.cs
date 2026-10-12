@@ -68,7 +68,8 @@ public static class FmStoryAct1
     /// <summary>What the map point on this act floor is in the story (floor 1 is the starting Ancient).</summary>
     public static string? StoryAt(int actFloor) => actFloor - 2 is var i && i >= 0 && i < Path.Length ? Path[i].Story : null;
 
-    public static bool StoryRun(IRunState? s) => s != null && s.CurrentActIndex == 0 && s.Players.FirstOrDefault() is { } p && FmRules.IsFmPlayer(p);
+    public static bool StoryRun(IRunState? s) => s != null && s.CurrentActIndex == 0 && s.Players.FirstOrDefault() is { } p && FmRules.IsFmPlayer(p)
+        && p.GetRelic<Relics.MillenniumPuzzle>() is { StoryMap: true };
 
     // ---------------- the duelist on the field ----------------
     static Control? _bgRoot;
@@ -219,7 +220,6 @@ static class FmStoryRoomsPatch
             if (t.Field("_icon").GetValue<TextureRect>() is { } icon)
             {
                 icon.Texture = tex;
-                icon.Material = null;
                 icon.ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize;
                 icon.StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered;
             }

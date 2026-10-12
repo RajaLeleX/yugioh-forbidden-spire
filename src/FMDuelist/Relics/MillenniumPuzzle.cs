@@ -37,9 +37,15 @@ public sealed class MillenniumPuzzle : RelicModel
     [MegaCrit.Sts2.Core.Saves.Runs.SavedProperty]
     public int StoryStage { get => _storyStage; set { AssertMutable(); _storyStage = value; } }
 
+    private bool _storyMap;
+
+    /// <summary>Runs started with the story Act 1 (older runs keep their own map).</summary>
+    [MegaCrit.Sts2.Core.Saves.Runs.SavedProperty]
+    public bool StoryMap { get => _storyMap; set { AssertMutable(); _storyMap = value; } }
+
     /// <summary>Act 1 is Forbidden Memories' story on one straight path.</summary>
     public override MegaCrit.Sts2.Core.Map.ActMap ModifyGeneratedMap(MegaCrit.Sts2.Core.Runs.IRunState runState, MegaCrit.Sts2.Core.Map.ActMap map, int actIndex)
-        => actIndex == 0 && runState.Players.Contains(Owner) ? new FmStoryActMap() : map;
+        => actIndex == 0 && StoryMap && runState.Players.Contains(Owner) ? new FmStoryActMap() : map;
 
     public override bool TryModifyRewards(Player player, List<MegaCrit.Sts2.Core.Rewards.Reward> rewards, AbstractRoom? room)
         => Mine(player) && FmAct1Story.HeishinRewards(player, rewards, room);
@@ -52,7 +58,12 @@ public sealed class MillenniumPuzzle : RelicModel
 
     private void Track() { if (Owner?.RunState != null) FmRules.ActIndex = Owner.RunState.CurrentActIndex; }
 
-    public override Task AfterObtained() { Track(); return Task.CompletedTask; }
+    public override Task AfterObtained()
+    {
+        Track();
+        if (Owner?.RunState is { CurrentActIndex: 0 } rs && rs.ActFloor <= 1 && !FmPractice.Active) StoryMap = true;
+        return Task.CompletedTask;
+    }
     public override Task AfterRoomEntered(AbstractRoom room)
     {
         Track(); FmInput.Ensure(); FmMusic.OnRoomEntered(room, Owner);

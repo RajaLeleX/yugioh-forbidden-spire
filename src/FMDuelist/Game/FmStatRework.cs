@@ -37,6 +37,7 @@ public static class FmStatRework
         {
             if (who.IsEnemy)
             {
+                if (IsDamageCap(power)) { await PowerCmd.Remove(power); return; }
                 switch (power)
                 {
                     case WeakPower:
@@ -71,6 +72,21 @@ public static class FmStatRework
             }
         }
         catch (Exception ex) { Log.Warn("[FMDuelist] stat rework: " + ex.Message); }
+    }
+
+    /// <summary>Monster powers that cap or soak damage (they break FM's battle numbers), removed from every enemy.</summary>
+    public static bool IsDamageCap(PowerModel p) => p is HardenedShellPower or SlipperyPower or HardToKillPower or IntangiblePower or BufferPower;
+
+    /// <summary>Strips damage caps from every enemy (combat start and each turn, in case a move re-applies one).</summary>
+    public static async Task StripCaps(MegaCrit.Sts2.Core.Combat.ICombatState? combat)
+    {
+        if (combat == null) return;
+        foreach (var e in combat.Enemies.Where(e => e.IsAlive).ToList())
+            foreach (var p in e.Powers.Where(IsDamageCap).ToList())
+            {
+                try { await PowerCmd.Remove(p); Log.Info($"[FMDuelist] removed {p.Id.Entry} from {e.Name}"); }
+                catch (Exception ex) { Log.Warn("[FMDuelist] strip cap: " + ex.Message); }
+            }
     }
 
     static async Task Loss<T>(PlayerChoiceContext ctx, Creature enemy, int value, Player owner, bool atk, bool def) where T : PowerModel
@@ -127,6 +143,7 @@ public static class FmStatRework
             Power(typeof(FmDefLossPower), "DEF Loss", "Lost DEF: its Block gains are this much smaller.");
             Power(typeof(FmBurnPower), "Burn", "At the start of its turn it takes 100 damage per stack, then one stack fades.");
             Power(typeof(FmCounterTrapPower), "Counter Trap", "Whenever an enemy attacks you or your monsters, it takes 100 damage per stack.");
+            Power(typeof(ThornsPower), "Thorns", "When one of your monsters attacks this enemy, the thorns hit you directly: you lose 100 Life Points per stack.");
             loc.GetTable("powers").MergeWith(p);
         }
         catch (Exception ex) { Log.Warn("[FMDuelist] stat rework loc: " + ex.Message); }

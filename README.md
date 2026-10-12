@@ -30,6 +30,11 @@ The mod ships **no game content** from Forbidden Memories. Card data, card art, 
   - track 39 loops during the duel
   - no rewards, and you return to the main menu afterwards
 
+- **Transform +** replaces upgrading: the card turns into a random card one rarity higher (monsters stay monsters; spells, traps and equips stay spells, traps and equips). All upgrade text is reworded.
+- **Thorns** on enemies hit your Life Points directly when your monster attacks (100 LP per stack).
+- **No damage caps on enemies:** Hardened Shell, Slippery, Intangible, Buffer and Hard to Kill are removed from enemies.
+- **Event HP numbers** show at the mod's x100 scale in the text, matching what they do.
+
 ## Features in 0.5 (beta)
 
 - **Duel Master K:** the Necrobinder becomes a Forbidden Memories duelist with 8000 Life Points, a hand of 5, one summon per turn and three monster zones.

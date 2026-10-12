@@ -67,6 +67,7 @@ public sealed class MillenniumPuzzle : RelicModel
         FmInput.Ensure();
         _scaled.Clear();
         foreach (var e in Owner.Creature.CombatState!.Enemies) await ScaleEnemy(e);
+        await FmStatRework.StripCaps(Owner.Creature.CombatState);
         // boss duel: the Kin Priest duels by FM rules
         if (Owner.Creature.CombatState!.Enemies.Any(e => e.Monster != null && FmRival.AllDuelists.Any(b => b.Monster == e.Monster.GetType()))) await FmRival.Begin(Owner, Owner.Creature.CombatState!);
         // Doom items cast a Shadow Spell instead (see FmShadow)
@@ -112,8 +113,14 @@ public sealed class MillenniumPuzzle : RelicModel
     private readonly Queue<(Creature dealer, FmSlot zone, FmPosition pos, int atk, int block, decimal amount)> _hits = new();
 
     // Enemy attacks on the duelist land on the monster the enemy picks (see FmField.EnemyTarget).
+    /// <summary>Damage an enemy's Thorns deal back to whoever attacked it.</summary>
+    private static bool IsThorns(Creature? dealer, ValueProp props) =>
+        dealer != null && dealer.IsEnemy && !props.IsPoweredAttack() && dealer.GetPower<ThornsPower>() != null;
+
     public override Creature ModifyUnblockedDamageTarget(Creature target, decimal amount, ValueProp props, Creature? dealer)
     {
+        // Thorns: when your monster attacks a thorny enemy, the thorns hurt you (your Life Points), not the monster
+        if (IsThorns(dealer, props) && IsZone(target) && target.PetOwner == Owner) return Owner.Creature;
         if (dealer == null || !dealer.IsEnemy || !props.IsPoweredAttack()) return target;
         if (target != Owner.Creature && !(IsZone(target) && target.PetOwner == Owner)) return target;
         return FmField.EnemyTarget(Owner, (int)amount)?.Creature(Owner) ?? target;
@@ -140,6 +147,7 @@ public sealed class MillenniumPuzzle : RelicModel
                 return 0;
             }
         }
+        if (target == Owner.Creature && IsThorns(dealer, props)) return amount; // Thorns go straight to your Life Points
         if (target == Owner.Creature && enemyHit && FmField.HasMonster(Owner) && !props.IsPoweredAttack()) return 0;
         return amount;
     }
@@ -400,7 +408,7 @@ public sealed class MillenniumPuzzle : RelicModel
     public override Task BeforeSideTurnStart(PlayerChoiceContext choiceContext, CombatSide side, IReadOnlyList<Creature> participants, ICombatState combatState)
     {
         if (side == CombatSide.Player && participants.Contains(Owner.Creature)) { FmGuardianStars.Reset(); FmField.NotifyChanged(); }
-        return Task.CompletedTask;
+        return FmStatRework.StripCaps(combatState as MegaCrit.Sts2.Core.Combat.ICombatState ?? Owner.Creature.CombatState);
     }
 
     // --- turn flow ---

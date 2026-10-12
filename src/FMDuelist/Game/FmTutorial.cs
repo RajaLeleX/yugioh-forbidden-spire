@@ -256,6 +256,8 @@ public static class FmTutorial
         "- Monsters have [b]1 HP[/b]. Any enemy attack destroys them.",
         "- While you have a monster on the field, enemies hit the monster instead of you.",
         "- Right-click a monster on the field to switch between Attack and Defense.",
+        "- [b]Transform +[/b] (replaces upgrading): the card turns into a random card [b]one rarity higher[/b] (starter -> Common -> Uncommon -> Rare; a Rare becomes another Rare). Monsters stay monsters; spells, traps and equips stay spells, traps and equips.",
+        "- [b]Thorns:[/b] when one of your monsters attacks an enemy with Thorns, the thorns hit [b]you directly[/b], not your monster: you lose 100 Life Points per Thorns stack (3 Thorns = 300 LP).",
         "",
         $"{H}Spells, traps and equips{HE}",
         "- You can play as many spells as you like, but only [b]one Raigeki or Dark Hole per turn[/b].",

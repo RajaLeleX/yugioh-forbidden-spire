@@ -17,7 +17,8 @@ static class FmItemText
     public static bool Scales(DynamicVar v)
     {
         if (!FmRules.RunActive) return false;
-        if (v is not (DamageVar or BlockVar or HealVar or HpLossVar or MaxHpVar)) return false;
+        bool hpNamed = v.GetType() == typeof(DynamicVar) && v.Name.Contains("hp", StringComparison.OrdinalIgnoreCase) && Owner(v) is EventModel;
+        if (!hpNamed && v is not (DamageVar or BlockVar or HealVar or HpLossVar or MaxHpVar)) return false;
         if (v.BaseValue <= 0 || v.BaseValue >= FmRules.FlatLimit) return false;
         var owner = Owner(v);
         string table = owner switch { RelicModel => "relics", PotionModel => "potions", EventModel => "events", _ => "" };

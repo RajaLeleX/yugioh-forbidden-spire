@@ -5,22 +5,28 @@ using FMDuelist.Data;
 namespace FMDuelist.Game;
 
 /// <summary>
-/// A Forbidden Memories story scene on screen: FM's 4:3 picture above its stone text box, the game's own font and
-/// typing (FmTextBox), clickable choices, fades and flashes. The pictures are local files in the mod's "story"
-/// folder (never shipped); without them the scene still plays over black.
+/// A Forbidden Memories story scene on screen, built in layers like FM's: a background plate, a character picture
+/// that warps and slides in and out over it, the speaker's portrait box above the text box, and FM's stone text box
+/// with the game's own font (FmTextBox). Every line shows who is speaking: a name plate, plus the portrait when the
+/// speaker isn't the one pictured. The pictures are local files in the mod's "story" folder (never shipped); without
+/// them the scene still plays over black.
 /// </summary>
 public sealed class FmScene
 {
     readonly CanvasLayer _layer;
-    readonly Control _stage;
+    readonly Control _stage, _picArea;
     readonly ColorRect _black, _flash;
-    readonly TextureRect _pic, _picNext;
+    readonly TextureRect _bg, _chr, _icon;
+    readonly PanelContainer _plate;
+    readonly Label _plateText;
     readonly CanvasItem _boxBg;
     readonly FmTextBox _text;
     readonly SceneTree _tree;
-    readonly float _sw, _sh;
+    readonly float _sw, _sh, _imgH;
     public bool Skipped;
-    string? _shown;
+    string? _bgKey, _chrKey, _iconKey;
+    /// <summary>Who is pictured right now (their lines need no portrait box).</summary>
+    readonly HashSet<string> _onScreen = new();
 
     static string Dir => System.IO.Path.Combine(System.IO.Path.GetDirectoryName(typeof(FmScene).Assembly.Location) ?? ".", "story");
     static readonly Dictionary<string, Texture2D?> _tex = new();
@@ -33,6 +39,27 @@ public sealed class FmScene
         return _tex[name] = t;
     }
 
+    /// <summary>FM's fade: the picture ripples sideways and dissolves (amt 1 = gone, 0 = settled).</summary>
+    const string WarpShader = @"shader_type canvas_item;
+uniform float amt = 1.0;
+void fragment() {
+    float w = amt * amt;
+    vec2 uv = UV;
+    uv.x += sin(UV.y * 70.0 + TIME * 30.0) * 0.045 * w;
+    uv.y += sin(UV.x * 24.0 + TIME * 12.0) * 0.012 * w;
+    vec4 c = texture(TEXTURE, uv);
+    c.a *= clamp(1.0 - amt, 0.0, 1.0);
+    COLOR = c;
+}";
+    static Shader? _warp;
+    static ShaderMaterial Warp() => new() { Shader = _warp ??= new Shader { Code = WarpShader } };
+
+    public static readonly Dictionary<string, string> Names = new()
+    {
+        ["teana"] = "Teana", ["jono"] = "Jono", ["seto"] = "Seto", ["simon"] = "Simon Muran", ["heishin"] = "Heishin",
+        ["guard"] = "Guard", ["servant"] = "Servant", ["k"] = "K",
+    };
+
     FmScene(SceneTree tree)
     {
         _tree = tree;
@@ -42,13 +69,23 @@ public sealed class FmScene
         _black = new ColorRect { Color = Colors.Black, Size = view, MouseFilter = Control.MouseFilterEnum.Stop, Modulate = new Color(1, 1, 1, 0) };
         _layer.AddChild(_black);
         _sw = Math.Min(view.X, view.Y * 4f / 3f); _sh = _sw * 3f / 4f;
-        _stage = new Control { Position = new Vector2((view.X - _sw) / 2, (view.Y - _sh) / 2), Size = new Vector2(_sw, _sh), ClipContents = true, MouseFilter = Control.MouseFilterEnum.Ignore };
+        _stage = new Control { Position = new Vector2((view.X - _sw) / 2, (view.Y - _sh) / 2), Size = new Vector2(_sw, _sh), MouseFilter = Control.MouseFilterEnum.Ignore };
         _layer.AddChild(_stage);
-        float imgH = _sh * 700f / 1080f, boxH = _sh * 380f / 1080f;
-        TextureRect Pic() => new() { Size = new Vector2(_sw, imgH), ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.Scale, Modulate = new Color(1, 1, 1, 0), MouseFilter = Control.MouseFilterEnum.Ignore };
-        _pic = Pic(); _picNext = Pic();
-        _stage.AddChild(_pic); _stage.AddChild(_picNext);
-        var boxRect = new Rect2(0, imgH, _sw, boxH);
+        _imgH = _sh * 700f / 1080f;
+        float boxH = _sh * 380f / 1080f;
+        // the picture area clips pans and slides
+        _picArea = new Control { Size = new Vector2(_sw, _imgH), ClipContents = true, MouseFilter = Control.MouseFilterEnum.Ignore };
+        _stage.AddChild(_picArea);
+        TextureRect Pic() => new() { Size = new Vector2(_sw, _imgH), ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.Scale, Modulate = new Color(1, 1, 1, 0), MouseFilter = Control.MouseFilterEnum.Ignore };
+        _bg = Pic(); _chr = Pic();
+        _chr.Material = Warp(); _chr.Modulate = Colors.White; SetAmt(_chr, 1);
+        _picArea.AddChild(_bg); _picArea.AddChild(_chr);
+        // the speaker portrait box sits where FM puts it (right, just above the text box)
+        float s = _sw / 1440f;
+        _icon = new TextureRect { Position = new Vector2(1074 * s, (700 - 225 - 49) * s), Size = new Vector2(213, 225) * s, ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.Scale, MouseFilter = Control.MouseFilterEnum.Ignore, Material = Warp() };
+        SetAmt(_icon, 1);
+        _stage.AddChild(_icon);
+        var boxRect = new Rect2(0, _imgH, _sw, boxH);
         if (Tex("textbox") is { } tb)
             _boxBg = new TextureRect { Texture = tb, Position = boxRect.Position, Size = boxRect.Size, ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.Scale, MouseFilter = Control.MouseFilterEnum.Ignore, Modulate = new Color(1, 1, 1, 0) };
         else
@@ -60,6 +97,20 @@ public sealed class FmScene
         _stage.AddChild((Node)_boxBg);
         _text = new FmTextBox(_stage, boxRect, _sh);
         _text.Root.Modulate = new Color(1, 1, 1, 0);
+        // name plate: who is speaking, on the text box's top edge
+        _plate = new PanelContainer { Position = new Vector2(28 * s, _imgH - 34 * s), MouseFilter = Control.MouseFilterEnum.Ignore, Visible = false };
+        _plate.AddThemeStyleboxOverride("panel", new StyleBoxFlat
+        {
+            BgColor = new Color(0.1f, 0.11f, 0.22f, 0.95f), BorderColor = new Color(0.72f, 0.66f, 0.5f),
+            BorderWidthBottom = 3, BorderWidthTop = 3, BorderWidthLeft = 3, BorderWidthRight = 3,
+            ContentMarginLeft = 16 * s, ContentMarginRight = 16 * s, ContentMarginTop = 2 * s, ContentMarginBottom = 2 * s,
+        });
+        _plateText = new Label { MouseFilter = Control.MouseFilterEnum.Ignore };
+        _plateText.AddThemeFontOverride("font", new SystemFont { FontNames = new[] { "Lucida Console", "Consolas", "Courier New" }, FontWeight = 700 });
+        _plateText.AddThemeFontSizeOverride("font_size", (int)(30 * s));
+        _plateText.AddThemeColorOverride("font_color", new Color(1f, 0.86f, 0.35f));
+        _plate.AddChild(_plateText);
+        _stage.AddChild(_plate);
         _flash = new ColorRect { Color = Colors.White, Size = view, MouseFilter = Control.MouseFilterEnum.Ignore, Modulate = new Color(1, 1, 1, 0) };
         _layer.AddChild(_flash);
         _black.GuiInput += e => { if (e is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left }) _text.Click(); };
@@ -67,6 +118,16 @@ public sealed class FmScene
         skip.AddThemeFontSizeOverride("font_size", 26);
         skip.Pressed += () => Skipped = true;
         _layer.AddChild(skip);
+    }
+
+    static void SetAmt(CanvasItem c, float v) => (c.Material as ShaderMaterial)?.SetShaderParameter("amt", v);
+    Tween WarpTo(CanvasItem c, float to, double dur)
+    {
+        var mat = (ShaderMaterial)c.Material;
+        float from = (float)mat.GetShaderParameter("amt");
+        var t = c.CreateTween();
+        t.TweenMethod(Callable.From<float>(v => mat.SetShaderParameter("amt", v)), from, to, dur).SetTrans(Tween.TransitionType.Sine);
+        return t;
     }
 
     /// <summary>Fades the screen to the scene (black, stone text box).</summary>
@@ -88,38 +149,129 @@ public sealed class FmScene
         if (GodotObject.IsInstanceValid(_layer)) _layer.QueueFree();
     }
 
-    /// <summary>Hides the whole scene for a moment (e.g. while the game shows a card reward).</summary>
     public void SetVisible(bool v) => _layer.Visible = v;
 
-    /// <summary>Cross-fades to another picture (FM fades through black between scenes).</summary>
-    public async Task Show(string key, double fade = 0.45)
+    // ---------------- pictures ----------------
+    /// <summary>A background plate (FM fades through black between places). Any character leaves first.</summary>
+    public async Task Bg(string key, double fade = 0.45)
     {
-        if (_shown == key) return;
-        _text.Clear();
-        if (_shown != null && _pic.Modulate.A > 0.01f) { Fade(_pic, 0, fade); await Wait(fade); }
-        _pic.Texture = Tex(key);
-        _shown = key;
-        Fade(_pic, 1, fade);
+        if (_bgKey == key && _bg.Size.Y <= _imgH + 1) return;
+        _text.Clear(); HideSpeaker();
+        if (_chrKey != null) await Chr(null);
+        if (_bgKey != null && _bg.Modulate.A > 0.01f) { Fade(_bg, 0, fade); await Wait(fade); }
+        _bg.Texture = Tex(key);
+        _bg.Size = new Vector2(_sw, _imgH); _bg.Position = Vector2.Zero;
+        _bgKey = key;
+        Fade(_bg, 1, fade);
         await Wait(fade);
     }
 
+    /// <summary>A full picture with its characters drawn in (shown like a background, people in it are on screen).</summary>
+    public async Task Still(string key, params string[] who)
+    {
+        await Bg(key);
+        _onScreen.Clear();
+        foreach (var w in who) _onScreen.Add(w);
+    }
+
+    /// <summary>
+    /// A character steps in: their picture slides a little from the side and settles out of FM's ripple, over the
+    /// current background. A different character warps out first; null clears the character.
+    /// </summary>
+    public async Task Chr(string? key, params string[] who)
+    {
+        if (_chrKey == key) { if (key != null) { _onScreen.Clear(); foreach (var w in who) _onScreen.Add(w); } return; }
+        HideSpeaker();
+        if (_chrKey != null)
+        {
+            var o = _chr.CreateTween();
+            o.TweenProperty(_chr, "position:x", -_sw * 0.05f, 0.35).SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.In);
+            WarpTo(_chr, 1, 0.35);
+            await Wait(0.37);
+        }
+        _chrKey = key;
+        _onScreen.Clear();
+        if (key == null) return;
+        foreach (var w in who) _onScreen.Add(w);
+        _chr.Texture = Tex(key);
+        _chr.Position = new Vector2(_sw * 0.06f, 0);
+        var t = _chr.CreateTween();
+        t.TweenProperty(_chr, "position:x", 0f, 0.45).SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.Out);
+        WarpTo(_chr, 0, 0.45);
+        await Wait(0.47);
+    }
+
+    /// <summary>A tall picture that slowly pans up from its bottom to its top (FM's camera move).</summary>
+    public async Task Pan(string key, double delay = 1.2, double dur = 2.6)
+    {
+        if (_chrKey != null) await Chr(null);
+        _text.Clear(); HideSpeaker();
+        if (_bg.Modulate.A > 0.01f) { Fade(_bg, 0, 0.45); await Wait(0.45); }
+        var tex = Tex(key);
+        float h = tex != null ? _sw * tex.GetHeight() / tex.GetWidth() : _imgH;
+        _bg.Texture = tex; _bgKey = key;
+        _bg.Size = new Vector2(_sw, h);
+        _bg.Position = new Vector2(0, _imgH - h);
+        _onScreen.Clear();
+        Fade(_bg, 1, 0.45);
+        var t = _bg.CreateTween();
+        t.TweenInterval(delay);
+        t.TweenProperty(_bg, "position:y", 0f, dur).SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut);
+        await Wait(0.5);
+    }
+
+    /// <summary>Everything leaves (black picture area).</summary>
     public async Task Hide(double fade = 0.45)
     {
-        _text.Clear();
-        _shown = null;
-        Fade(_pic, 0, fade);
+        _text.Clear(); HideSpeaker();
+        if (_chrKey != null) await Chr(null);
+        _bgKey = null;
+        _onScreen.Clear();
+        Fade(_bg, 0, fade);
         await Wait(fade);
     }
 
-    /// <summary>One text box: a line from the disc by id, or a line written for the mod.</summary>
-    public Task Say(string idOrText, bool literal = false)
+    // ---------------- who is speaking ----------------
+    void HideSpeaker()
+    {
+        if (_iconKey != null) { WarpTo(_icon, 1, 0.25); _iconKey = null; }
+        _plate.Visible = false;
+    }
+
+    void Speaker(string? who)
+    {
+        if (who == null) { HideSpeaker(); return; }
+        _plateText.Text = Names.TryGetValue(who, out var n) ? n : who;
+        _plate.Visible = true;
+        // the portrait box shows whoever speaks from off the picture
+        string? icon = _onScreen.Contains(who) || who == "k" || Tex("icon_" + who) == null ? null : who;
+        if (icon == _iconKey) return;
+        if (icon == null) { WarpTo(_icon, 1, 0.25); _iconKey = null; return; }
+        _icon.Texture = Tex("icon_" + icon);
+        SetAmt(_icon, 1);
+        WarpTo(_icon, 0, 0.3);
+        _iconKey = icon;
+    }
+
+    /// <summary>Who says a disc line, from its id (tea_, jono_, seto_, simon_, hei_, serv_/guard_, isis_).</summary>
+    public static string? SpeakerOf(string id) => id.Split('_')[0] switch
+    {
+        "tea" => "teana", "jono" => "jono", "seto" => "seto", "simon" => "simon", "hei" => "heishin",
+        "serv" or "guard" => "guard", "isis" => "servant", _ => null,
+    };
+
+    /// <summary>One text box: a line from the disc by id (speaker known), or a line written for the mod.</summary>
+    public Task Say(string idOrText, string? speaker = null, bool literal = false)
     {
         if (Skipped) return Task.CompletedTask;
         string s = literal ? idOrText : FmAct1Story.Line(idOrText);
+        Speaker(literal ? speaker : speaker ?? SpeakerOf(idOrText));
         return _text.Say(s, true, () => Skipped);
     }
 
-    public Task<int> Choose(params string[] options) => _text.Choose(options);
+    public Task Lit(string speaker, string text) => Say(text, speaker, true);
+
+    public Task<int> Choose(params string[] options) { _plate.Visible = false; return _text.Choose(options); }
 
     public async Task Flash()
     {
@@ -130,7 +282,7 @@ public sealed class FmScene
         await Wait(1.4);
     }
 
-    /// <summary>The closing card: white text in the game's own font, fading in over black.</summary>
+    /// <summary>The closing card: text in the game's own font, fading in over black.</summary>
     public async Task Caption(string text, double hold)
     {
         await Hide(0.6);
@@ -146,7 +298,6 @@ public sealed class FmScene
         await Wait(0.8);
         Fade(l, 1, 1.2);
         await Wait(1.2 + hold);
-        // wait for a click (or the time running out)
         var done = false;
         _black.GuiInput += e => { if (e is InputEventMouseButton { Pressed: true }) done = true; };
         for (double t = 0; t < 8 && !done; t += 0.05) await Wait(0.05);

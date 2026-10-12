@@ -50,7 +50,7 @@ public static class FmRival
     };
 
     /// <summary>The bosses plus the main menu's practice opponent.</summary>
-    public static IEnumerable<Duelist> AllDuelists => Bosses.Append(FmPractice.Duelist);
+    public static IEnumerable<Duelist> AllDuelists => Bosses.Append(FmPractice.Duelist).Append(FmAct1Story.Heishin);
     public static bool IsDuelist(Creature? c) => c?.Monster != null && AllDuelists.Any(b => b.Monster == c.Monster.GetType());
 
     public static Duelist? Current;
@@ -82,7 +82,7 @@ public static class FmRival
     {
         Reset();
         foreach (var b in AllDuelists)
-            if (combat.Enemies.FirstOrDefault(e => e.Monster != null && e.Monster.GetType() == b.Monster) is { } boss) { Priest = boss; Current = b; break; }
+            if (combat.Enemies.FirstOrDefault(e => e.IsAlive && e.Monster != null && e.Monster.GetType() == b.Monster) is { } boss) { Priest = boss; Current = b; break; }
         if (Priest == null || Current == null || !FmData.Loaded) return;
         Active = true;
         FmDuelStats.Reset();
@@ -279,6 +279,13 @@ public static class FmRival
         var combat = Priest?.CombatState;
         if (!Active || Priest == null || Priest.IsDead || player == null || combat == null) return;
         var ctx = new MegaCrit.Sts2.Core.GameActions.Multiplayer.BlockingPlayerChoiceContext();
+        if (Current == FmAct1Story.Heishin && FmAct1Story.TurnsIntoDuel(combat) >= 12 && player.Creature.CurrentHp > 0)
+        {
+            Banner($"{Name} unleashes the forbidden power of darkness!");
+            try { await FmSpellVfx.DarkHole(); } catch { }
+            await Lp(new MegaCrit.Sts2.Core.GameActions.Multiplayer.BlockingPlayerChoiceContext(), player.Creature, player.Creature.CurrentHp);
+            return;
+        }
         if (Bound)
         {
             Bound = false;
@@ -556,7 +563,7 @@ public static class FmRival
                 break;
             }
 
-            if (Priest == null || Priest.IsDead || player.Creature.IsDead || s.MonsterId == 0) break;
+            if (!Active || Priest == null || Priest.IsDead || player.Creature.IsDead || player.Creature.CurrentHp <= 0 || s.MonsterId == 0) break;
             var mine = FmField.Living(player).ToList();
             FmSlot? target = null; double best = 0;
             foreach (var m in mine)

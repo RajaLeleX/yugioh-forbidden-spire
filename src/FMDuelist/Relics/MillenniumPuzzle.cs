@@ -68,6 +68,13 @@ public sealed class MillenniumPuzzle : RelicModel
         _scaled.Clear();
         foreach (var e in Owner.Creature.CombatState!.Enemies) await ScaleEnemy(e);
         await FmStatRework.StripCaps(Owner.Creature.CombatState);
+        // Act 1 boss: Forbidden Memories' plaza and duel ground scenes first
+        if (FmAct1Story.Enabled(Owner) && Owner.Creature.CombatState!.Enemies.Any(e => e.Monster is MegaCrit.Sts2.Core.Models.Monsters.KinPriest))
+        {
+            FmAct1Story.Reset();
+            try { await FmAct1Story.PreBoss(); } catch (Exception ex) { MegaCrit.Sts2.Core.Logging.Log.Warn("[FMDuelist] pre-boss scene: " + ex.Message); }
+            FmMusic.OnRoomEntered(Owner.RunState.CurrentRoom!, Owner);
+        }
         // boss duel: the Kin Priest duels by FM rules
         if (Owner.Creature.CombatState!.Enemies.Any(e => e.Monster != null && FmRival.AllDuelists.Any(b => b.Monster == e.Monster.GetType()))) await FmRival.Begin(Owner, Owner.Creature.CombatState!);
         // Doom items cast a Shadow Spell instead (see FmShadow)
@@ -128,6 +135,7 @@ public sealed class MillenniumPuzzle : RelicModel
 
     public override decimal ModifyHpLostBeforeOsty(Creature target, decimal amount, ValueProp props, Creature? dealer, CardModel? cardSource)
     {
+        if (FmAct1Story.IsHeishin(target)) return Math.Min(amount, Math.Max(0, target.CurrentHp - 1));
         if (FmRival.IsZoneCreature(target)) return 0; // the boss's monster zones only lose monsters in FM battles
         if (amount <= 0 || !IsMineOrOsty(target)) return amount;
         bool enemyHit = dealer != null && dealer.IsEnemy;
@@ -374,6 +382,9 @@ public sealed class MillenniumPuzzle : RelicModel
 
     public override bool ShouldDie(Creature creature)
     {
+        // the unwinnable Heishin duel isn't a game over
+        if (creature == Owner.Creature && FmAct1Story.State == FmAct1Story.Phase.Lost) return false;
+        if (FmAct1Story.IsHeishin(creature) && FmAct1Story.State != FmAct1Story.Phase.None) return false;
         // the practice duel never ends the run: whoever falls, the results show and you go back to the main menu
         if (!FmPractice.Active || !FmRival.Active) return true;
         if (creature == Owner.Creature || creature == FmRival.Priest)
@@ -390,6 +401,17 @@ public sealed class MillenniumPuzzle : RelicModel
 
     public override async Task BeforeDeath(Creature creature)
     {
+        // Act 1 story: beating Seto leads into Heishin's invasion; losing to Heishin leads into the Puzzle
+        if (FmRival.Active && !FmPractice.Active && FmRival.Current == FmRival.Bosses[0] && creature == FmRival.Priest && FmAct1Story.Enabled(Owner))
+        {
+            await FmAct1Story.AfterSeto(Owner, Owner.Creature.CombatState?.RoundNumber ?? 1);
+            return;
+        }
+        if (FmAct1Story.State == FmAct1Story.Phase.HeishinDuel && creature == Owner.Creature)
+        {
+            await FmAct1Story.AfterHeishin(Owner);
+            return;
+        }
         if (!FmRival.Active || FmPractice.Active || FmRival.Current == null) return;
         if (creature != Owner.Creature && creature != FmRival.Priest) return;
         bool won = creature == FmRival.Priest;
@@ -484,6 +506,8 @@ public sealed class MillenniumPuzzle : RelicModel
             foreach (var z in FmRival.Slots) if (z.RivalCreature is { IsAlive: true } zc) await CreatureCmd.Kill(zc);
             FmRival.Active = false;
         }
+        if (FmAct1Story.State == FmAct1Story.Phase.HeishinPending && creature.Monster is MegaCrit.Sts2.Core.Models.Monsters.KinPriest)
+            await FmAct1Story.StartHeishin(ctx, Owner);
     }
 
     public override Task AfterCombatVictory(CombatRoom room)
@@ -496,6 +520,7 @@ public sealed class MillenniumPuzzle : RelicModel
     {
         FmField.ResetCombat();
         FmRival.Reset();
+        FmAct1Story.Reset();
         return Task.CompletedTask;
     }
 }

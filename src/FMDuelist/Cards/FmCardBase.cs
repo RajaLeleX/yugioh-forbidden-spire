@@ -24,7 +24,12 @@ public abstract class FmCardBase : CardModel
     public override CardPoolModel Pool => FmSheet.ColorlessIds.Contains(FmId) && this is not FmPositionCard
         ? ModelDb.CardPool<MegaCrit.Sts2.Core.Models.CardPools.ColorlessCardPool>() : ModelDb.CardPool<FmCardPool>();
 
-    public override int MaxUpgradeLevel => 0;
+    /// <summary>
+    /// Real FM cards report one upgrade level so the game's card grids and upgrade pickers work (their previews are
+    /// harmless: nothing changes). An actual upgrade never happens: it becomes Transform + (FmTransformPlus).
+    /// The helper cards (Attack/Defense position, empty zone) can't be upgraded at all.
+    /// </summary>
+    public override int MaxUpgradeLevel => Game.FmUpgradeLevels.For(GetType());
 
     public virtual int ArtId => FmId;
 }

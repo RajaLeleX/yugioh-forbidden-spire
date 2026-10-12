@@ -18,6 +18,13 @@ namespace FMDuelist.Game;
 /// Rare). Monsters stay monsters; spells, traps and equips stay spells, traps and equips. All the game's text that
 /// mentions upgrading says Transform + instead.
 /// </summary>
+/// <summary>Which mod cards report an upgrade level (only the real FM cards; see FmCardBase.MaxUpgradeLevel).</summary>
+public static class FmUpgradeLevels
+{
+    static HashSet<Type>? _pool;
+    public static int For(Type t) => (_pool ??= new HashSet<Type>(FmSheet.PoolTypes)).Contains(t) ? 1 : 0;
+}
+
 public static class FmTransformPlus
 {
     static int Tier(CardRarity r) => r switch { CardRarity.Common => 0, CardRarity.Uncommon => 1, CardRarity.Rare => 2, _ => -1 };
@@ -91,15 +98,6 @@ public static class FmTransformPlus
 [HarmonyPatch]
 static class FmTransformPlusPatch
 {
-    /// <summary>FM cards can be picked wherever the game lets you pick a card to upgrade.</summary>
-    [HarmonyPostfix, HarmonyPatch(typeof(CardModel), nameof(CardModel.IsUpgradable), MethodType.Getter)]
-    static void Upgradable(CardModel __instance, ref bool __result)
-    {
-        // only real Forbidden Memories cards that sit in one of your piles (never the Attack/Defense/zone choice cards)
-        if (!__result && __instance is FmCardBase && __instance.Pile != null && FmSheet.PoolTypes.Contains(__instance.GetType())
-            && __instance.Owner is { } o && FmRules.IsFmPlayer(o)) __result = true;
-    }
-
     /// <summary>Upgrading an FM card transforms it instead (Transform +).</summary>
     [HarmonyPrefix, HarmonyPatch(typeof(CardCmd), nameof(CardCmd.Upgrade), new[] { typeof(IEnumerable<CardModel>), typeof(CardPreviewStyle) })]
     static void Upgrade(ref IEnumerable<CardModel> cards, CardPreviewStyle style)

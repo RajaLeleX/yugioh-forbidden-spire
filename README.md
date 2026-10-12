@@ -16,6 +16,7 @@ The mod ships **no game content** from Forbidden Memories. Card data, card art, 
   - the dialogue is read from your disc and shown in Forbidden Memories' own font, with its type-on effect
   - click once to show a text box in full, and again to continue (0.4 s cooldown)
   - a Skip button is included
+  - dialogue choices are clickable options in Forbidden Memories' style (`<Option>` lines with the yellow highlight bar)
   - note: the intro's pictures aren't read from the disc yet, so without local copies the scene plays text-only for now
 - **End of every duel**, Forbidden Memories style:
   - a "YOU WIN!" or "YOU LOSE" animation with the win or lose jingle

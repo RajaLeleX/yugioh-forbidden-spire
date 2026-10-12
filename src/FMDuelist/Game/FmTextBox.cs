@@ -149,6 +149,67 @@ public sealed class FmTextBox
         _arrow.Visible = false;
     }
 
+    /// <summary>
+    /// A choice in FM's style: each option on its own line as "&lt;Option&gt;", the one under the mouse lit by FM's
+    /// yellow bar. Click an option to pick it (the 0.4 s click cooldown applies). Returns the option's index.
+    /// </summary>
+    public async Task<int> Choose(IReadOnlyList<string> options)
+    {
+        if (Engine.GetMainLoop() is not SceneTree tree || options.Count == 0) return 0;
+        Clear();
+        int picked = -1, hover = 0;
+        var bars = new List<ColorRect>();
+        float lineH = LinePitch * _px, width = _root.Size.X - _origin.X * 2;
+        for (int i = 0; i < options.Count; i++)
+        {
+            int idx = i;
+            var pos = _origin + new Vector2(-2 * _px, i * lineH - 1 * _px);
+            var bar = new ColorRect { Position = pos, Size = new Vector2(width, CellH * _px + 2 * _px), Color = new Color(0.86f, 0.9f, 0.1f, 0.85f), Visible = i == 0, MouseFilter = Control.MouseFilterEnum.Ignore };
+            _textLayer.AddChild(bar);
+            bars.Add(bar);
+            DrawLine("<" + options[i] + ">", _origin + new Vector2(0, i * lineH));
+            var hit = new Button { Flat = true, Position = pos, Size = bar.Size, FocusMode = Control.FocusModeEnum.None, MouseDefaultCursorShape = Control.CursorShape.PointingHand };
+            hit.AddThemeStyleboxOverride("normal", new StyleBoxEmpty()); hit.AddThemeStyleboxOverride("hover", new StyleBoxEmpty()); hit.AddThemeStyleboxOverride("pressed", new StyleBoxEmpty());
+            hit.MouseEntered += () => { if (hover == idx) return; hover = idx; for (int k = 0; k < bars.Count; k++) bars[k].Visible = k == idx; FmSfx.Play(FmSfx.Flip); };
+            hit.Pressed += () =>
+            {
+                double now = Time.GetTicksMsec() / 1000.0;
+                if (now - _lastClick < ClickCooldown) return;
+                _lastClick = now;
+                picked = idx;
+            };
+            _textLayer.AddChild(hit);
+        }
+        FmSfx.Play(FmSfx.Flip);
+        while (picked < 0) await tree.ToSignal(tree, SceneTree.SignalName.ProcessFrame);
+        FmSfx.Play(FmSfx.Mark);
+        _clicked = false;
+        Clear();
+        return picked;
+    }
+
+    /// <summary>One line of text in FM's font, shown at once (used for choices).</summary>
+    void DrawLine(string s, Vector2 at)
+    {
+        if (_sheet == null || _glyphs == null)
+        {
+            var l = new Label { Text = s, Position = at, MouseFilter = Control.MouseFilterEnum.Ignore };
+            l.AddThemeFontSizeOverride("font_size", (int)(10 * _px));
+            _textLayer.AddChild(l);
+            return;
+        }
+        for (int i = 0; i < s.Length; i++)
+        {
+            if (s[i] == ' ' || !_glyphs.TryGetValue(s[i], out var rect)) continue;
+            _textLayer.AddChild(new TextureRect
+            {
+                Texture = new AtlasTexture { Atlas = _sheet, Region = rect }, Position = at + new Vector2(i * CellW * _px, 0), Size = new Vector2(CellW, CellH) * _px,
+                ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.Scale,
+                TextureFilter = CanvasItem.TextureFilterEnum.Nearest, MouseFilter = Control.MouseFilterEnum.Ignore,
+            });
+        }
+    }
+
     void Reveal(Control g, bool animate)
     {
         g.Visible = true;

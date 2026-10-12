@@ -76,6 +76,9 @@ static class FmMenuButtons
             while ((FmIntro.Playing || FmIntro.Covering) && Time.GetTicksMsec() - start < 60000)
                 await menu.ToSignal(tree, SceneTree.SignalName.ProcessFrame);
             if (!GodotObject.IsInstanceValid(menu)) return;
+            // FM's title first: CLICK TO START
+            await FmTitle.WaitForClick(menu);
+            if (!GodotObject.IsInstanceValid(menu)) return;
             for (int i = 0; i < rows.Count; i++)
             {
                 var b = rows[i];

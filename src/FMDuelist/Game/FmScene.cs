@@ -24,6 +24,17 @@ public sealed class FmScene
     readonly SceneTree _tree;
     readonly float _sw, _sh, _imgH;
     public bool Skipped;
+    Button? _skip;
+    /// <summary>Scenes that aren't a cutscene (the card shop) have no Skip button.</summary>
+    public void HideSkip() { if (_skip != null) _skip.Visible = false; }
+
+    /// <summary>FM's black menu panel at the top left of the picture (the card shop's).</summary>
+    public Task<int> Menu(params string[] options)
+    {
+        _plate.Visible = false;
+        float s = _sw / 1440f;
+        return _text.Menu(_stage, new Rect2(35 * s, 195 * s, 605 * s, 305 * s), options);
+    }
     string? _bgKey, _chrKey, _iconKey;
     /// <summary>Who is pictured right now (their lines need no portrait box).</summary>
     readonly HashSet<string> _onScreen = new();
@@ -57,7 +68,7 @@ void fragment() {
     public static readonly Dictionary<string, string> Names = new()
     {
         ["teana"] = "Teana", ["jono"] = "Jono", ["seto"] = "Seto", ["simon"] = "Simon Muran", ["heishin"] = "Heishin",
-        ["guard"] = "Guard", ["servant"] = "Servant", ["k"] = "K", ["v1"] = "Villager 1", ["v2"] = "Villager 2", ["v3"] = "Villager 3",
+        ["guard"] = "Guard", ["servant"] = "Servant", ["k"] = "K", ["v1"] = "Villager 1", ["v2"] = "Villager 2", ["v3"] = "Villager 3", ["shop"] = "Card Shop Owner",
     };
 
     FmScene(SceneTree tree)
@@ -114,7 +125,7 @@ void fragment() {
         _flash = new ColorRect { Color = Colors.White, Size = view, MouseFilter = Control.MouseFilterEnum.Ignore, Modulate = new Color(1, 1, 1, 0) };
         _layer.AddChild(_flash);
         _black.GuiInput += e => { if (e is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left }) _text.Click(); };
-        var skip = new Button { Text = "Skip  ▶", Position = new Vector2(view.X - 190, 24), Size = new Vector2(160, 56), Modulate = new Color(1, 1, 1, 0.75f) };
+        var skip = _skip = new Button { Text = "Skip  ▶", Position = new Vector2(view.X - 190, 24), Size = new Vector2(160, 56), Modulate = new Color(1, 1, 1, 0.75f) };
         skip.AddThemeFontSizeOverride("font_size", 26);
         skip.Pressed += () => Skipped = true;
         _layer.AddChild(skip);

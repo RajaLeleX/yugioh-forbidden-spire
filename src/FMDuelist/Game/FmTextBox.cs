@@ -188,22 +188,72 @@ public sealed class FmTextBox
         return picked;
     }
 
-    /// <summary>One line of text in FM's font, shown at once (used for choices).</summary>
-    void DrawLine(string s, Vector2 at)
+    /// <summary>
+    /// FM's menu (the card shop's SAVE / BUILD DECK / ...): a black panel with the options centred in large letters,
+    /// the one under the mouse on FM's yellow bar. Click to pick; returns the option's index.
+    /// </summary>
+    /// <param name="parent">Where the panel goes (the stage).</param>
+    /// <param name="area">The panel's rectangle.</param>
+    public async Task<int> Menu(Control parent, Rect2 area, IReadOnlyList<string> options)
     {
+        if (Engine.GetMainLoop() is not SceneTree tree || options.Count == 0) return 0;
+        float px = _px * 1.6f, lineH = (CellH + 3) * px;
+        var panel = new Control { Position = area.Position, Size = area.Size, MouseFilter = Control.MouseFilterEnum.Ignore };
+        float cut = area.Size.Y * 0.12f, w = area.Size.X, h = area.Size.Y;
+        panel.AddChild(new Polygon2D
+        {
+            Color = new Color(0, 0, 0, 0.94f),
+            Polygon = new[] { new Vector2(cut, 0), new Vector2(w - cut, 0), new Vector2(w, cut), new Vector2(w, h - cut), new Vector2(w - cut, h), new Vector2(cut, h), new Vector2(0, h - cut), new Vector2(0, cut) },
+        });
+        parent.AddChild(panel);
+        int picked = -1, hover = 0;
+        var bars = new List<ColorRect>();
+        float top = (h - options.Count * lineH) / 2;
+        for (int i = 0; i < options.Count; i++)
+        {
+            int idx = i;
+            var bar = new ColorRect { Position = new Vector2(cut * 0.4f, top + i * lineH - 1.5f * px), Size = new Vector2(w - cut * 0.8f, CellH * px + 3 * px), Color = new Color(0.86f, 0.9f, 0.1f, 0.9f), Visible = i == 0, MouseFilter = Control.MouseFilterEnum.Ignore };
+            panel.AddChild(bar);
+            bars.Add(bar);
+            float textW = options[i].Length * CellW * px;
+            DrawLine(options[i], new Vector2((w - textW) / 2, top + i * lineH), panel, px);
+            var hit = new Button { Flat = true, Position = bar.Position, Size = bar.Size, FocusMode = Control.FocusModeEnum.None, MouseDefaultCursorShape = Control.CursorShape.PointingHand };
+            hit.AddThemeStyleboxOverride("normal", new StyleBoxEmpty()); hit.AddThemeStyleboxOverride("hover", new StyleBoxEmpty()); hit.AddThemeStyleboxOverride("pressed", new StyleBoxEmpty());
+            hit.MouseEntered += () => { if (hover == idx) return; hover = idx; for (int k = 0; k < bars.Count; k++) bars[k].Visible = k == idx; FmSfx.Play(FmSfx.Flip); };
+            hit.Pressed += () =>
+            {
+                double now = Time.GetTicksMsec() / 1000.0;
+                if (now - _lastClick < ClickCooldown) return;
+                _lastClick = now;
+                picked = idx;
+            };
+            panel.AddChild(hit);
+        }
+        FmSfx.Play(FmSfx.Flip);
+        while (picked < 0 && GodotObject.IsInstanceValid(panel)) await tree.ToSignal(tree, SceneTree.SignalName.ProcessFrame);
+        FmSfx.Play(FmSfx.Mark);
+        if (GodotObject.IsInstanceValid(panel)) panel.QueueFree();
+        return Math.Max(picked, 0);
+    }
+
+    /// <summary>One line of text in FM's font, shown at once (used for choices).</summary>
+    void DrawLine(string s, Vector2 at, Control? parent = null, float px = 0)
+    {
+        parent ??= _textLayer;
+        if (px <= 0) px = _px;
         if (_sheet == null || _glyphs == null)
         {
             var l = new Label { Text = s, Position = at, MouseFilter = Control.MouseFilterEnum.Ignore };
-            l.AddThemeFontSizeOverride("font_size", (int)(10 * _px));
-            _textLayer.AddChild(l);
+            l.AddThemeFontSizeOverride("font_size", (int)(10 * px));
+            parent.AddChild(l);
             return;
         }
         for (int i = 0; i < s.Length; i++)
         {
             if (s[i] == ' ' || !_glyphs.TryGetValue(s[i], out var rect)) continue;
-            _textLayer.AddChild(new TextureRect
+            parent.AddChild(new TextureRect
             {
-                Texture = new AtlasTexture { Atlas = _sheet, Region = rect }, Position = at + new Vector2(i * CellW * _px, 0), Size = new Vector2(CellW, CellH) * _px,
+                Texture = new AtlasTexture { Atlas = _sheet, Region = rect }, Position = at + new Vector2(i * CellW * px, 0), Size = new Vector2(CellW, CellH) * px,
                 ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.Scale,
                 TextureFilter = CanvasItem.TextureFilterEnum.Nearest, MouseFilter = Control.MouseFilterEnum.Ignore,
             });

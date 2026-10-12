@@ -89,6 +89,7 @@ public static class FmLoc
 
             loc.GetTable("card_selection").MergeWith(new Dictionary<string, string>
             {
+                ["FMDUELIST_SELL"] = "Choose a card to sell (half its shop price).",
                 ["FMDUELIST_RITUAL"] = "Choose 3 monsters to offer to the ritual.",
             });
             Log.Info($"[FMDuelist] Localization injected ({cards.Count / 2} cards)");

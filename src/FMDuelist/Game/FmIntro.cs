@@ -163,11 +163,14 @@ public static class FmIntro
     /// <summary>FM's title art (the logo on the flaming stone wall) behind the main menu's own buttons.</summary>
     public static void ApplyMenuBackground()
     {
-        if (_title == null || NGame.Instance?.MainMenu is not { } menu) return;
+        // FM's own title screen (the logo on the grey hieroglyph wall) when it's in the local story folder
+        var wall = FmScene.Tex("bg_title");
+        var title = wall ?? _title;
+        if (title == null || NGame.Instance?.MainMenu is not { } menu) return;
         var bg = menu.GetNodeOrNull<Control>("%MainMenuBg");
         if (bg == null || bg.GetNodeOrNull("FMDuelistTitle") != null) return;
         // soft fill: the same frame blurred and darkened, covering the whole screen so there are no bars
-        var src = _title.GetImage();
+        var src = title.GetImage();
         var blur = (Image)src.Duplicate();
         blur.Resize(src.GetWidth() / 10, src.GetHeight() / 10, Image.Interpolation.Bilinear);
         blur.Resize(src.GetWidth(), src.GetHeight(), Image.Interpolation.Cubic);
@@ -182,18 +185,22 @@ public static class FmIntro
         // the whole frame (zoomed out), centred, sitting above the menu buttons
         var art = new TextureRect
         {
-            Name = "FMDuelistLogo", Texture = _title, ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
-            StretchMode = TextureRect.StretchModeEnum.KeepAspectCovered, TextureFilter = CanvasItem.TextureFilterEnum.Linear,
+            Name = "FMDuelistLogo", Texture = title, ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
+            StretchMode = wall != null ? TextureRect.StretchModeEnum.KeepAspectCentered : TextureRect.StretchModeEnum.KeepAspectCovered, TextureFilter = CanvasItem.TextureFilterEnum.Linear,
             MouseFilter = Control.MouseFilterEnum.Ignore,
         };
         // big: the full screen height and most of its width (only a little of the frame's top and bottom is trimmed)
-        art.AnchorLeft = 0.06f; art.AnchorRight = 0.94f; art.AnchorTop = 0f; art.AnchorBottom = 1f;
+        art.AnchorLeft = wall != null ? 0f : 0.06f; art.AnchorRight = wall != null ? 1f : 0.94f; art.AnchorTop = 0f; art.AnchorBottom = 1f;
         art.OffsetLeft = art.OffsetRight = art.OffsetTop = art.OffsetBottom = 0;
         bg.AddChild(art);
         // feather the frame's edges into the fill
         var edge = new Shader { Code = @"shader_type canvas_item;
 void fragment(){ vec4 c = texture(TEXTURE, UV) * COLOR; float e = smoothstep(0.0, 0.06, UV.x) * smoothstep(0.0, 0.06, 1.0 - UV.x) * smoothstep(0.0, 0.06, UV.y) * smoothstep(0.0, 0.06, 1.0 - UV.y); COLOR = vec4(c.rgb, c.a * e); }" };
         art.Material = new ShaderMaterial { Shader = edge };
+        // the wall fills the screen's height: feather its sides only
+        if (wall != null)
+            art.Material = new ShaderMaterial { Shader = new Shader { Code = @"shader_type canvas_item;
+void fragment(){ vec4 c = texture(TEXTURE, UV) * COLOR; float e = smoothstep(0.0, 0.04, UV.x) * smoothstep(0.0, 0.04, 1.0 - UV.x); COLOR = vec4(c.rgb, c.a * e); }" } };
         var shade = new ColorRect { Name = "FMDuelistShade", Color = new Color(0, 0, 0, 0.15f), MouseFilter = Control.MouseFilterEnum.Ignore };
         shade.SetAnchorsPreset(Control.LayoutPreset.FullRect);
         bg.AddChild(shade);

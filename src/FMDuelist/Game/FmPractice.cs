@@ -163,7 +163,7 @@ public static class FmPractice
 [HarmonyPatch]
 static class FmPracticeMenuPatch
 {
-    [HarmonyPrefix, HarmonyPatch(typeof(NMainMenu), "OpenCompendiumSubmenu")]
+    [HarmonyPrefix, HarmonyPatch(typeof(NMainMenu), "OpenCompendiumSubmenu", new[] { typeof(MegaCrit.Sts2.Core.Nodes.GodotExtensions.NButton) })]
     static bool Open()
     {
         FmPractice.ShowPicker();

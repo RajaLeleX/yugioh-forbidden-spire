@@ -1,0 +1,188 @@
+[
+ {
+  "id": "char_starting_hp",
+  "target": "Necrobinder.get_StartingHp",
+  "kind": "harmony_postfix",
+  "does": "8000 when FM mode"
+ },
+ {
+  "id": "char_deck",
+  "target": "Necrobinder.get_StartingDeck",
+  "kind": "harmony_postfix",
+  "does": "starter rows from monsters/spells sheets"
+ },
+ {
+  "id": "char_pool",
+  "target": "Necrobinder.get_CardPool",
+  "kind": "harmony_postfix",
+  "does": "FmCardPool"
+ },
+ {
+  "id": "char_relics",
+  "target": "Necrobinder.get_StartingRelics",
+  "kind": "harmony_postfix",
+  "does": "MillenniumPuzzle"
+ },
+ {
+  "id": "enemy_hp_scale",
+  "target": "MillenniumPuzzle.BeforeCombatStart/AfterCreatureAddedToCombat",
+  "kind": "model_hook",
+  "does": "enemy HP x100 once"
+ },
+ {
+  "id": "enemy_damage_scale",
+  "target": "MillenniumPuzzle.ModifyDamageMultiplicative",
+  "kind": "model_hook",
+  "does": "enemy dealer x100; non-FM player sources x100"
+ },
+ {
+  "id": "enemy_block_scale",
+  "target": "MillenniumPuzzle.ModifyBlockMultiplicative",
+  "kind": "model_hook",
+  "does": "enemy block x100; non-FM player block x100"
+ },
+ {
+  "id": "draw_count",
+  "target": "MillenniumPuzzle.ModifyHandDraw",
+  "kind": "model_hook",
+  "does": "5 - hand size"
+ },
+ {
+  "id": "card_retain",
+  "target": "MillenniumPuzzle.ShouldFlush",
+  "kind": "model_hook",
+  "does": "false: hand kept"
+ },
+ {
+  "id": "card_cost",
+  "target": "FmCardBase ctor energy 0",
+  "kind": "card_field",
+  "does": "0 cost"
+ },
+ {
+  "id": "can_play_monster",
+  "target": "FmMonsterCard.IsPlayable",
+  "kind": "card_override",
+  "does": "false after summon this turn"
+ },
+ {
+  "id": "hand_right_click",
+  "target": "FmInput.Handle",
+  "kind": "godot_node",
+  "does": "right-click marks hovered hand card"
+ },
+ {
+  "id": "monster_play",
+  "target": "FmMonsterCard.OnPlay",
+  "kind": "card_override",
+  "does": "fusion chain, dragon gate, position choice, summon"
+ },
+ {
+  "id": "osty_summon",
+  "target": "FmField.Summon",
+  "kind": "code",
+  "does": "replace Osty, HP=DEF"
+ },
+ {
+  "id": "osty_visual",
+  "target": "FmOstyVisual.Apply (after summon)",
+  "kind": "godot_node",
+  "does": "card art sprite, rotate in defense, ATK/DEF toggle button"
+ },
+ {
+  "id": "turn_end",
+  "target": "MillenniumPuzzle.BeforeSideTurnEnd",
+  "kind": "model_hook",
+  "does": "attack mode: hit target for ATK; defense: Osty gains Block=DEF"
+ },
+ {
+  "id": "turn_start",
+  "target": "MillenniumPuzzle.AfterPlayerTurnStart",
+  "kind": "model_hook",
+  "does": "reset summon flag; tick Swords"
+ },
+ {
+  "id": "portrait",
+  "target": "CardModel.get_Portrait",
+  "kind": "harmony_prefix",
+  "does": "runtime FM art texture"
+ },
+ {
+  "id": "relic_icon",
+  "target": "RelicModel.get_Icon/get_IconOutline/get_BigIcon",
+  "kind": "harmony_prefix",
+  "does": "runtime FM art for FM relics"
+ },
+ {
+  "id": "power_icon",
+  "target": "PowerModel.get_Icon/get_BigIcon",
+  "kind": "harmony_prefix",
+  "does": "runtime FM art for FM powers"
+ },
+ {
+  "id": "loc_inject",
+  "target": "LocManager.SetLanguageInternal",
+  "kind": "harmony_postfix",
+  "does": "merge FM names/descriptions into cards/relics/powers tables"
+ },
+ {
+  "id": "neow_options",
+  "target": "Neow option generation",
+  "kind": "harmony_postfix",
+  "does": "add Dragon Treasure option for FM Necrobinder"
+ },
+ {
+  "id": "card_pool",
+  "target": "FmCardBase.Rarity",
+  "kind": "card_override",
+  "does": "per-act rarity from sheet; None = not offered"
+ },
+ {
+  "id": "music",
+  "target": "FmMusic node",
+  "kind": "godot_node",
+  "does": "plays rendered FM track in combat"
+ },
+ {
+  "id": "sfx",
+  "target": "FmSfx",
+  "kind": "code",
+  "does": "fusion mark sound"
+ },
+ {
+  "id": "mod_init",
+  "target": "[ModInitializer] FmMod.Init",
+  "kind": "entry",
+  "does": "Harmony.PatchAll, load disc"
+ },
+ {
+  "id": "enemy_attack",
+  "target": "MillenniumPuzzle.BeforeAttack/AfterAttack",
+  "kind": "model_hook",
+  "does": "snapshot block/position, then counter or reflect"
+ },
+ {
+  "id": "click_attack",
+  "target": "FmAttackAction.ExecuteAction",
+  "kind": "game_action",
+  "does": "clicked monster attack through the action queue, once per turn"
+ },
+ {
+  "id": "zone",
+  "target": "FmZone.Tick",
+  "kind": "frame",
+  "does": "zone row and hover preview"
+ },
+ {
+  "id": "relics",
+  "target": "FmRelic.BeforeCombatStart / FmBonus",
+  "kind": "model_hook",
+  "does": "relic effects by kind"
+ },
+ {
+  "id": "input",
+  "target": "NGame._Input",
+  "kind": "harmony_prefix",
+  "does": "right-click marks, click attack, position toggle"
+ }
+]

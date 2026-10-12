@@ -1,0 +1,138 @@
+{
+ "atkBonus": 500,
+ "defBonus": 500,
+ "note": "Strength/Dexterity gains in FM runs become a flat +500 ATK (Sun Star) / +500 DEF (Moon Star) for all your monsters until your next turn.",
+ "removed": [
+  "RuinedHelmet",
+  "HelicalDart",
+  "MiniRegent"
+ ],
+ "items": [
+  {
+   "kind": "relic",
+   "key": "BRIMSTONE",
+   "stat": "atk",
+   "icon": "sun"
+  },
+  {
+   "kind": "relic",
+   "key": "EMBER_TEA",
+   "stat": "atk",
+   "icon": "mars"
+  },
+  {
+   "kind": "relic",
+   "key": "ENDLESS_APPETITE",
+   "stat": "atk",
+   "icon": "jupiter"
+  },
+  {
+   "kind": "relic",
+   "key": "GIRYA",
+   "stat": "atk",
+   "icon": "pluto"
+  },
+  {
+   "kind": "relic",
+   "key": "RED_SKULL",
+   "stat": "atk",
+   "icon": "uranus"
+  },
+  {
+   "kind": "relic",
+   "key": "REPTILE_TRINKET",
+   "stat": "atk",
+   "icon": "sun"
+  },
+  {
+   "kind": "relic",
+   "key": "SHURIKEN",
+   "stat": "atk",
+   "icon": "mars"
+  },
+  {
+   "kind": "relic",
+   "key": "SLING_OF_COURAGE",
+   "stat": "atk",
+   "icon": "jupiter"
+  },
+  {
+   "kind": "relic",
+   "key": "SWORD_OF_JADE",
+   "stat": "atk",
+   "icon": "pluto"
+  },
+  {
+   "kind": "relic",
+   "key": "TOASTY_MITTENS",
+   "stat": "atk",
+   "icon": "uranus"
+  },
+  {
+   "kind": "relic",
+   "key": "VAJRA",
+   "stat": "atk",
+   "icon": "sun"
+  },
+  {
+   "kind": "relic",
+   "key": "BELT_BUCKLE",
+   "stat": "def",
+   "icon": "moon"
+  },
+  {
+   "kind": "relic",
+   "key": "KUNAI",
+   "stat": "def",
+   "icon": "venus"
+  },
+  {
+   "kind": "relic",
+   "key": "ODDLY_SMOOTH_STONE",
+   "stat": "def",
+   "icon": "mercury"
+  },
+  {
+   "kind": "relic",
+   "key": "RAINBOW_RING",
+   "stat": "both",
+   "icon": "sun"
+  },
+  {
+   "kind": "relic",
+   "key": "SPARKLING_ROUGE",
+   "stat": "both",
+   "icon": "moon"
+  },
+  {
+   "kind": "potion",
+   "key": "STRENGTH_POTION",
+   "stat": "atk",
+   "icon": "mars"
+  },
+  {
+   "kind": "potion",
+   "key": "FLEX_POTION",
+   "stat": "atk",
+   "icon": "jupiter"
+  },
+  {
+   "kind": "potion",
+   "key": "DEXTERITY_POTION",
+   "stat": "def",
+   "icon": "saturn"
+  },
+  {
+   "kind": "potion",
+   "key": "SPEED_POTION",
+   "stat": "def",
+   "icon": "neptune"
+  },
+  {
+   "kind": "potion",
+   "key": "FYSH_OIL",
+   "stat": "both",
+   "icon": "mercury"
+  }
+ ]
+}

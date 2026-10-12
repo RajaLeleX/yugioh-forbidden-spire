@@ -1,0 +1,15 @@
+# extracted game files and local-only content (never shared)
+cache/
+devdata/
+shots/
+snapshots/
+settings.cfg
+*.bin
+*.sav
+
+# build output
+bin/
+obj/
+*.dll
+*.pdb
+__pycache__/

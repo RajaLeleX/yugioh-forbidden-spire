@@ -1,0 +1,55 @@
+# Relic sheet: Millennium Items and Forbidden Memories characters, tuned for 8000 LP / x100 enemies.
+# Base-game comparison: a common relic is worth ~1 card of value per combat; +500 ATK ~ one equip that never leaves.
+import json, os
+H = os.path.expanduser('~/fmsts')
+R = [
+ # id, class, title, rarity, kind, value, types, art, who, text
+ ('millennium_eye', 'MillenniumEye', 'Millennium Eye', 'Rare', 'hand_size', 1, [], 109, 'Pegasus',
+  'Pegasus reads your opponent\'s mind. Draw up to 6 cards each turn instead of 5.'),
+ ('millennium_ring', 'MillenniumRing', 'Millennium Ring', 'Rare', 'death_burn', 50, [], 148, 'Bakura',
+  'When your monster is destroyed, its spirit deals 50% of its ATK to a random enemy.'),
+ ('millennium_rod', 'MillenniumRod', 'Millennium Rod', 'Rare', 'combat_weak', 2, [], 220, 'Seto',
+  'Start of combat: apply 2 Weak to ALL enemies.'),
+ ('millennium_key', 'MillenniumKey', 'Millennium Key', 'Uncommon', 'combat_trap', 683, [], 192, 'Shadi',
+  'Start of combat: set a Bear Trap face-down.'),
+ ('millennium_scale', 'MillenniumScale', 'Millennium Scale', 'Rare', 'fusion_bonus', 300, [], 360, 'Shadi',
+  'Each successful fusion in a chain gives the result +300 ATK/DEF.'),
+ ('millennium_necklace', 'MillenniumNecklace', 'Millennium Necklace', 'Uncommon', 'empty_field_block', 600, [], 260, 'Isis',
+  'Isis foresees the attack. Start of your turn with no monster: gain 600 Block.'),
+ ('simon_muran', 'SimonMuran', "Simon Muran's Lesson", 'Common', 'heal_after_combat', 400, [], 259, 'Simon Muran',
+  'Your mentor patches you up. After each combat, recover 400 LP.'),
+ ('teanas_care', 'TeanasCare', "Teana's Care", 'Common', 'heal_bonus', 50, [], 2, 'Teana',
+  'Healing spells recover 50% more Life Points.'),
+ ('jonos_spirit', 'JonosSpirit', "Jono's Spirit", 'Common', 'first_summon_atk', 500, [], 15, 'Jono',
+  'Your first monster each combat gets +500 ATK.'),
+ ('duel_master_k', 'DuelMasterK', "Duel Master K's Deck", 'Common', 'combat_draw', 2, [], 41, 'Duel Master K',
+  'Start of combat: draw 2 extra cards.'),
+ ('harpie_feather', 'MaisHarpies', "Mai's Harpies", 'Uncommon', 'type_boost', 500, ['WingedBeast'], 62, 'Mai Valentine',
+  'Winged Beast monsters get +500 ATK/DEF.'),
+ ('weevils_swarm', 'WeevilsSwarm', "Weevil's Swarm", 'Uncommon', 'type_boost', 500, ['Insect'], 57, 'Weevil Underwood',
+  'Insect monsters get +500 ATK/DEF.'),
+ ('rex_raptor', 'RexsFossils', "Rex's Fossils", 'Uncommon', 'type_boost', 500, ['Dinosaur'], 32, 'Rex Raptor',
+  'Dinosaur monsters get +500 ATK/DEF.'),
+ ('bandit_keith', 'KeithsMachines', "Keith's Machines", 'Uncommon', 'type_boost', 500, ['Machine'], 204, 'Bandit Keith',
+  'Machine monsters get +500 ATK/DEF.'),
+ ('seto_dragons', 'SetosDragons', "High Priest Seto's Dragons", 'Rare', 'type_boost', 500, ['Dragon'], 1, 'High Priest Seto',
+  'Dragon monsters get +500 ATK/DEF.'),
+ ('kaiba_pride', 'KaibasPride', "Kaiba's Pride", 'Rare', 'counter_bonus', 100, [], 380, 'Seto Kaiba',
+  'Your monster hits back twice as hard when attacked in Attack position.'),
+ ('guardian_sebek', 'GuardianSebek', 'Guardian Sebek', 'Uncommon', 'defense_boost', 800, [], 374, 'Guardian Sebek',
+  'Monsters in Defense position get +800 DEF.'),
+ ('guardian_neku', 'GuardianNeku', 'Guardian Neku', 'Uncommon', 'type_boost', 500, ['Zombie', 'Fiend'], 368, 'Guardian Neku',
+  'Zombie and Fiend monsters get +500 ATK/DEF.'),
+ ('ocean_mage', 'OceanMage', 'Ocean Mage', 'Uncommon', 'start_field', 334, [], 445, 'Ocean Mage', 'Start of combat: Umi is in play.'),
+ ('forest_mage', 'ForestMage', 'Forest Mage', 'Uncommon', 'start_field', 330, [], 638, 'Forest Mage', 'Start of combat: Forest is in play.'),
+ ('mountain_mage', 'MountainMage', 'Mountain Mage', 'Uncommon', 'start_field', 332, [], 525, 'Mountain Mage', 'Start of combat: Mountain is in play.'),
+ ('desert_mage', 'DesertMage', 'Desert Mage', 'Uncommon', 'start_field', 331, [], 59, 'Desert Mage', 'Start of combat: Wasteland is in play.'),
+ ('meadow_mage', 'MeadowMage', 'Meadow Mage', 'Uncommon', 'start_field', 333, [], 38, 'Meadow Mage', 'Start of combat: Sogen is in play.'),
+ ('heishins_ambition', 'HeishinsAmbition', "Heishin's Ambition", 'Rare', 'double_summon', 500, [], 287, 'Heishin',
+  'You may summon twice per turn. The second summon costs 500 LP.'),
+ ('darknite', 'DarkNitesMask', "DarkNite's Mask", 'Rare', 'fusion_keep', 0, [], 116, 'DarkNite',
+  'A failed fusion keeps the stronger monster instead of the newer one.'),
+]
+rows = [dict(id=a, cls='Fm' + b, title=c, rarity=d, kind=e, value=f, types=g, art=h, who=i, text=j) for a, b, c, d, e, f, g, h, i, j in R]
+json.dump(rows, open(f'{H}/sheets/relics.json', 'w'), indent=1)
+print(len(rows), 'relics')

@@ -1,0 +1,24 @@
+[
+ {
+  "id": "heals",
+  "count": 3,
+  "fromIds": [
+   338,
+   339,
+   340,
+   341
+  ],
+  "distinct": true
+ },
+ {
+  "id": "monsters",
+  "count": 14,
+  "act1": "Common",
+  "maxAtk": 1000,
+  "maxLevel": 3,
+  "excludeTypes": [
+   "Dragon"
+  ],
+  "distinctTypes": true
+ }
+]

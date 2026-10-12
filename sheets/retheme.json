@@ -1,0 +1,1705 @@
+[
+ {
+  "kind": "potion",
+  "key": "ASHWATER",
+  "fm": 656,
+  "was": "Ashwater"
+ },
+ {
+  "kind": "potion",
+  "key": "ATTACK_POTION",
+  "fm": 301,
+  "was": "Attack Potion"
+ },
+ {
+  "kind": "potion",
+  "key": "BEETLE_JUICE",
+  "fm": 688,
+  "was": "Beetle Juice"
+ },
+ {
+  "kind": "potion",
+  "key": "BLOCK_POTION",
+  "fm": 309,
+  "was": "Block Potion"
+ },
+ {
+  "kind": "potion",
+  "key": "BLOOD_POTION",
+  "fm": 339,
+  "was": "Blood Potion"
+ },
+ {
+  "kind": "potion",
+  "key": "BONE_BREW",
+  "fm": 699,
+  "was": "Bone Brew"
+ },
+ {
+  "kind": "potion",
+  "key": "BOTTLED_POTENTIAL",
+  "fm": 652,
+  "was": "Bottled Potential"
+ },
+ {
+  "kind": "potion",
+  "key": "CLARITY",
+  "fm": 323,
+  "was": "Clarity Extract"
+ },
+ {
+  "kind": "potion",
+  "key": "COLORLESS_POTION",
+  "fm": 676,
+  "was": "Colorless Potion"
+ },
+ {
+  "kind": "potion",
+  "key": "DEXTERITY_POTION",
+  "fm": 327,
+  "was": "Dexterity Potion"
+ },
+ {
+  "kind": "potion",
+  "key": "DISTILLED_CHAOS",
+  "fm": 660,
+  "was": "Distilled Chaos"
+ },
+ {
+  "kind": "potion",
+  "key": "DROPLET_OF_PRECOGNITION",
+  "fm": 307,
+  "was": "Droplet of Precognition"
+ },
+ {
+  "kind": "potion",
+  "key": "DUPLICATOR",
+  "fm": 657,
+  "was": "Duplicator"
+ },
+ {
+  "kind": "potion",
+  "key": "ENTROPIC_BREW",
+  "fm": 677,
+  "was": "Entropic Brew"
+ },
+ {
+  "kind": "potion",
+  "key": "ESSENCE_OF_DARKNESS",
+  "fm": 303,
+  "was": "Essence of Darkness"
+ },
+ {
+  "kind": "potion",
+  "key": "EXPLOSIVE_AMPOULE",
+  "fm": 346,
+  "was": "Explosive Ampoule"
+ },
+ {
+  "kind": "potion",
+  "key": "FAIRY_IN_A_BOTTLE",
+  "fm": 341,
+  "was": "Fairy in a Bottle"
+ },
+ {
+  "kind": "potion",
+  "key": "FIRE_POTION",
+  "fm": 344,
+  "was": "Fire Potion"
+ },
+ {
+  "kind": "potion",
+  "key": "FLEX_POTION",
+  "fm": 326,
+  "was": "Flex Potion"
+ },
+ {
+  "kind": "potion",
+  "key": "FOCUS_POTION",
+  "fm": 322,
+  "was": "Focus Potion"
+ },
+ {
+  "kind": "potion",
+  "key": "FORTIFIER",
+  "fm": 317,
+  "was": "Fortifier"
+ },
+ {
+  "kind": "potion",
+  "key": "FOUL_POTION",
+  "fm": 310,
+  "was": "Foul Potion"
+ },
+ {
+  "kind": "potion",
+  "key": "FRUIT_JUICE",
+  "fm": 338,
+  "was": "Fruit Juice"
+ },
+ {
+  "kind": "potion",
+  "key": "FYSH_OIL",
+  "fm": 334,
+  "was": "Fysh Oil"
+ },
+ {
+  "kind": "potion",
+  "key": "GAMBLERS_BREW",
+  "fm": 690,
+  "was": "Gambler's Brew"
+ },
+ {
+  "kind": "potion",
+  "key": "GHOST_IN_A_JAR",
+  "fm": 329,
+  "was": "Ghost in a Jar"
+ },
+ {
+  "kind": "potion",
+  "key": "GIGANTIFICATION_POTION",
+  "fm": 304,
+  "was": "Gigantification Potion"
+ },
+ {
+  "kind": "potion",
+  "key": "GLOWWATER_POTION",
+  "fm": 319,
+  "was": "Glowwater Potion"
+ },
+ {
+  "kind": "potion",
+  "key": "HEART_OF_IRON",
+  "fm": 658,
+  "was": "Heart of Iron"
+ },
+ {
+  "kind": "potion",
+  "key": "KINGS_COURAGE",
+  "fm": 328,
+  "was": "King's Courage"
+ },
+ {
+  "kind": "potion",
+  "key": "LIQUID_BRONZE",
+  "fm": 308,
+  "was": "Liquid Bronze"
+ },
+ {
+  "kind": "potion",
+  "key": "LIQUID_MEMORIES",
+  "fm": 679,
+  "was": "Liquid Memories"
+ },
+ {
+  "kind": "potion",
+  "key": "LUCKY_TONIC",
+  "fm": 314,
+  "was": "Lucky Tonic"
+ },
+ {
+  "kind": "potion",
+  "key": "MAZALETHS_GIFT",
+  "fm": 721,
+  "was": "Mazaleth's Gift"
+ },
+ {
+  "kind": "potion",
+  "key": "OROBIC_ACID",
+  "fm": 685,
+  "was": "Orobic Acid"
+ },
+ {
+  "kind": "potion",
+  "key": "POISON_POTION",
+  "fm": 662,
+  "was": "Poison Potion"
+ },
+ {
+  "kind": "potion",
+  "key": "POTION_OF_BINDING",
+  "fm": 349,
+  "was": "Potion of Binding"
+ },
+ {
+  "kind": "potion",
+  "key": "POTION_OF_CAPACITY",
+  "fm": 325,
+  "was": "Potion of Capacity"
+ },
+ {
+  "kind": "potion",
+  "key": "POTION_OF_DOOM",
+  "fm": 686,
+  "was": "Potion of Doom"
+ },
+ {
+  "kind": "potion",
+  "key": "POTION_SHAPED_ROCK",
+  "fm": 343,
+  "was": "Potion-Shaped Rock"
+ },
+ {
+  "kind": "potion",
+  "key": "POT_OF_GHOULS",
+  "fm": 666,
+  "was": "Pot of Ghouls"
+ },
+ {
+  "kind": "potion",
+  "key": "POWDERED_DEMISE",
+  "fm": 311,
+  "was": "Powdered Demise"
+ },
+ {
+  "kind": "potion",
+  "key": "POWER_POTION",
+  "fm": 302,
+  "was": "Power Potion"
+ },
+ {
+  "kind": "potion",
+  "key": "REGEN_POTION",
+  "fm": 340,
+  "was": "Regen Potion"
+ },
+ {
+  "kind": "potion",
+  "key": "SHACKLING_POTION",
+  "fm": 681,
+  "was": "Shackling Potion"
+ },
+ {
+  "kind": "potion",
+  "key": "SHIP_IN_A_BOTTLE",
+  "fm": 700,
+  "was": "Ship in a Bottle"
+ },
+ {
+  "kind": "potion",
+  "key": "SKILL_POTION",
+  "fm": 318,
+  "was": "Skill Potion"
+ },
+ {
+  "kind": "potion",
+  "key": "SPEED_POTION",
+  "fm": 316,
+  "was": "Speed Potion"
+ },
+ {
+  "kind": "potion",
+  "key": "STABLE_SERUM",
+  "fm": 668,
+  "was": "Stable Serum"
+ },
+ {
+  "kind": "potion",
+  "key": "STAR_POTION",
+  "fm": 208,
+  "was": "Star Potion"
+ },
+ {
+  "kind": "potion",
+  "key": "STRENGTH_POTION",
+  "fm": 324,
+  "was": "Strength Potion"
+ },
+ {
+  "kind": "potion",
+  "key": "SWIFT_POTION",
+  "fm": 659,
+  "was": "Swift Potion"
+ },
+ {
+  "kind": "potion",
+  "key": "VULNERABLE_POTION",
+  "fm": 320,
+  "was": "Vulnerable Potion"
+ },
+ {
+  "kind": "potion",
+  "key": "WEAK_POTION",
+  "fm": 682,
+  "was": "Weak Potion"
+ },
+ {
+  "kind": "relic",
+  "key": "AKABEKO",
+  "fm": 201,
+  "was": "Akabeko"
+ },
+ {
+  "kind": "relic",
+  "key": "ALCHEMICAL_COFFER",
+  "fm": 167,
+  "was": "Alchemical Coffer"
+ },
+ {
+  "kind": "relic",
+  "key": "AMETHYST_AUBERGINE",
+  "fm": 488,
+  "was": "Amethyst Aubergine"
+ },
+ {
+  "kind": "relic",
+  "key": "ANCHOR",
+  "fm": 449,
+  "was": "Anchor"
+ },
+ {
+  "kind": "relic",
+  "key": "ARCANE_SCROLL",
+  "fm": 268,
+  "was": "Arcane Scroll"
+ },
+ {
+  "kind": "relic",
+  "key": "BAG_OF_MARBLES",
+  "fm": 490,
+  "was": "Bag of Marbles"
+ },
+ {
+  "kind": "relic",
+  "key": "BAG_OF_PREPARATION",
+  "fm": 118,
+  "was": "Bag of Preparation"
+ },
+ {
+  "kind": "relic",
+  "key": "BEATING_REMNANT",
+  "fm": 254,
+  "was": "Beating Remnant"
+ },
+ {
+  "kind": "relic",
+  "key": "BEAUTIFUL_BRACELET",
+  "fm": 183,
+  "was": "Beautiful Bracelet"
+ },
+ {
+  "kind": "relic",
+  "key": "BELT_BUCKLE",
+  "fm": 156,
+  "was": "Belt Buckle"
+ },
+ {
+  "kind": "relic",
+  "key": "BIG_HAT",
+  "fm": 114,
+  "was": "Big Hat"
+ },
+ {
+  "kind": "relic",
+  "key": "BIG_MUSHROOM",
+  "fm": 8,
+  "was": "Big Mushroom"
+ },
+ {
+  "kind": "relic",
+  "key": "BIIIG_HUG",
+  "fm": 354,
+  "was": "Biiig Hug"
+ },
+ {
+  "kind": "relic",
+  "key": "BING_BONG",
+  "fm": 486,
+  "was": "Bing Bong"
+ },
+ {
+  "kind": "relic",
+  "key": "BLACK_BLOOD",
+  "fm": 152,
+  "was": "Black Blood"
+ },
+ {
+  "kind": "relic",
+  "key": "BLACK_STAR",
+  "fm": 181,
+  "was": "Black Star"
+ },
+ {
+  "kind": "relic",
+  "key": "BLOOD_VIAL",
+  "fm": 229,
+  "was": "Blood Vial"
+ },
+ {
+  "kind": "relic",
+  "key": "BONE_FLUTE",
+  "fm": 24,
+  "was": "Bone Flute"
+ },
+ {
+  "kind": "relic",
+  "key": "BOOK_OF_FIVE_RINGS",
+  "fm": 293,
+  "was": "Book of Five Rings"
+ },
+ {
+  "kind": "relic",
+  "key": "BOOK_REPAIR_KNIFE",
+  "fm": 209,
+  "was": "Book Repair Knife"
+ },
+ {
+  "kind": "relic",
+  "key": "BOWLER_HAT",
+  "fm": 182,
+  "was": "Bowler Hat"
+ },
+ {
+  "kind": "relic",
+  "key": "BRIMSTONE",
+  "fm": 176,
+  "was": "Brimstone"
+ },
+ {
+  "kind": "relic",
+  "key": "BRONZE_SCALES",
+  "fm": 615,
+  "was": "Bronze Scales"
+ },
+ {
+  "kind": "relic",
+  "key": "BURNING_BLOOD",
+  "fm": 215,
+  "was": "Burning Blood"
+ },
+ {
+  "kind": "relic",
+  "key": "BURNING_STICKS",
+  "fm": 157,
+  "was": "Burning Sticks"
+ },
+ {
+  "kind": "relic",
+  "key": "BYRDPIP",
+  "fm": 538,
+  "was": "Byrdpip"
+ },
+ {
+  "kind": "relic",
+  "key": "CALLING_BELL",
+  "fm": 170,
+  "was": "Calling Bell"
+ },
+ {
+  "kind": "relic",
+  "key": "CAPTAINS_WHEEL",
+  "fm": 265,
+  "was": "Captain's Wheel"
+ },
+ {
+  "kind": "relic",
+  "key": "CAULDRON",
+  "fm": 628,
+  "was": "Cauldron"
+ },
+ {
+  "kind": "relic",
+  "key": "CENTENNIAL_PUZZLE",
+  "fm": 366,
+  "was": "Centennial Puzzle"
+ },
+ {
+  "kind": "relic",
+  "key": "CHARONS_ASHES",
+  "fm": 556,
+  "was": "Charon's Ashes"
+ },
+ {
+  "kind": "relic",
+  "key": "CHOICES_PARADOX",
+  "fm": 103,
+  "was": "Choices Paradox"
+ },
+ {
+  "kind": "relic",
+  "key": "CHOSEN_CHEESE",
+  "fm": 255,
+  "was": "The Chosen Cheese"
+ },
+ {
+  "kind": "relic",
+  "key": "CIRCLET",
+  "fm": 429,
+  "was": "Circlet"
+ },
+ {
+  "kind": "relic",
+  "key": "CLOAK_CLASP",
+  "fm": 104,
+  "was": "Cloak Clasp"
+ },
+ {
+  "kind": "relic",
+  "key": "CRACKED_CORE",
+  "fm": 537,
+  "was": "Cracked Core"
+ },
+ {
+  "kind": "relic",
+  "key": "CROSSBOW",
+  "fm": 312,
+  "was": "Crossbow"
+ },
+ {
+  "kind": "relic",
+  "key": "CURSED_KETTLE",
+  "fm": 558,
+  "was": "Cursed Kettle"
+ },
+ {
+  "kind": "relic",
+  "key": "CURSED_PEARL",
+  "fm": 251,
+  "was": "Cursed Pearl"
+ },
+ {
+  "kind": "relic",
+  "key": "DARKSTONE_PERIAPT",
+  "fm": 102,
+  "was": "Darkstone Periapt"
+ },
+ {
+  "kind": "relic",
+  "key": "DATA_DISK",
+  "fm": 283,
+  "was": "Data Disk"
+ },
+ {
+  "kind": "relic",
+  "key": "DAUGHTER_OF_THE_WIND",
+  "fm": 144,
+  "was": "Daughter of the Wind"
+ },
+ {
+  "kind": "relic",
+  "key": "DELICATE_FROND",
+  "fm": 238,
+  "was": "Delicate Frond"
+ },
+ {
+  "kind": "relic",
+  "key": "DEMON_TONGUE",
+  "fm": 112,
+  "was": "Demon Tongue"
+ },
+ {
+  "kind": "relic",
+  "key": "DIAMOND_DIADEM",
+  "fm": 266,
+  "was": "Diamond Diadem"
+ },
+ {
+  "kind": "relic",
+  "key": "DINGY_RUG",
+  "fm": 228,
+  "was": "Dingy Rug"
+ },
+ {
+  "kind": "relic",
+  "key": "DISTINGUISHED_CAPE",
+  "fm": 214,
+  "was": "Distinguished Cape"
+ },
+ {
+  "kind": "relic",
+  "key": "DIVINE_DESTINY",
+  "fm": 612,
+  "was": "Divine Destiny"
+ },
+ {
+  "kind": "relic",
+  "key": "DIVINE_RIGHT",
+  "fm": 280,
+  "was": "Divine Right"
+ },
+ {
+  "kind": "relic",
+  "key": "DOLLYS_MIRROR",
+  "fm": 261,
+  "was": "Dolly's Mirror"
+ },
+ {
+  "kind": "relic",
+  "key": "DRAGON_FRUIT",
+  "fm": 620,
+  "was": "Dragon Fruit"
+ },
+ {
+  "kind": "relic",
+  "key": "DREAM_CATCHER",
+  "fm": 129,
+  "was": "Dream Catcher"
+ },
+ {
+  "kind": "relic",
+  "key": "DRIFTWOOD",
+  "fm": 247,
+  "was": "Driftwood"
+ },
+ {
+  "kind": "relic",
+  "key": "ELECTRIC_SHRYMP",
+  "fm": 463,
+  "was": "Electric Shrymp"
+ },
+ {
+  "kind": "relic",
+  "key": "EMBER_TEA",
+  "fm": 210,
+  "was": "Ember Tea"
+ },
+ {
+  "kind": "relic",
+  "key": "EMOTION_CHIP",
+  "fm": 420,
+  "was": "Emotion Chip"
+ },
+ {
+  "kind": "relic",
+  "key": "EMPTY_CAGE",
+  "fm": 173,
+  "was": "Empty Cage"
+ },
+ {
+  "kind": "relic",
+  "key": "ENDLESS_APPETITE",
+  "fm": 398,
+  "was": "Endless Appetite"
+ },
+ {
+  "kind": "relic",
+  "key": "ETERNAL_FEATHER",
+  "fm": 264,
+  "was": "Eternal Feather"
+ },
+ {
+  "kind": "relic",
+  "key": "FENCING_MANUAL",
+  "fm": 262,
+  "was": "Fencing Manual"
+ },
+ {
+  "kind": "relic",
+  "key": "FESTIVE_POPPER",
+  "fm": 417,
+  "was": "Festive Popper"
+ },
+ {
+  "kind": "relic",
+  "key": "FIDDLE",
+  "fm": 592,
+  "was": "Fiddle"
+ },
+ {
+  "kind": "relic",
+  "key": "FORGOTTEN_SOUL",
+  "fm": 203,
+  "was": "Forgotten Soul"
+ },
+ {
+  "kind": "relic",
+  "key": "FRESNEL_LENS",
+  "fm": 171,
+  "was": "Fresnel Lens"
+ },
+ {
+  "kind": "relic",
+  "key": "FUNERARY_MASK",
+  "fm": 146,
+  "was": "Funerary Mask"
+ },
+ {
+  "kind": "relic",
+  "key": "FUR_COAT",
+  "fm": 65,
+  "was": "Fur Coat"
+ },
+ {
+  "kind": "relic",
+  "key": "GALACTIC_DUST",
+  "fm": 524,
+  "was": "Galactic Dust"
+ },
+ {
+  "kind": "relic",
+  "key": "GAMBLING_CHIP",
+  "fm": 120,
+  "was": "Gambling Chip"
+ },
+ {
+  "kind": "relic",
+  "key": "GAME_PIECE",
+  "fm": 166,
+  "was": "Game Piece"
+ },
+ {
+  "kind": "relic",
+  "key": "GIRYA",
+  "fm": 74,
+  "was": "Girya"
+ },
+ {
+  "kind": "relic",
+  "key": "GLASS_EYE",
+  "fm": 402,
+  "was": "Glass Eye"
+ },
+ {
+  "kind": "relic",
+  "key": "GLITTER",
+  "fm": 608,
+  "was": "Glitter"
+ },
+ {
+  "kind": "relic",
+  "key": "GLOWING_ORB",
+  "fm": 387,
+  "was": "Glowing Orb"
+ },
+ {
+  "kind": "relic",
+  "key": "GNARLED_HAMMER",
+  "fm": 3,
+  "was": "Gnarled Hammer"
+ },
+ {
+  "kind": "relic",
+  "key": "GOLDEN_COMPASS",
+  "fm": 583,
+  "was": "Golden Compass"
+ },
+ {
+  "kind": "relic",
+  "key": "GOLDEN_PEARL",
+  "fm": 451,
+  "was": "Golden Pearl"
+ },
+ {
+  "kind": "relic",
+  "key": "GOLD_PLATED_CABLES",
+  "fm": 421,
+  "was": "Gold-Plated Cables"
+ },
+ {
+  "kind": "relic",
+  "key": "GORGET",
+  "fm": 196,
+  "was": "Gorget"
+ },
+ {
+  "kind": "relic",
+  "key": "HAND_DRILL",
+  "fm": 197,
+  "was": "Hand Drill"
+ },
+ {
+  "kind": "relic",
+  "key": "HEFTY_TABLET",
+  "fm": 515,
+  "was": "Hefty Tablet"
+ },
+ {
+  "kind": "relic",
+  "key": "HISTORY_COURSE",
+  "fm": 175,
+  "was": "History Course"
+ },
+ {
+  "kind": "relic",
+  "key": "HORN_CLEAT",
+  "fm": 25,
+  "was": "Horn Cleat"
+ },
+ {
+  "kind": "relic",
+  "key": "INFUSED_CORE",
+  "fm": 422,
+  "was": "Infused Core"
+ },
+ {
+  "kind": "relic",
+  "key": "INK_BOTTLE",
+  "fm": 288,
+  "was": "Ink Bottle"
+ },
+ {
+  "kind": "relic",
+  "key": "IRON_CLUB",
+  "fm": 28,
+  "was": "Iron Club"
+ },
+ {
+  "kind": "relic",
+  "key": "JEWELED_MASK",
+  "fm": 42,
+  "was": "Jeweled Mask"
+ },
+ {
+  "kind": "relic",
+  "key": "JEWELRY_BOX",
+  "fm": 591,
+  "was": "Jewelry Box"
+ },
+ {
+  "kind": "relic",
+  "key": "JOSS_PAPER",
+  "fm": 108,
+  "was": "Joss Paper"
+ },
+ {
+  "kind": "relic",
+  "key": "JUZU_BRACELET",
+  "fm": 284,
+  "was": "Juzu Bracelet"
+ },
+ {
+  "kind": "relic",
+  "key": "KALEIDOSCOPE",
+  "fm": 505,
+  "was": "Kaleidoscope"
+ },
+ {
+  "kind": "relic",
+  "key": "KIFUDA",
+  "fm": 134,
+  "was": "Kifuda"
+ },
+ {
+  "kind": "relic",
+  "key": "KUNAI",
+  "fm": 651,
+  "was": "Kunai"
+ },
+ {
+  "kind": "relic",
+  "key": "KUSARIGAMA",
+  "fm": 469,
+  "was": "Kusarigama"
+ },
+ {
+  "kind": "relic",
+  "key": "LARGE_CAPSULE",
+  "fm": 147,
+  "was": "Large Capsule"
+ },
+ {
+  "kind": "relic",
+  "key": "LASTING_CANDY",
+  "fm": 198,
+  "was": "Lasting Candy"
+ },
+ {
+  "kind": "relic",
+  "key": "LAVA_ROCK",
+  "fm": 244,
+  "was": "Lava Rock"
+ },
+ {
+  "kind": "relic",
+  "key": "LEAD_PAPERWEIGHT",
+  "fm": 455,
+  "was": "Lead Paperweight"
+ },
+ {
+  "kind": "relic",
+  "key": "LEES_WAFFLE",
+  "fm": 604,
+  "was": "Lee's Waffle"
+ },
+ {
+  "kind": "relic",
+  "key": "LETTER_OPENER",
+  "fm": 609,
+  "was": "Letter Opener"
+ },
+ {
+  "kind": "relic",
+  "key": "LIZARD_TAIL",
+  "fm": 569,
+  "was": "Lizard Tail"
+ },
+ {
+  "kind": "relic",
+  "key": "LOOMING_FRUIT",
+  "fm": 510,
+  "was": "Looming Fruit"
+ },
+ {
+  "kind": "relic",
+  "key": "LORDS_PARASOL",
+  "fm": 130,
+  "was": "Lord's Parasol"
+ },
+ {
+  "kind": "relic",
+  "key": "LOST_COFFER",
+  "fm": 588,
+  "was": "Lost Coffer"
+ },
+ {
+  "kind": "relic",
+  "key": "LOST_WISP",
+  "fm": 563,
+  "was": "Lost Wisp"
+ },
+ {
+  "kind": "relic",
+  "key": "LUCKY_FYSH",
+  "fm": 436,
+  "was": "Lucky Fysh"
+ },
+ {
+  "kind": "relic",
+  "key": "LUNAR_PASTRY",
+  "fm": 290,
+  "was": "Lunar Pastry"
+ },
+ {
+  "kind": "relic",
+  "key": "MANGO",
+  "fm": 489,
+  "was": "Mango"
+ },
+ {
+  "kind": "relic",
+  "key": "MASSIVE_SCROLL",
+  "fm": 122,
+  "was": "Massive Scroll"
+ },
+ {
+  "kind": "relic",
+  "key": "MAW_BANK",
+  "fm": 393,
+  "was": "Maw Bank"
+ },
+ {
+  "kind": "relic",
+  "key": "MEAL_TICKET",
+  "fm": 212,
+  "was": "Meal Ticket"
+ },
+ {
+  "kind": "relic",
+  "key": "MEAT_CLEAVER",
+  "fm": 64,
+  "was": "Meat Cleaver"
+ },
+ {
+  "kind": "relic",
+  "key": "MEAT_ON_THE_BONE",
+  "fm": 61,
+  "was": "Meat on the Bone"
+ },
+ {
+  "kind": "relic",
+  "key": "MEMBERSHIP_CARD",
+  "fm": 224,
+  "was": "Membership Card"
+ },
+ {
+  "kind": "relic",
+  "key": "MERCURY_HOURGLASS",
+  "fm": 616,
+  "was": "Mercury Hourglass"
+ },
+ {
+  "kind": "relic",
+  "key": "METRONOME",
+  "fm": 45,
+  "was": "Metronome"
+ },
+ {
+  "kind": "relic",
+  "key": "MINIATURE_TENT",
+  "fm": 83,
+  "was": "Miniature Tent"
+ },
+ {
+  "kind": "relic",
+  "key": "MR_STRUGGLES",
+  "fm": 58,
+  "was": "Mr. Struggles"
+ },
+ {
+  "kind": "relic",
+  "key": "MUSIC_BOX",
+  "fm": 395,
+  "was": "Music Box"
+ },
+ {
+  "kind": "relic",
+  "key": "MYSTERIOUS_COCOON",
+  "fm": 72,
+  "was": "Mysterious Cocoon"
+ },
+ {
+  "kind": "relic",
+  "key": "MYSTIC_LIGHTER",
+  "fm": 142,
+  "was": "Mystic Lighter"
+ },
+ {
+  "kind": "relic",
+  "key": "NEOWS_BONES",
+  "fm": 153,
+  "was": "Neow's Bones"
+ },
+ {
+  "kind": "relic",
+  "key": "NEOWS_TORMENT",
+  "fm": 119,
+  "was": "Neow's Torment"
+ },
+ {
+  "kind": "relic",
+  "key": "NEW_LEAF",
+  "fm": 274,
+  "was": "New Leaf"
+ },
+ {
+  "kind": "relic",
+  "key": "NINJA_SCROLL",
+  "fm": 184,
+  "was": "Ninja Scroll"
+ },
+ {
+  "kind": "relic",
+  "key": "NUTRITIOUS_OYSTER",
+  "fm": 497,
+  "was": "Nutritious Oyster"
+ },
+ {
+  "kind": "relic",
+  "key": "ODDLY_SMOOTH_STONE",
+  "fm": 517,
+  "was": "Oddly Smooth Stone"
+ },
+ {
+  "kind": "relic",
+  "key": "OLD_COIN",
+  "fm": 481,
+  "was": "Old Coin"
+ },
+ {
+  "kind": "relic",
+  "key": "ORANGE_DOUGH",
+  "fm": 289,
+  "was": "Orange Dough"
+ },
+ {
+  "kind": "relic",
+  "key": "ORICHALCUM",
+  "fm": 88,
+  "was": "Orichalcum"
+ },
+ {
+  "kind": "relic",
+  "key": "ORNAMENTAL_FAN",
+  "fm": 687,
+  "was": "Ornamental Fan"
+ },
+ {
+  "kind": "relic",
+  "key": "ORRERY",
+  "fm": 276,
+  "was": "Orrery"
+ },
+ {
+  "kind": "relic",
+  "key": "PAELS_BLOOD",
+  "fm": 139,
+  "was": "Pael's Blood"
+ },
+ {
+  "kind": "relic",
+  "key": "PAELS_EYE",
+  "fm": 185,
+  "was": "Pael's Eye"
+ },
+ {
+  "kind": "relic",
+  "key": "PAELS_GROWTH",
+  "fm": 273,
+  "was": "Pael's Growth"
+ },
+ {
+  "kind": "relic",
+  "key": "PAELS_HORN",
+  "fm": 313,
+  "was": "Pael's Horn"
+ },
+ {
+  "kind": "relic",
+  "key": "PAELS_LEGION",
+  "fm": 478,
+  "was": "Pael's Legion"
+ },
+ {
+  "kind": "relic",
+  "key": "PAELS_WING",
+  "fm": 101,
+  "was": "Pael's Wing"
+ },
+ {
+  "kind": "relic",
+  "key": "PANTOGRAPH",
+  "fm": 256,
+  "was": "Pantograph"
+ },
+ {
+  "kind": "relic",
+  "key": "PAPER_KRANE",
+  "fm": 207,
+  "was": "Paper Krane"
+ },
+ {
+  "kind": "relic",
+  "key": "PAPER_PHROG",
+  "fm": 549,
+  "was": "Paper Phrog"
+ },
+ {
+  "kind": "relic",
+  "key": "PARRYING_SHIELD",
+  "fm": 296,
+  "was": "Parrying Shield"
+ },
+ {
+  "kind": "relic",
+  "key": "PEAR",
+  "fm": 547,
+  "was": "Pear"
+ },
+ {
+  "kind": "relic",
+  "key": "PENDULUM",
+  "fm": 16,
+  "was": "Pendulum"
+ },
+ {
+  "kind": "relic",
+  "key": "PEN_NIB",
+  "fm": 190,
+  "was": "Pen Nib"
+ },
+ {
+  "kind": "relic",
+  "key": "PERMAFROST",
+  "fm": 431,
+  "was": "Permafrost"
+ },
+ {
+  "kind": "relic",
+  "key": "PETRIFIED_TOAD",
+  "fm": 237,
+  "was": "Petrified Toad"
+ },
+ {
+  "kind": "relic",
+  "key": "PHIAL_HOLSTER",
+  "fm": 243,
+  "was": "Phial Holster"
+ },
+ {
+  "kind": "relic",
+  "key": "PHYLACTERY_UNBOUND",
+  "fm": 143,
+  "was": "Phylactery Unbound"
+ },
+ {
+  "kind": "relic",
+  "key": "PLANISPHERE",
+  "fm": 271,
+  "was": "Planisphere"
+ },
+ {
+  "kind": "relic",
+  "key": "POCKETWATCH",
+  "fm": 187,
+  "was": "Pocketwatch"
+ },
+ {
+  "kind": "relic",
+  "key": "POLLINOUS_CORE",
+  "fm": 579,
+  "was": "Pollinous Core"
+ },
+ {
+  "kind": "relic",
+  "key": "POTION_BELT",
+  "fm": 213,
+  "was": "Potion Belt"
+ },
+ {
+  "kind": "relic",
+  "key": "PRAYER_WHEEL",
+  "fm": 428,
+  "was": "Prayer Wheel"
+ },
+ {
+  "kind": "relic",
+  "key": "PRECARIOUS_SHEARS",
+  "fm": 514,
+  "was": "Precarious Shears"
+ },
+ {
+  "kind": "relic",
+  "key": "PRECISE_SCISSORS",
+  "fm": 535,
+  "was": "Precise Scissors"
+ },
+ {
+  "kind": "relic",
+  "key": "PRESERVED_FOG",
+  "fm": 279,
+  "was": "Preserved Fog"
+ },
+ {
+  "kind": "relic",
+  "key": "PUNCH_DAGGER",
+  "fm": 110,
+  "was": "Punch Dagger"
+ },
+ {
+  "kind": "relic",
+  "key": "RAINBOW_RING",
+  "fm": 527,
+  "was": "Rainbow Ring"
+ },
+ {
+  "kind": "relic",
+  "key": "RED_MASK",
+  "fm": 34,
+  "was": "Red Mask"
+ },
+ {
+  "kind": "relic",
+  "key": "RED_SKULL",
+  "fm": 226,
+  "was": "Red Skull"
+ },
+ {
+  "kind": "relic",
+  "key": "RED_VINE_TEA",
+  "fm": 567,
+  "was": "Red Vine Tea"
+ },
+ {
+  "kind": "relic",
+  "key": "REGALITE",
+  "fm": 456,
+  "was": "Regalite"
+ },
+ {
+  "kind": "relic",
+  "key": "REGAL_PILLOW",
+  "fm": 121,
+  "was": "Regal Pillow"
+ },
+ {
+  "kind": "relic",
+  "key": "REPTILE_TRINKET",
+  "fm": 76,
+  "was": "Reptile Trinket"
+ },
+ {
+  "kind": "relic",
+  "key": "RINGING_TRIANGLE",
+  "fm": 601,
+  "was": "Ringing Triangle"
+ },
+ {
+  "kind": "relic",
+  "key": "RING_OF_THE_DRAKE",
+  "fm": 561,
+  "was": "Ring of the Drake"
+ },
+ {
+  "kind": "relic",
+  "key": "RING_OF_THE_SNAKE",
+  "fm": 475,
+  "was": "Ring of the Snake"
+ },
+ {
+  "kind": "relic",
+  "key": "RIPPLE_BASIN",
+  "fm": 71,
+  "was": "Ripple Basin"
+ },
+ {
+  "kind": "relic",
+  "key": "ROYAL_POISON",
+  "fm": 504,
+  "was": "Royal Poison"
+ },
+ {
+  "kind": "relic",
+  "key": "ROYAL_STAMP",
+  "fm": 164,
+  "was": "Royal Stamp"
+ },
+ {
+  "kind": "relic",
+  "key": "RUNIC_CAPACITOR",
+  "fm": 461,
+  "was": "Runic Capacitor"
+ },
+ {
+  "kind": "relic",
+  "key": "RUNIC_PYRAMID",
+  "fm": 162,
+  "was": "Runic Pyramid"
+ },
+ {
+  "kind": "relic",
+  "key": "SAI",
+  "fm": 107,
+  "was": "Sai"
+ },
+ {
+  "kind": "relic",
+  "key": "SCREAMING_FLAGON",
+  "fm": 484,
+  "was": "Screaming Flagon"
+ },
+ {
+  "kind": "relic",
+  "key": "SCROLL_BOXES",
+  "fm": 115,
+  "was": "Scroll Boxes"
+ },
+ {
+  "kind": "relic",
+  "key": "SEA_GLASS",
+  "fm": 227,
+  "was": "Sea Glass"
+ },
+ {
+  "kind": "relic",
+  "key": "SELF_FORMING_CLAY",
+  "fm": 646,
+  "was": "Self-Forming Clay"
+ },
+ {
+  "kind": "relic",
+  "key": "SERE_TALON",
+  "fm": 159,
+  "was": "Sere Talon"
+ },
+ {
+  "kind": "relic",
+  "key": "SHOVEL",
+  "fm": 414,
+  "was": "Shovel"
+ },
+ {
+  "kind": "relic",
+  "key": "SHURIKEN",
+  "fm": 250,
+  "was": "Shuriken"
+ },
+ {
+  "kind": "relic",
+  "key": "SIGNET_RING",
+  "fm": 151,
+  "was": "Signet Ring"
+ },
+ {
+  "kind": "relic",
+  "key": "SILKEN_TRESS",
+  "fm": 574,
+  "was": "Silken Tress"
+ },
+ {
+  "kind": "relic",
+  "key": "SLING_OF_COURAGE",
+  "fm": 602,
+  "was": "Sling of Courage"
+ },
+ {
+  "kind": "relic",
+  "key": "SMALL_CAPSULE",
+  "fm": 277,
+  "was": "Small Capsule"
+ },
+ {
+  "kind": "relic",
+  "key": "SNECKO_SKULL",
+  "fm": 590,
+  "was": "Snecko Skull"
+ },
+ {
+  "kind": "relic",
+  "key": "SPARKLING_ROUGE",
+  "fm": 252,
+  "was": "Sparkling Rouge"
+ },
+ {
+  "kind": "relic",
+  "key": "STONE_CALENDAR",
+  "fm": 516,
+  "was": "Stone Calendar"
+ },
+ {
+  "kind": "relic",
+  "key": "STONE_HUMIDIFIER",
+  "fm": 457,
+  "was": "Stone Humidifier"
+ },
+ {
+  "kind": "relic",
+  "key": "STORYBOOK",
+  "fm": 145,
+  "was": "Storybook"
+ },
+ {
+  "kind": "relic",
+  "key": "STRAWBERRY",
+  "fm": 205,
+  "was": "Strawberry"
+ },
+ {
+  "kind": "relic",
+  "key": "STURDY_CLAMP",
+  "fm": 480,
+  "was": "Sturdy Clamp"
+ },
+ {
+  "kind": "relic",
+  "key": "SWORD_OF_JADE",
+  "fm": 399,
+  "was": "Sword of Jade"
+ },
+ {
+  "kind": "relic",
+  "key": "SWORD_OF_STONE",
+  "fm": 263,
+  "was": "Sword of Stone"
+ },
+ {
+  "kind": "relic",
+  "key": "SYMBIOTIC_VIRUS",
+  "fm": 155,
+  "was": "Symbiotic Virus"
+ },
+ {
+  "kind": "relic",
+  "key": "TANXS_WHISTLE",
+  "fm": 40,
+  "was": "Tanx's Whistle"
+ },
+ {
+  "kind": "relic",
+  "key": "TEA_OF_DISCOURTESY",
+  "fm": 241,
+  "was": "Tea of Discourtesy"
+ },
+ {
+  "kind": "relic",
+  "key": "THE_ABACUS",
+  "fm": 189,
+  "was": "The Abacus"
+ },
+ {
+  "kind": "relic",
+  "key": "THE_BOOT",
+  "fm": 77,
+  "was": "The Boot"
+ },
+ {
+  "kind": "relic",
+  "key": "THE_COURIER",
+  "fm": 499,
+  "was": "The Courier"
+ },
+ {
+  "kind": "relic",
+  "key": "THROWING_AXE",
+  "fm": 29,
+  "was": "Throwing Axe"
+ },
+ {
+  "kind": "relic",
+  "key": "TINGSHA",
+  "fm": 459,
+  "was": "Tingsha"
+ },
+ {
+  "kind": "relic",
+  "key": "TINY_MAILBOX",
+  "fm": 202,
+  "was": "Tiny Mailbox"
+ },
+ {
+  "kind": "relic",
+  "key": "TOASTY_MITTENS",
+  "fm": 291,
+  "was": "Toasty Mittens"
+ },
+ {
+  "kind": "relic",
+  "key": "TOOLBOX",
+  "fm": 410,
+  "was": "Toolbox"
+ },
+ {
+  "kind": "relic",
+  "key": "TOUCH_OF_OROBAS",
+  "fm": 135,
+  "was": "Touch of Orobas"
+ },
+ {
+  "kind": "relic",
+  "key": "TOUGH_BANDAGES",
+  "fm": 359,
+  "was": "Tough Bandages"
+ },
+ {
+  "kind": "relic",
+  "key": "TOY_BOX",
+  "fm": 381,
+  "was": "Toy Box"
+ },
+ {
+  "kind": "relic",
+  "key": "TRI_BOOMERANG",
+  "fm": 206,
+  "was": "Tri-Boomerang"
+ },
+ {
+  "kind": "relic",
+  "key": "TUNGSTEN_ROD",
+  "fm": 606,
+  "was": "Tungsten Rod"
+ },
+ {
+  "kind": "relic",
+  "key": "TUNING_FORK",
+  "fm": 191,
+  "was": "Tuning Fork"
+ },
+ {
+  "kind": "relic",
+  "key": "TWISTED_FUNNEL",
+  "fm": 589,
+  "was": "Twisted Funnel"
+ },
+ {
+  "kind": "relic",
+  "key": "UNCEASING_TOP",
+  "fm": 485,
+  "was": "Unceasing Top"
+ },
+ {
+  "kind": "relic",
+  "key": "UNDYING_SIGIL",
+  "fm": 351,
+  "was": "Undying Sigil"
+ },
+ {
+  "kind": "relic",
+  "key": "UNSETTLING_LAMP",
+  "fm": 222,
+  "was": "Unsettling Lamp"
+ },
+ {
+  "kind": "relic",
+  "key": "VAJRA",
+  "fm": 610,
+  "was": "Vajra"
+ },
+ {
+  "kind": "relic",
+  "key": "VAMBRACE",
+  "fm": 629,
+  "was": "Vambrace"
+ },
+ {
+  "kind": "relic",
+  "key": "VEXING_PUZZLEBOX",
+  "fm": 560,
+  "was": "Vexing Puzzlebox"
+ },
+ {
+  "kind": "relic",
+  "key": "VINE_BRACELET",
+  "fm": 75,
+  "was": "Vine Bracelet"
+ },
+ {
+  "kind": "relic",
+  "key": "WHITE_BEAST_STATUE",
+  "fm": 138,
+  "was": "White Beast Statue"
+ },
+ {
+  "kind": "relic",
+  "key": "WHITE_STAR",
+  "fm": 492,
+  "was": "White Star"
+ },
+ {
+  "kind": "relic",
+  "key": "WINGED_BOOTS",
+  "fm": 541,
+  "was": "Winged Boots"
+ },
+ {
+  "kind": "relic",
+  "key": "WING_CHARM",
+  "fm": 603,
+  "was": "Wing Charm"
+ },
+ {
+  "kind": "relic",
+  "key": "WONGOS_MYSTERY_TICKET",
+  "fm": 607,
+  "was": "Wongo's Mystery Ticket"
+ },
+ {
+  "kind": "relic",
+  "key": "WONGO_CUSTOMER_APPRECIATION_BADGE",
+  "fm": 598,
+  "was": "Wongo Customer Appreciation Badge"
+ },
+ {
+  "kind": "relic",
+  "key": "FAKE_ANCHOR",
+  "fm": 449,
+  "was": "Anchor???",
+  "knockoff": true
+ },
+ {
+  "kind": "relic",
+  "key": "FAKE_BLOOD_VIAL",
+  "fm": 229,
+  "was": "Blood Vial???",
+  "knockoff": true
+ },
+ {
+  "kind": "relic",
+  "key": "FAKE_LEES_WAFFLE",
+  "fm": 604,
+  "was": "Lee's Waffle???",
+  "knockoff": true
+ },
+ {
+  "kind": "relic",
+  "key": "FAKE_MANGO",
+  "fm": 489,
+  "was": "Mango???",
+  "knockoff": true
+ },
+ {
+  "kind": "relic",
+  "key": "FAKE_ORICHALCUM",
+  "fm": 88,
+  "was": "Orichalcum???",
+  "knockoff": true
+ }
+]

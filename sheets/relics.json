@@ -1,0 +1,315 @@
+[
+ {
+  "id": "millennium_eye",
+  "cls": "FmMillenniumEye",
+  "title": "Millennium Eye",
+  "rarity": "Rare",
+  "kind": "hand_size",
+  "value": 1,
+  "types": [],
+  "art": 109,
+  "who": "Pegasus",
+  "text": "Pegasus reads your opponent's mind. Draw up to 6 cards each turn instead of 5."
+ },
+ {
+  "id": "millennium_ring",
+  "cls": "FmMillenniumRing",
+  "title": "Millennium Ring",
+  "rarity": "Rare",
+  "kind": "death_burn",
+  "value": 50,
+  "types": [],
+  "art": 148,
+  "who": "Bakura",
+  "text": "When your monster is destroyed, its spirit deals 50% of its ATK to a random enemy."
+ },
+ {
+  "id": "millennium_rod",
+  "cls": "FmMillenniumRod",
+  "title": "Millennium Rod",
+  "rarity": "Rare",
+  "kind": "combat_weak",
+  "value": 2,
+  "types": [],
+  "art": 220,
+  "who": "Seto",
+  "text": "Start of combat: apply 2 Weak to ALL enemies."
+ },
+ {
+  "id": "millennium_key",
+  "cls": "FmMillenniumKey",
+  "title": "Millennium Key",
+  "rarity": "Uncommon",
+  "kind": "combat_trap",
+  "value": 683,
+  "types": [],
+  "art": 192,
+  "who": "Shadi",
+  "text": "Start of combat: set a Bear Trap face-down."
+ },
+ {
+  "id": "millennium_scale",
+  "cls": "FmMillenniumScale",
+  "title": "Millennium Scale",
+  "rarity": "Rare",
+  "kind": "fusion_bonus",
+  "value": 300,
+  "types": [],
+  "art": 360,
+  "who": "Shadi",
+  "text": "Each successful fusion in a chain gives the result +300 ATK/DEF."
+ },
+ {
+  "id": "millennium_necklace",
+  "cls": "FmMillenniumNecklace",
+  "title": "Millennium Necklace",
+  "rarity": "Uncommon",
+  "kind": "empty_field_block",
+  "value": 600,
+  "types": [],
+  "art": 260,
+  "who": "Isis",
+  "text": "Isis foresees the attack. Start of your turn with no monster: gain 600 Block."
+ },
+ {
+  "id": "simon_muran",
+  "cls": "FmSimonMuran",
+  "title": "Simon Muran's Lesson",
+  "rarity": "Common",
+  "kind": "heal_after_combat",
+  "value": 400,
+  "types": [],
+  "art": 259,
+  "who": "Simon Muran",
+  "text": "Your mentor patches you up. After each combat, recover 400 LP."
+ },
+ {
+  "id": "teanas_care",
+  "cls": "FmTeanasCare",
+  "title": "Teana's Care",
+  "rarity": "Common",
+  "kind": "heal_bonus",
+  "value": 50,
+  "types": [],
+  "art": 2,
+  "who": "Teana",
+  "text": "Healing spells recover 50% more Life Points."
+ },
+ {
+  "id": "jonos_spirit",
+  "cls": "FmJonosSpirit",
+  "title": "Jono's Spirit",
+  "rarity": "Common",
+  "kind": "first_summon_atk",
+  "value": 500,
+  "types": [],
+  "art": 15,
+  "who": "Jono",
+  "text": "Your first monster each combat gets +500 ATK."
+ },
+ {
+  "id": "duel_master_k",
+  "cls": "FmDuelMasterK",
+  "title": "Duel Master K's Deck",
+  "rarity": "Common",
+  "kind": "combat_draw",
+  "value": 2,
+  "types": [],
+  "art": 41,
+  "who": "Duel Master K",
+  "text": "Start of combat: draw 2 extra cards."
+ },
+ {
+  "id": "harpie_feather",
+  "cls": "FmMaisHarpies",
+  "title": "Mai's Harpies",
+  "rarity": "Uncommon",
+  "kind": "type_boost",
+  "value": 500,
+  "types": [
+   "WingedBeast"
+  ],
+  "art": 62,
+  "who": "Mai Valentine",
+  "text": "Winged Beast monsters get +500 ATK/DEF."
+ },
+ {
+  "id": "weevils_swarm",
+  "cls": "FmWeevilsSwarm",
+  "title": "Weevil's Swarm",
+  "rarity": "Uncommon",
+  "kind": "type_boost",
+  "value": 500,
+  "types": [
+   "Insect"
+  ],
+  "art": 57,
+  "who": "Weevil Underwood",
+  "text": "Insect monsters get +500 ATK/DEF."
+ },
+ {
+  "id": "rex_raptor",
+  "cls": "FmRexsFossils",
+  "title": "Rex's Fossils",
+  "rarity": "Uncommon",
+  "kind": "type_boost",
+  "value": 500,
+  "types": [
+   "Dinosaur"
+  ],
+  "art": 32,
+  "who": "Rex Raptor",
+  "text": "Dinosaur monsters get +500 ATK/DEF."
+ },
+ {
+  "id": "bandit_keith",
+  "cls": "FmKeithsMachines",
+  "title": "Keith's Machines",
+  "rarity": "Uncommon",
+  "kind": "type_boost",
+  "value": 500,
+  "types": [
+   "Machine"
+  ],
+  "art": 204,
+  "who": "Bandit Keith",
+  "text": "Machine monsters get +500 ATK/DEF."
+ },
+ {
+  "id": "seto_dragons",
+  "cls": "FmSetosDragons",
+  "title": "High Priest Seto's Dragons",
+  "rarity": "Rare",
+  "kind": "type_boost",
+  "value": 500,
+  "types": [
+   "Dragon"
+  ],
+  "art": 1,
+  "who": "High Priest Seto",
+  "text": "Dragon monsters get +500 ATK/DEF."
+ },
+ {
+  "id": "kaiba_pride",
+  "cls": "FmKaibasPride",
+  "title": "Kaiba's Pride",
+  "rarity": "Rare",
+  "kind": "counter_bonus",
+  "value": 100,
+  "types": [],
+  "art": 380,
+  "who": "Seto Kaiba",
+  "text": "Your monster hits back twice as hard when attacked in Attack position."
+ },
+ {
+  "id": "guardian_sebek",
+  "cls": "FmGuardianSebek",
+  "title": "Guardian Sebek",
+  "rarity": "Uncommon",
+  "kind": "defense_boost",
+  "value": 800,
+  "types": [],
+  "art": 374,
+  "who": "Guardian Sebek",
+  "text": "Monsters in Defense position get +800 DEF."
+ },
+ {
+  "id": "guardian_neku",
+  "cls": "FmGuardianNeku",
+  "title": "Guardian Neku",
+  "rarity": "Uncommon",
+  "kind": "type_boost",
+  "value": 500,
+  "types": [
+   "Zombie",
+   "Fiend"
+  ],
+  "art": 368,
+  "who": "Guardian Neku",
+  "text": "Zombie and Fiend monsters get +500 ATK/DEF."
+ },
+ {
+  "id": "ocean_mage",
+  "cls": "FmOceanMage",
+  "title": "Ocean Mage",
+  "rarity": "Uncommon",
+  "kind": "start_field",
+  "value": 334,
+  "types": [],
+  "art": 445,
+  "who": "Ocean Mage",
+  "text": "Start of combat: Umi is in play."
+ },
+ {
+  "id": "forest_mage",
+  "cls": "FmForestMage",
+  "title": "Forest Mage",
+  "rarity": "Uncommon",
+  "kind": "start_field",
+  "value": 330,
+  "types": [],
+  "art": 638,
+  "who": "Forest Mage",
+  "text": "Start of combat: Forest is in play."
+ },
+ {
+  "id": "mountain_mage",
+  "cls": "FmMountainMage",
+  "title": "Mountain Mage",
+  "rarity": "Uncommon",
+  "kind": "start_field",
+  "value": 332,
+  "types": [],
+  "art": 525,
+  "who": "Mountain Mage",
+  "text": "Start of combat: Mountain is in play."
+ },
+ {
+  "id": "desert_mage",
+  "cls": "FmDesertMage",
+  "title": "Desert Mage",
+  "rarity": "Uncommon",
+  "kind": "start_field",
+  "value": 331,
+  "types": [],
+  "art": 59,
+  "who": "Desert Mage",
+  "text": "Start of combat: Wasteland is in play."
+ },
+ {
+  "id": "meadow_mage",
+  "cls": "FmMeadowMage",
+  "title": "Meadow Mage",
+  "rarity": "Uncommon",
+  "kind": "start_field",
+  "value": 333,
+  "types": [],
+  "art": 38,
+  "who": "Meadow Mage",
+  "text": "Start of combat: Sogen is in play."
+ },
+ {
+  "id": "heishins_ambition",
+  "cls": "FmHeishinsAmbition",
+  "title": "Heishin's Ambition",
+  "rarity": "Rare",
+  "kind": "double_summon",
+  "value": 500,
+  "types": [],
+  "art": 287,
+  "who": "Heishin",
+  "text": "You may summon twice per turn. The second summon costs 500 LP."
+ },
+ {
+  "id": "darknite",
+  "cls": "FmDarkNitesMask",
+  "title": "DarkNite's Mask",
+  "rarity": "Rare",
+  "kind": "fusion_keep",
+  "value": 0,
+  "types": [],
+  "art": 116,
+  "who": "DarkNite",
+  "text": "A failed fusion keeps the stronger monster instead of the newer one."
+ }
+]

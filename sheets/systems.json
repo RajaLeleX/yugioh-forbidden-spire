@@ -1,0 +1,572 @@
+[
+ {
+  "id": "life_points",
+  "what": "FM Necrobinder starts with 8000 max HP",
+  "value": 8000,
+  "hook": "char_starting_hp"
+ },
+ {
+  "id": "enemy_hp_x100",
+  "what": "Enemy max/current HP multiplied at combat start",
+  "value": 100,
+  "hook": "enemy_hp_scale"
+ },
+ {
+  "id": "enemy_damage_x100",
+  "what": "Damage dealt by enemies multiplied",
+  "value": 100,
+  "hook": "enemy_damage_scale"
+ },
+ {
+  "id": "enemy_block_x100",
+  "what": "Block gained by enemies multiplied so their defenses match the scale",
+  "value": 100,
+  "hook": "enemy_block_scale"
+ },
+ {
+  "id": "enemy_power_x100",
+  "what": "Enemy flat damage-affecting powers (Strength) multiplied",
+  "value": 100,
+  "hook": "enemy_damage_scale"
+ },
+ {
+  "id": "hand_draw_to_5",
+  "what": "Start of turn: draw until hand has 5 cards",
+  "value": 5,
+  "hook": "draw_count"
+ },
+ {
+  "id": "retain_hand",
+  "what": "FM cards are never discarded at end of turn",
+  "value": 1,
+  "hook": "card_retain"
+ },
+ {
+  "id": "no_energy",
+  "what": "All FM cards cost 0 energy",
+  "value": 0,
+  "hook": "card_cost"
+ },
+ {
+  "id": "one_summon_per_turn",
+  "what": "Only one monster summon (single or fusion chain) per turn; spells unlimited",
+  "value": 1,
+  "hook": "can_play_monster"
+ },
+ {
+  "id": "fusion_marking",
+  "what": "Right-click a monster in hand to mark it with the next fusion number; right-click again to unmark",
+  "value": 0,
+  "hook": "hand_right_click"
+ },
+ {
+  "id": "fusion_chain",
+  "what": "Playing any marked card fuses all marked cards in order using the disc fusion table; mismatches drop the earlier card",
+  "value": 0,
+  "hook": "monster_play"
+ },
+ {
+  "id": "position_choice",
+  "what": "After summoning, a choice window offers Attack or Defense",
+  "value": 0,
+  "hook": "monster_play"
+ },
+ {
+  "id": "osty_is_monster",
+  "what": "Osty becomes the summoned FM monster with 1 HP; any enemy hit that gets past Block destroys it, whatever its ATK",
+  "value": 1,
+  "hook": "osty_summon"
+ },
+ {
+  "id": "osty_card_sprite",
+  "what": "The monster is shown as the game NCard of its FM card (CanvasGroup), upright in Attack, sideways in Defense",
+  "value": 0,
+  "hook": "osty_visual"
+ },
+ {
+  "id": "osty_attack",
+  "what": "Attack position at end of your turn: Osty hits its target (or a random enemy) for ATK",
+  "value": 1,
+  "hook": "turn_end"
+ },
+ {
+  "id": "defense_block",
+  "what": "Defense position at end of your turn: the duelist gains Block = DEF (the game blocks hits on Osty with its owner's Block)",
+  "value": 1,
+  "hook": "turn_end"
+ },
+ {
+  "id": "dragon_gate",
+  "what": "Fusions resulting in level 5+ Dragons fail unless Dragon Treasure relic owned",
+  "value": 5,
+  "hook": "monster_play"
+ },
+ {
+  "id": "dragon_buff_option",
+  "what": "Neow offers Dragon Treasure relic: unlocks dragon fusions and adds Baby Dragon + Petit Dragon",
+  "value": 2,
+  "hook": "neow_options"
+ },
+ {
+  "id": "reward_scaling",
+  "what": "Card rewards draw from FM pool using per-act rarity columns; StS rarity odds apply",
+  "value": 0,
+  "hook": "card_pool"
+ },
+ {
+  "id": "fm_music",
+  "what": "Normal/elite fights: random FM track (all non-jingle tracks), kept for 2 floors; bosses and rest sites fixed (media.json)",
+  "value": 0,
+  "hook": "music"
+ },
+ {
+  "id": "fm_sfx",
+  "what": "Fusion mark / draw sounds from disc",
+  "value": 0,
+  "hook": "sfx"
+ },
+ {
+  "id": "disc_loader",
+  "what": "Reads the player's FM disc image path from %APPDATA%/FMDuelist/settings.cfg (FM_DISC) and parses cards, fusions, equips, art",
+  "value": 0,
+  "hook": "mod_init"
+ },
+ {
+  "id": "position_toggle",
+  "what": "ATK/DEF toggle button on the monster switches position for this turn",
+  "value": 0,
+  "hook": "osty_visual"
+ },
+ {
+  "id": "three_zones",
+  "what": "Three monster zones (zone 1 = Osty, zones 2-3 = FmZonePet pets). Summon asks for a zone; an occupied zone fuses with its monster first",
+  "value": 3,
+  "hook": "osty_summon"
+ },
+ {
+  "id": "destroy_burn",
+  "what": "When the monster dies its card sprite burns away (shader dissolve) with FM destroy SFX if decodable",
+  "value": 0,
+  "hook": "osty_visual"
+ },
+ {
+  "id": "counter_attack",
+  "what": "Attack position hit: if hit <= monster ATK the attacker takes ATK back; if hit > ATK no hit-back and the duelist takes the difference",
+  "value": 1,
+  "hook": "enemy_attack"
+ },
+ {
+  "id": "block_reflect",
+  "what": "Enemy attack total (all hits summed) <= Defense block: leftover block dealt back to attacker",
+  "value": 1,
+  "hook": "enemy_attack"
+ },
+ {
+  "id": "click_attack",
+  "what": "Click the monster card: game targeting arrow; chosen enemy is attacked (card flies into it, hit fx, flies back); once per turn, else auto at end of turn",
+  "value": 1,
+  "hook": "click_attack"
+ },
+ {
+  "id": "deck_cycle",
+  "what": "Standard StS deck cycle: played cards go to discard and reshuffle; no FM card exhausts",
+  "value": 0,
+  "hook": "card_cost"
+ },
+ {
+  "id": "damage_calc",
+  "what": "Monster on field: duelist takes no enemy damage; per hit in Attack: hit-back ATK, duelist takes (hit - ATK) if positive, monster destroyed; Defense: Block soaks, unbroken Block reflects remainder",
+  "value": 1,
+  "hook": "enemy_attack"
+ },
+ {
+  "id": "monster_self_safe",
+  "what": "The monster only loses HP to enemy powered attacks (never from its own attacks, thorns or self-damage)",
+  "value": 1,
+  "hook": "enemy_attack"
+ },
+ {
+  "id": "multi_hit_per_hit",
+  "what": "Each hit of a multi-hit attack is calculated separately (hit-back, excess damage, reflect)",
+  "value": 1,
+  "hook": "enemy_attack"
+ },
+ {
+  "id": "hover_preview",
+  "what": "Hovering the field monster or a zone card shows the full card, stats, equips and FM text",
+  "value": 0,
+  "hook": "zone"
+ },
+ {
+  "id": "spell_trap_zone",
+  "what": "Row above the duelist: set traps face-down, field spell, equips, Swords with turns left",
+  "value": 0,
+  "hook": "zone"
+ },
+ {
+  "id": "relics",
+  "what": "25 Millennium Item / character relics in the Necrobinder pool (sheets/relics.json)",
+  "value": 25,
+  "hook": "relics"
+ },
+ {
+  "id": "field_backdrop",
+  "what": "Field spells fade the combat backdrop into their own card art (blurred, tinted): Forest, Wasteland, Mountain, Sogen, Umi (sea), Yami (darkness)",
+  "value": 0,
+  "hook": "zone"
+ },
+ {
+  "id": "colorless_pool",
+  "what": "During FM runs the colorless pool = 24 FM rituals + 6 FM support magic (pool column = colorless)",
+  "value": 30,
+  "hook": "card_pool"
+ },
+ {
+  "id": "field_fusion",
+  "what": "Summoning while a monster is on the field: the field monster is the first card of the fusion chain (animated)",
+  "value": 1,
+  "hook": "monster_play"
+ },
+ {
+  "id": "scale_everything",
+  "what": "Every non-FM damage/Block number is x100 (enemy attacks, thorns, poison, statuses, base relics/potions/powers on the duelist); FM effects use raw FM numbers; enemy Strength/Dexterity/Thorns/Poison/Constrict/BlockNextTurn display x100",
+  "value": 100,
+  "hook": "enemy_damage_scale"
+ },
+ {
+  "id": "scale_flat_hp",
+  "what": "FM runs: base-game flat HP loss, heals and max-HP changes under 200 are x100 (events, relics, potions, Neow, enemy regen); FM effects are raw",
+  "value": 200,
+  "hook": "enemy_damage_scale"
+ },
+ {
+  "id": "no_energy_items",
+  "what": "Relics/potions/events in sheets/removed_energy.json never appear in FM runs (energy + card upgrades); reward upgrade odds are 0",
+  "value": 80,
+  "hook": "card_pool"
+ },
+ {
+  "id": "skip_reward",
+  "what": "Card reward Skip completes (discards) the reward",
+  "value": 0,
+  "hook": "card_pool"
+ },
+ {
+  "id": "rest_cut",
+  "what": "Rest site: Smith replaced by Cut, which removes up to (act index + 1) cards: Act 1: 1, Act 2: 2, Act 3: 3",
+  "value": 3,
+  "hook": "card_pool"
+ },
+ {
+  "id": "front_zone_hit",
+  "what": "Enemy attacks land on the front living zone (1, then 2, then 3)",
+  "value": 1,
+  "hook": "enemy_attack"
+ },
+ {
+  "id": "trap_limit",
+  "what": "At most 3 traps set at once",
+  "value": 3,
+  "hook": "can_play_monster"
+ },
+ {
+  "id": "rest_music",
+  "what": "Rest sites play FM's Build Deck music (media.json restSite_BuildDeck)",
+  "value": 0,
+  "hook": "music"
+ },
+ {
+  "id": "start_music",
+  "what": "Each act's starting room plays media.json actStartRoom (act 1: 44, act 2: 26, act 3: game music)",
+  "value": 44,
+  "hook": "music"
+ },
+ {
+  "id": "boss_fanfare",
+  "what": "Beating an act boss plays media.json bossVictoryFanfare (track 46) once",
+  "value": 46,
+  "hook": "music"
+ },
+ {
+  "id": "exodia",
+  "what": "Neow option Exodia Card Box adds the 5 Forbidden One pieces (17-21). All 5 in hand: animation, every enemy killed. Pieces never in rewards or shops",
+  "value": 5,
+  "hook": "monster_play"
+ },
+ {
+  "id": "min_deck",
+  "what": "Only with the Exodia Card Box: deck cannot be cut (rest Cut, shop removal) below 15; the box tops the deck up to 15",
+  "value": 15,
+  "hook": "card_pool"
+ },
+ {
+  "id": "item_text_x100",
+  "what": "In FM runs all text matches the x100 effects: relic/potion/event numbers (<200, not %), enemy power tooltips and icons, base-card damage/Block previews",
+  "value": 100,
+  "hook": "enemy_damage_scale"
+ },
+ {
+  "id": "defeat_music",
+  "what": "Losing: track 47 (You Lose) once, then 3 s later track 48 (Game Over) once",
+  "value": 47,
+  "hook": "music"
+ },
+ {
+  "id": "dark_hole_lock",
+  "what": "Dark Hole destroys all your monsters and blocks summoning for the rest of that turn",
+  "value": 1,
+  "hook": "can_play_monster"
+ },
+ {
+  "id": "intro_fmv",
+  "what": "After the company logos, MOVIE.STR movie 1 plays (MDEC v2 + XA, decoded from the disc); click/key skips",
+  "value": 1,
+  "hook": "music"
+ },
+ {
+  "id": "menu_backdrop",
+  "what": "Main menu backdrop = intro frame 255 (FM logo on the flaming stone wall); menu buttons unchanged; menu music track 00",
+  "value": 0,
+  "hook": "music"
+ },
+ {
+  "id": "dragon_rewards",
+  "what": "Act 1: 20% per card reward to swap in a random weak Dragon (lv<=4); Act 2: weak Common, strong Uncommon; Act 3: all Dragons Common; Act 1 shops: 40% per visit that one card is a weak Dragon",
+  "value": 0.2,
+  "hook": "card_pool"
+ },
+ {
+  "id": "map_music",
+  "what": "Act map theme (also events/shops/treasure): media.json actMap (act 1: track 10)",
+  "value": 10,
+  "hook": "music"
+ },
+ {
+  "id": "attack_locks_position",
+  "what": "A monster that attacked this turn can't switch to Defense until next turn",
+  "value": 1,
+  "hook": "zone"
+ },
+ {
+  "id": "one_mass_spell_per_turn",
+  "what": "Only one Raigeki (337) or Dark Hole (336) can be played per turn",
+  "value": 1,
+  "hook": "turn_start"
+ },
+ {
+  "id": "star_chips",
+  "what": "Currency is Star Chips: Gold/coin text renamed in every loc table; gold icons replaced with the mod's own star chip art (dist/FMDuelist/star_chip.png)",
+  "value": 1,
+  "hook": "loc_inject"
+ },
+ {
+  "id": "shop_music",
+  "what": "Shop music per act: Act 1 #15, Act 2 #9, Act 3 #15 (media.actShop)",
+  "value": 15,
+  "hook": "music"
+ },
+ {
+  "id": "elite_music",
+  "what": "Elite fights: Act 1 #29; Act 2 #30 (70%) / #29 (30%); Act 3 #33 (60%) / #30 (25%) / #29 (15%) (media.eliteByAct)",
+  "value": 29,
+  "hook": "music"
+ },
+ {
+  "id": "arrow_fuse_field",
+  "what": "Dragging a hand monster's arrow onto your own field monster fuses onto it; that field monster leads the chain, then any right-click-marked cards in order, then the dragged card if unmarked",
+  "value": 1,
+  "hook": "monster_play"
+ },
+ {
+  "id": "tutorial",
+  "what": "Before the first Act 1 battle: popup with FM rules, fusing, junk cards and a cheat sheet computed from the disc fusion table (no 'don't show again'; Fusion Guide button reopens it)",
+  "value": 1,
+  "hook": "turn_start"
+ },
+ {
+  "id": "retheme",
+  "what": "Remaining potions/relics take an FM card's name, flavor and art from the disc (sheets/retheme.json, built by tools/make_retheme.py); effects unchanged",
+  "value": 295,
+  "hook": "loc_inject"
+ },
+ {
+  "id": "charselect_music",
+  "what": "Character select plays FM track 44 (media.characterSelect); every looping track now loops seamlessly at its loop-end point with the release tail folded into the loop start",
+  "value": 44,
+  "hook": "music"
+ },
+ {
+  "id": "duel_master_k",
+  "what": "Necrobinder is renamed Duel Master K (he/him, Duel Monsters description); portrait from local duel_master_k.png if present (never shipped), else game art",
+  "value": 1,
+  "hook": "loc_inject"
+ },
+ {
+  "id": "no_native_cards",
+  "what": "Base-game cards added to an FM player's piles become FM cards: Strike -> random heal spell (338-341), Defend -> random trap (681-690), other -> random FM pool card; curses/statuses untouched",
+  "value": 1,
+  "hook": "card_pool"
+ },
+ {
+  "id": "block_multipliers",
+  "what": "Block multipliers in FM runs give +1000 DEF until next turn instead: Fortifier (one chosen monster), Pael's Legion (all your monsters, when a block spell is played)",
+  "value": 1000,
+  "hook": "zone"
+ },
+ {
+  "id": "transform",
+  "what": "Transform: monster -> random monster of higher rarity (basic: C55/U33/R12; common: U75/R25; uncommon/rare: R100); spell/trap/equip/ritual -> random spell/trap/equip (C60/U30/R10); never Exodia",
+  "value": 1,
+  "hook": "card_pool"
+ },
+ {
+  "id": "equips_targeted",
+  "what": "Equips are dragged onto one compatible monster (arrow only highlights monsters that can use it); bonus stays while that monster is on the field; FM-style equip animation (card spins in, flash, shine sweep) + synthesized equip sound",
+  "value": 1,
+  "hook": "zone"
+ },
+ {
+  "id": "junk_fusion",
+  "what": "Statuses/curses can be marked: harmless junk is knocked away (failed fusion, discarded); junk with an in-hand turn-end effect destroys the current monster and is exhausted; leading junk waits for the first monster",
+  "value": 1,
+  "hook": "hand_right_click"
+ },
+ {
+  "id": "step_back",
+  "what": "Frantic Escape (sand worm) = Step Back: uses the turn's summon, stacks only with marked Frantic Escapes (1-5 steps), no cost growth; tutorial tab 'Junk Cards' explains junk and Step Back with pictures",
+  "value": 5,
+  "hook": "monster_play"
+ },
+ {
+  "id": "neow_choices",
+  "what": "Neow shows 3 choices; Dragon Treasure 35% and Exodia Card Box 15% roll independently and replace normal choices",
+  "value": 3,
+  "hook": "neow_options"
+ },
+ {
+  "id": "random_starter",
+  "what": "Starter monsters are drawn fresh each run: 14 Common non-Dragon monsters (ATK<=1000, Lv<=3), one per type first; starter spells unchanged",
+  "value": 14,
+  "hook": "char_deck"
+ },
+ {
+  "id": "act1_opening_music",
+  "what": "First 5 normal fights of Act 1 play track 32; random battle pool afterwards",
+  "value": 32,
+  "hook": "music"
+ },
+ {
+  "id": "attack_vfx",
+  "what": "Per-monster attack animation: style from type + name/card-text keywords (slash, claw, bite, sting, fireball, breath, lightning, water, magic, holy, dark, laser, rock, vines, wind); colors from card art + attribute; size by ATK, hits by level",
+  "value": 15,
+  "hook": "click_attack"
+ },
+ {
+  "id": "summon_vfx",
+  "what": "Summon animation: card drops in spinning, golden light pillar, floor ring, sparkles",
+  "value": 1,
+  "hook": "osty_visual"
+ },
+ {
+  "id": "raigeki_thunder",
+  "what": "Raigeki plays a synthesized thunderclap (crack + rolling rumble) layered with the game's lightning SFX",
+  "value": 1,
+  "hook": "sfx"
+ },
+ {
+  "id": "guardian_stars",
+  "what": "Strength gain = Sun Star (+500 ATK all monsters until next turn), Dexterity gain = Moon Star (+500 DEF); game power removed immediately; items show planet icons (sheets/guardian_stars.json)",
+  "value": 500,
+  "hook": "turn_start"
+ },
+ {
+  "id": "enemy_targeting",
+  "what": "Each enemy hit picks a monster: 1) Attack-position monster it overpowers (excess to LP, biggest first); 2) one it destroys (ATK/DEF below hit); 3) least hit-back (Defense first, then lowest ATK)",
+  "value": 3,
+  "hook": "enemy_attack"
+ },
+ {
+  "id": "enemy_defense",
+  "what": "Enemy tactics (FmEnemyAI): value(attack m)=1.5*threat(m)+1.2*LP spill - hit-back*boldness*(1+2*back/life); never suicidal; value(defend)=0.8*min(your unspent attack-position ATK, its total hit)*(1+0.75*missing HP%); boss 0.55 / elite 0.75 / normal 1.0 boldness; defend = banner + Block equal to the skipped damage; a Defense monster whose DEF the hit exceeds is a clean kill: value>=1.5*threat+0.6*hit+400-0.25*risk and always beats defending",
+  "value": 1,
+  "hook": "enemy_attack"
+ },
+ {
+  "id": "plating",
+  "what": "Duelist Plating: +200 DEF per level to all monsters instead of end-of-turn Block; still -1 at the start of each turn; enemy Plating unchanged",
+  "value": 200,
+  "hook": "zone"
+ },
+ {
+  "id": "no_auto_attack",
+  "what": "Attack-position monsters no longer auto-attack at end of turn; they attack only when clicked",
+  "value": 0,
+  "hook": "turn_end"
+ },
+ {
+  "id": "field_locations",
+  "what": "Field cards swap the whole combat background to a StS location: Forest=overgrowth, Wasteland=the_insatiable_boss, Mountain=waterfall_giant_boss, Sogen=the_kin_boss, Umi=underdocks, Yami=vantom_boss; one field active at a time",
+  "value": 6,
+  "hook": "zone"
+ },
+ {
+  "id": "dark_hole_after_attack",
+  "what": "Dark Hole (336) is unplayable if any of your monsters attacked this turn",
+  "value": 336,
+  "hook": "can_play_monster"
+ },
+ {
+  "id": "boss_duels",
+  "what": "Boss duelists (FmRival.Bosses): Act1 The Kin -> Young Priest Seto (FM duelist #7), Act2 Knowledge Demon -> \"Final\" Duelist (#17 Seto Kaiba, World Tournament finals), Act3 Queen -> Final Priest Seto (#36 Seto 3rd); 8000 LP each, minions removed, own moves replaced by the duel, 3 monster zones, FM rules",
+  "value": 8000,
+  "hook": "enemy_attack"
+ },
+ {
+  "id": "heal_vfx",
+  "what": "Unique heal animations + synthesized sounds: Mooyan Curry (eat), Red Medicine (drink, red), Goblin's Secret Remedy (bubbling flask), Soul of the Pure (descending soul), Dian Keto (Healing Light pillar + cross), Eternal Draught (drink, blue); shared healing chime",
+  "value": 6,
+  "hook": "sfx"
+ },
+ {
+  "id": "heal_fusion",
+  "what": "Healing ladder 338<339<340<341<342: heal + heal = one step above the stronger (Dian Keto caps); any card can be right-click marked; non-fusing spells/traps/rituals in a chain are knocked away (discarded)",
+  "value": 5,
+  "hook": "hand_right_click"
+ },
+ {
+  "id": "chain_nonmonsters",
+  "what": "In a monster chain, spells/traps/rituals and equips that don't fit are the card knocked away (failed fusion) and the monster carries on to be summoned; cards marked before the first monster meet it when it arrives",
+  "value": 1,
+  "hook": "monster_play"
+ },
+ {
+  "id": "no_exoskeletons",
+  "what": "Exoskeletons removed: Hive no longer offers ExoskeletonsNormal/Weak; saved runs' Exoskeleton rooms spawn Bowlbugs (BowlbugRock) instead",
+  "value": 0,
+  "hook": "card_pool"
+ },
+ {
+  "id": "unlock_all",
+  "what": "Main menu: every Timeline epoch revealed, every relic/card/potion/event marked seen, menu buttons never locked",
+  "value": 1,
+  "hook": "mod_init"
+ },
+ {
+  "id": "library",
+  "what": "Timeline button -> FM Library: searchable/sortable/filterable list of all 722 disc cards with art + details + fuses-into, Fusion Calculator (5 slots, best order), plays FM track 45; Compendium card library shows FM cards only",
+  "value": 45,
+  "hook": "music"
+ },
+ {
+  "id": "hand_limit",
+  "what": "End of your turn: more than 5 cards in hand -> choose the excess to discard (manual choice; base-game discard prompts already only auto-pick when every card must go)",
+  "value": 5,
+  "hook": "turn_end"
+ },
+ {
+  "id": "cancel_summon",
+  "what": "Summons can be cancelled (Skip) at the zone choice, and at the position choice for a plain summon; the card returns to hand with marks kept; no cancel once a fusion chain/field fusion is used or for rituals",
+  "value": 1,
+  "hook": "monster_play"
+ }
+]

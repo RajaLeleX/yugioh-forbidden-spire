@@ -1,0 +1,11 @@
+{
+  "id": "FMDuelist",
+  "name": "Yugioh: Forbidden Spire",
+  "author": "rajal",
+  "description": "Version 0.5 (beta). Play the Necrobinder as Duel Master K and duel with Yu-Gi-Oh! Forbidden Memories cards read from your own FM disc: fusions, Attack/Defense positions, 8000 LP, and boss duels against Priest Seto.",
+  "version": "0.5.0",
+  "has_pck": false,
+  "has_dll": true,
+  "affects_gameplay": true,
+  "min_game_version": "0.107.0"
+}

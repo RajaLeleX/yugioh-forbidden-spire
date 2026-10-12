@@ -68,6 +68,37 @@ public static class FmRival
     static readonly Dictionary<int, int[]> _weights = new();
     static readonly System.Random Rng = new();
 
+    /// <summary>
+    /// How well a duelist plays, after FM's own difficulty ladder: the early story duelists mostly play their
+    /// strongest single card and only now and then fuse even when they could; later duelists fuse (up to three
+    /// cards, and onto their field), use their spells, equips and traps well and rarely misplay.
+    /// </summary>
+    /// <param name="Fuse">Chance each turn that he looks for a fusion at all.</param>
+    /// <param name="Chain">Most cards in one fusion (2 or 3).</param>
+    /// <param name="Onto">Whether he fuses onto a monster already on his field.</param>
+    /// <param name="Best">Chance he plays his strongest monster (otherwise a random one from his hand).</param>
+    /// <param name="Equip">Chance per turn that he plays his equips.</param>
+    /// <param name="Trap">Chance per turn that he sets a trap.</param>
+    /// <param name="Spell">Chance per turn that he uses Raigeki / Dark Hole / burns / heals when they'd help.</param>
+    public sealed record Skill(double Fuse, int Chain, bool Onto, double Best, double Equip, double Trap, double Spell);
+
+    static readonly Skill Full = new(1, 3, true, 1, 1, 1, 1);
+
+    /// <summary>By FM duelist number.</summary>
+    static readonly Dictionary<int, Skill> Skills = new()
+    {
+        [1] = new(0.15, 2, false, 0.55, 0.30, 0.30, 0.35), // Simon Muran: single cards, the odd fusion
+        [2] = new(0.20, 2, false, 0.60, 0.35, 0.35, 0.40), // Teana
+        [4] = new(0.25, 2, false, 0.60, 0.35, 0.35, 0.40), // Villager 1
+        [5] = new(0.30, 2, false, 0.65, 0.40, 0.40, 0.45), // Villager 2
+        [3] = new(0.30, 2, false, 0.65, 0.40, 0.40, 0.45), // Jono
+        [6] = new(0.35, 2, true, 0.70, 0.45, 0.45, 0.50),  // Villager 3
+        [7] = new(0.75, 3, true, 0.90, 0.80, 0.80, 0.85),  // Young Priest Seto
+    };
+
+    public static Skill Me => Skills.GetValueOrDefault(Current?.DuelistIndex ?? 0, Full);
+    static bool Roll(double chance) => chance >= 1 || Rng.NextDouble() < chance;
+
     public static bool IsZoneCreature(Creature? c) => c != null && Slots.Any(s => s.RivalCreature == c);
     public static FmSlot? SlotOf(Creature? c) => c == null ? null : Slots.FirstOrDefault(s => s.RivalCreature == c);
     public static IEnumerable<FmSlot> Living => Slots.Where(s => s.MonsterId != 0 && s.RivalCreature is { IsAlive: true });
@@ -355,9 +386,11 @@ public static class FmRival
     static async Task PlayTurn(PlayerChoiceContext ctx, Player player)
     {
         var mine = FmField.Living(player).ToList();
+        var skill = Me;
+        bool spells = Roll(skill.Spell);
 
         // heal when hurt
-        if (Priest!.CurrentHp <= LifePoints * 0.55 && Hand.FirstOrDefault(id => Spell(id)?.Kind == FmSpellKind.Heal) is int heal and > 0)
+        if (spells && Priest!.CurrentHp <= LifePoints * 0.55 && Hand.FirstOrDefault(id => Spell(id)?.Kind == FmSpellKind.Heal) is int heal and > 0)
         {
             await UseCard(heal);
             Banner($"{Name} plays {FmData.Get(heal).Name}!");
@@ -367,7 +400,7 @@ public static class FmRival
         }
         // Raigeki: wipe your field when you're ahead on monsters
         mine = FmField.Living(player).ToList();
-        if (Hand.Contains(337) && mine.Count > 0 && (mine.Count >= 2 || mine.Max(m => m.Atk) > (Living.Any() ? Living.Max(m => m.Atk) : 0)))
+        if (spells && Hand.Contains(337) && mine.Count > 0 && (mine.Count >= 2 || mine.Max(m => m.Atk) > (Living.Any() ? Living.Max(m => m.Atk) : 0)))
         {
             await UseCard(337);
             Banner($"{Name} plays Raigeki!");
@@ -377,7 +410,7 @@ public static class FmRival
         }
         // Dark Hole only when your field is clearly stronger than his
         mine = FmField.Living(player).ToList();
-        if (Hand.Contains(336) && mine.Count > 0 && mine.Sum(m => m.Atk) > Living.Sum(m => m.Atk) + 1000)
+        if (spells && Hand.Contains(336) && mine.Count > 0 && mine.Sum(m => m.Atk) > Living.Sum(m => m.Atk) + 1000)
         {
             await UseCard(336);
             Banner($"{Name} plays Dark Hole!");
@@ -387,7 +420,7 @@ public static class FmRival
             await Wait(0.5);
         }
         // burn spells go straight at your Life Points
-        foreach (var burn in Hand.Where(id => Spell(id)?.Kind is FmSpellKind.Burn or FmSpellKind.BurnSelfDmg).ToList())
+        foreach (var burn in Hand.Where(id => spells && Spell(id)?.Kind is FmSpellKind.Burn or FmSpellKind.BurnSelfDmg).ToList())
         {
             await UseCard(burn);
             Banner($"{Name} plays {FmData.Get(burn).Name}!");
@@ -397,16 +430,27 @@ public static class FmRival
         // one summon (his strongest monster or fusion)
         if (BestSummon() is { } plan) await Summon(player, plan);
         // equips: the ones that win a battle first, then any that fit
-        while (await Equip(player, needWin: true)) { }
-        while (await Equip(player, needWin: false)) { }
+        if (Roll(skill.Equip))
+        {
+            while (await Equip(player, needWin: true)) { }
+            while (await Equip(player, needWin: false)) { }
+        }
         // traps face down
-        while (await SetTrap()) { }
+        if (Roll(skill.Trap)) while (await SetTrap()) { }
     }
 
     /// <summary>His strongest summon from hand: a single monster, a 2-3 card fusion, or a fusion onto his field.</summary>
     static (int atk, int result, List<int> chain, FmSlot? onto)? BestSummon()
     {
         var monsters = Hand.Where(id => FmData.Get(id).IsMonster).ToList();
+        var skill = Me;
+        bool fuse = Roll(skill.Fuse);
+        // a weaker duelist sometimes just plays whatever monster he picks up
+        if (!fuse && monsters.Count > 0 && !Roll(skill.Best))
+        {
+            int pick = monsters[Rng.Next(monsters.Count)];
+            return (FmData.Get(pick).Atk, pick, new List<int> { pick }, null);
+        }
         int bestAtk = -1, bestResult = 0; List<int> bestChain = new(); FmSlot? onto = null;
         void Consider(List<int> chain, int result, FmSlot? field)
         {
@@ -417,13 +461,13 @@ public static class FmRival
         for (int i = 0; i < monsters.Count; i++)
             for (int j = 0; j < monsters.Count; j++)
             {
-                if (i == j || FmData.Fuse(monsters[i], monsters[j]) is not int r || !FmData.Get(r).IsMonster) continue;
+                if (!fuse || i == j || FmData.Fuse(monsters[i], monsters[j]) is not int r || !FmData.Get(r).IsMonster) continue;
                 Consider(new List<int> { monsters[i], monsters[j] }, r, null);
                 for (int k = 0; k < monsters.Count; k++)
-                    if (k != i && k != j && FmData.Fuse(r, monsters[k]) is int r2 && FmData.Get(r2).IsMonster)
+                    if (skill.Chain >= 3 && k != i && k != j && FmData.Fuse(r, monsters[k]) is int r2 && FmData.Get(r2).IsMonster)
                         Consider(new List<int> { monsters[i], monsters[j], monsters[k] }, r2, null);
             }
-        foreach (var f in Living)
+        foreach (var f in Living.Where(_ => fuse && skill.Onto))
             foreach (var m in monsters)
                 if (FmData.Fuse(f.MonsterId, m) is int r && FmData.Get(r).IsMonster && FmData.Get(r).Atk > f.Atk)
                     Consider(new List<int> { f.MonsterId, m }, r, f);

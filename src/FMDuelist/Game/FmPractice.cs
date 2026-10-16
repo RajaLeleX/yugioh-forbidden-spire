@@ -129,7 +129,43 @@ public static class FmPractice
     static readonly (int min, int max)[] AtkBand = { (800, 1400), (1400, 2000), (1900, 2900) };
 
     /// <summary>The 40-card deck for a level: 30 monsters spread across the level's ATK band, plus its spells and traps.</summary>
-    public static List<int> Deck(int level) => _decks[Math.Clamp(level, 1, 3) - 1] is { } d ? new List<int>(d) : Build(level);
+    public static List<int> Deck(int level) => level == YourDeckLevel && _yours != null ? new List<int>(_yours)
+        : _decks[Math.Clamp(level, 1, 3) - 1] is { } d ? new List<int>(d) : Build(level);
+
+    // ---------------- your own deck ----------------
+    public const int YourDeckLevel = 4;
+    static List<int>? _yours;
+
+    /// <summary>
+    /// Your deck: the one in your saved run if there is one, otherwise the deck you ended your last run with
+    /// (newest run history first). Only Forbidden Memories cards count.
+    /// </summary>
+    static List<int>? YourDeck(out string from)
+    {
+        from = "";
+        static List<int> Ids(IEnumerable<MegaCrit.Sts2.Core.Saves.Runs.SerializableCard> cards) => cards
+            .Select(c => c.Id is { } id ? ModelDb.GetById<CardModel>(id) as Cards.FmCardBase : null)
+            .Where(c => c != null && c.FmId > 0 && FmData.Get(c.FmId) is { Name.Length: > 0 })
+            .Select(c => c!.FmId).ToList();
+        try
+        {
+            var sm = SaveManager.Instance;
+            if (sm.HasRunSave && sm.LoadRunSave().SaveData is { } run && run.Players?.FirstOrDefault() is { } me)
+            {
+                var ids = Ids(me.Deck);
+                if (ids.Count >= 5) { from = "current run"; return ids; }
+            }
+            foreach (var name in sm.GetAllRunHistoryNames().OrderByDescending(n => n))
+            {
+                if (sm.LoadRunHistory(name).SaveData is not { } h || h.GameMode == GameMode.Custom) continue;
+                if (h.Players.FirstOrDefault() is not { } p) continue;
+                var ids = Ids(p.Deck);
+                if (ids.Count >= 5) { from = "last run"; return ids; }
+            }
+        }
+        catch (Exception ex) { Log.Warn("[FMDuelist] your deck: " + ex.Message); }
+        return null;
+    }
 
     static List<int> Build(int level)
     {
@@ -152,6 +188,7 @@ public static class FmPractice
         try
         {
             Active = true; Level = level;
+            if (level == YourDeckLevel && _yours == null) _yours = YourDeck(out _);
             Log.Info($"[FMDuelist] Practice duel vs Duel Master K, level {level}");
             var seed = DateTime.Now.Ticks.ToString("X")[^8..];
             await NGame.Instance!.StartNewSingleplayerRun(ModelDb.Character<Necrobinder>(), false, ActModel.GetDefaultList(), Array.Empty<ModifierModel>(), seed, GameMode.Custom);
@@ -181,9 +218,11 @@ public static class FmPractice
         catch (Exception ex) { Log.Warn("[FMDuelist] practice death anim: " + ex.Message); }
         try { await FmDuelEnd.Show(won, player, comLp, "Duel Master K", turns, spoils: false); }
         catch (Exception ex) { Log.Warn("[FMDuelist] practice results: " + ex.Message); }
+        FmPracticeNoSavePatch.Guard = true;
         Active = false;
         FmRival.Reset();
         try { await NGame.Instance!.ReturnToMainMenu(); } catch (Exception ex) { Log.Error("[FMDuelist] practice exit: " + ex); }
+        finally { FmPracticeNoSavePatch.Guard = false; }
     }
 
     // ---------------- the level picker ----------------
@@ -200,7 +239,7 @@ public static class FmPractice
         float s = view.Y / 1080f;
         var dim = new ColorRect { Color = new Color(0, 0, 0, 0.75f), Size = view, MouseFilter = Control.MouseFilterEnum.Stop };
         _picker.AddChild(dim);
-        var panel = new PanelContainer { Size = new Vector2(760 * s, 600 * s), Position = new Vector2((view.X - 760 * s) / 2, (view.Y - 600 * s) / 2) };
+        var panel = new PanelContainer { Size = new Vector2(760 * s, 690 * s), Position = new Vector2((view.X - 760 * s) / 2, (view.Y - 690 * s) / 2) };
         panel.AddThemeStyleboxOverride("panel", new StyleBoxFlat
         {
             BgColor = new Color(0.07f, 0.06f, 0.12f, 0.97f), BorderColor = new Color(0.86f, 0.68f, 0.28f),
@@ -224,6 +263,16 @@ public static class FmPractice
             b.Pressed += () => { ClosePicker(); TaskHelper.RunSafely(Start(level)); };
             col.AddChild(b);
         }
+        // 4th: your own deck (from your saved run, or your last run); Duel Master K uses a copy of it too
+        _yours = YourDeck(out var from);
+        var mine = new Button
+        {
+            Text = _yours != null ? $"Level 4 - Your Deck ({from}, {_yours.Count} cards)" : "Level 4 - Your Deck (no run found yet)",
+            CustomMinimumSize = new Vector2(0, 74 * s), Disabled = _yours == null,
+        };
+        mine.AddThemeFontSizeOverride("font_size", (int)(28 * s));
+        mine.Pressed += () => { ClosePicker(); TaskHelper.RunSafely(Start(YourDeckLevel)); };
+        col.AddChild(mine);
         var cancel = new Button { Text = "Back", CustomMinimumSize = new Vector2(0, 60 * s) };
         cancel.AddThemeFontSizeOverride("font_size", (int)(26 * s));
         cancel.Pressed += () => { ClosePicker(); FmMusic.PlayWhenReady(FmMedia.MenuTrack); };
@@ -235,6 +284,33 @@ public static class FmPractice
         if (_picker != null && GodotObject.IsInstanceValid(_picker)) _picker.QueueFree();
         _picker = null;
     }
+}
+
+/// <summary>
+/// The Free Duel is a throwaway run: while it's on (and until it's back at the main menu), nothing is saved and
+/// no save is deleted, so the run you have saved, its history and your progress are left exactly as they were.
+/// </summary>
+[HarmonyPatch]
+static class FmPracticeNoSavePatch
+{
+    public static bool Guard;
+
+    [HarmonyPrefix, HarmonyPatch(typeof(SaveManager), nameof(SaveManager.SaveRun))]
+    static bool NoSave(ref Task __result)
+    {
+        if (!FmPractice.Active && !Guard) return true;
+        __result = Task.CompletedTask;
+        return false;
+    }
+
+    [HarmonyPrefix, HarmonyPatch(typeof(SaveManager), nameof(SaveManager.DeleteCurrentRun))]
+    static bool NoDelete() => !FmPractice.Active && !Guard;
+
+    [HarmonyPrefix, HarmonyPatch(typeof(SaveManager), nameof(SaveManager.SaveRunHistory))]
+    static bool NoHistory() => !FmPractice.Active && !Guard;
+
+    [HarmonyPrefix, HarmonyPatch(typeof(SaveManager), nameof(SaveManager.UpdateProgressWithRunData))]
+    static bool NoProgress() => !FmPractice.Active && !Guard;
 }
 
 /// <summary>

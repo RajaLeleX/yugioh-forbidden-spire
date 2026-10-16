@@ -77,8 +77,8 @@ public static class FmLibraryFm
             switch (m.ButtonIndex)
             {
                 case MouseButton.Right: Back(); return true;
-                case MouseButton.WheelUp: if (_page == Page.Table) Turn(-1); else Step(-1); return true;
-                case MouseButton.WheelDown: if (_page == Page.Table) Turn(1); else Step(1); return true;
+                case MouseButton.WheelUp: if (_page == Page.Table) Turn(-1); return true;
+                case MouseButton.WheelDown: if (_page == Page.Table) Turn(1); return true;
             }
             return false;
         }
@@ -88,10 +88,10 @@ public static class FmLibraryFm
             {
                 case Key.Escape or Key.Backspace: Back(); return true;
                 case Key.Enter or Key.KpEnter or Key.Space: Forward(); return true;
-                case Key.Left: Step(-1); return true;
-                case Key.Right: Step(1); return true;
-                case Key.Up: Step(_page == Page.Table ? -10 : -1); return true;
-                case Key.Down: Step(_page == Page.Table ? 10 : 1); return true;
+                case Key.Left: if (_page != Page.Model) Step(-1); return true;
+                case Key.Right: if (_page != Page.Model) Step(1); return true;
+                case Key.Up: if (_page == Page.Table) Step(-10); return true;
+                case Key.Down: if (_page == Page.Table) Step(10); return true;
                 case Key.Pageup: Turn(-1); return true;
                 case Key.Pagedown: Turn(1); return true;
             }
@@ -108,30 +108,40 @@ public static class FmLibraryFm
         }
     }
 
-    static void Back()
+    static bool _busy;
+
+    static async void Back()
     {
+        if (_busy) return;
         FmSfx.Play(FmSfx.Flip);
         switch (_page)
         {
             case Page.Model: _page = Page.Card; Render(); break;
-            case Page.Card: _page = Page.Table; _row = (_cursor - 1) / 200; Render(); break;
+            case Page.Card:
+                _busy = true;
+                try { await FlyBack(); } catch (Exception ex) { Log.Warn("[FMDuelist] library card out: " + ex.Message); }
+                _busy = false;
+                _page = Page.Table; _row = (_cursor - 1) / 200; Render();
+                break;
             default: Close(); break;
         }
     }
 
     static void Forward()
     {
+        if (_busy) return;
         FmSfx.Play(FmSfx.Mark);
         switch (_page)
         {
-            case Page.Table: _page = Page.Card; Render(); break;
-            case Page.Card: if (FmData.Get(_cursor).IsMonster) { _page = Page.Model; Render(); } break;
+            case Page.Table: _page = Page.Card; _intro = true; Render(); break;
+            case Page.Card: if (FmData.Get(_cursor).IsMonster) { Whoosh(); _page = Page.Model; Render(); } break;
             default: _page = Page.Card; Render(); break;
         }
     }
 
     static void Step(int d)
     {
+        if (_busy) return;
         int next = Math.Clamp(_cursor + d, 1, Count);
         if (next == _cursor) return;
         _cursor = next;
@@ -328,20 +338,32 @@ public static class FmLibraryFm
     }
 
     // ---------------- the card ----------------
+    static bool _intro;
+    static Control? _holder, _face, _back;
+    static readonly List<Control> _right = new();
+    static List<CanvasItem> _glyphs = new();
+    static float CardScale => 200 * _px / FmCardFace.Size.Y;
+    static Vector2 CardHome => P(70, 101);
+
     static void CardPage()
     {
         var info = FmData.Get(_cursor);
-        // the card on the left, as big as FM shows it
-        var holder = new Control { Position = P(70, 101), MouseFilter = Control.MouseFilterEnum.Ignore };
-        var face = FmCardFace.Create(_cursor);
-        float k = 200 * _px / FmCardFace.Size.Y;
-        holder.Scale = new Vector2(k, k);
-        holder.AddChild(face);
-        _screen!.AddChild(holder);
+        // the card on the left, as big as FM shows it (with its back, for the flip)
+        _holder = new Control { Position = CardHome, MouseFilter = Control.MouseFilterEnum.Ignore };
+        _holder.Scale = new Vector2(CardScale, CardScale);
+        _face = FmCardFace.Create(_cursor);
+        _holder.AddChild(_face);
+        _back = new TextureRect
+        {
+            Texture = FmRivalHand.Back(), Size = FmCardFace.Size, Position = -FmCardFace.Size / 2, Visible = false,
+            ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.Scale, MouseFilter = Control.MouseFilterEnum.Ignore,
+        };
+        _holder.AddChild(_back);
+        _screen!.AddChild(_holder);
+        int before = _screen.GetChildCount();
         // type
         Box(144, 4, 170, 24, Navy, StoneEdge);
-        string type = FmData.TypeNames[(int)info.Type];
-        Text(type, 158, 10, 1.3f);
+        Text(FmData.TypeNames[(int)info.Type], 158, 10, 1.3f);
         // Guardian Stars
         Box(144, 31, 170, 56, Navy, StoneEdge);
         if (info.IsMonster)
@@ -359,20 +381,150 @@ public static class FmLibraryFm
                 row++;
             }
         }
-        // its text, typed out like FM
+        // its text, typed out like FM once the card is in place
         Box(144, 90, 170, 110, Navy, StoneEdge);
-        var lines = FmTextBox.Wrap(string.Join(" ", info.Desc.Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim())), 19);
-        var glyphs = new List<CanvasItem>();
+        var lines = FmTextBox.Wrap(string.Join(" ", info.Desc.Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(t => t.Trim())), 19);
+        _glyphs = new List<CanvasItem>();
         for (int i = 0; i < lines.Count && i < 8; i++)
         {
             var t = Text(lines[i], 148, 95 + i * 13, 1.08f);
-            foreach (var g in t.GetChildren().OfType<CanvasItem>()) { g.Visible = false; glyphs.Add(g); }
+            foreach (var g in t.GetChildren().OfType<CanvasItem>()) { g.Visible = false; _glyphs.Add(g); }
         }
-        TypeOut(glyphs, _screen);
-        if (info.IsMonster)
+        if (info.IsMonster) Text($"ATK {info.Atk}  DEF {info.Def}  Lv {info.Level}", 148, 186, 0.95f, new Color(1f, 0.85f, 0.4f));
+        _right.Clear();
+        for (int i = before; i < _screen.GetChildCount(); i++) if (_screen.GetChild(i) is Control c) _right.Add(c);
+        if (_intro) { _intro = false; FlyIn(); }
+        else TypeOut(_glyphs, _screen);
+    }
+
+    /// <summary>Where the card's cell is on the table (the card flies from and back to it).</summary>
+    static Vector2 CellCenter()
+    {
+        int n = (_cursor - 1) % 200, panel = n / 100, k = n % 100;
+        float x = (panel == 0 ? 3 : 162) + Inset + (k % 10 + 0.5f) * CellW, y = PanelY + Inset + (k / 10 + 0.5f) * CellH;
+        return P(x, y);
+    }
+
+    static float CellScale => CellH * 0.8f * _px / FmCardFace.Size.Y;
+
+    /// <summary>
+    /// FM: the card leaves its cell face down, tumbles up to its place on the left trailing outlines, while the
+    /// blue boxes slide in from the right; then it flips over and its text types out.
+    /// </summary>
+    static async void FlyIn()
+    {
+        if (_holder == null || _face == null || _back == null || Engine.GetMainLoop() is not SceneTree tree) return;
+        _busy = true;
+        var holder = _holder; var screen = _screen!;
+        try
         {
-            var stats = Text($"ATK {info.Atk}  DEF {info.Def}  Lv {info.Level}", 148, 186, 0.95f, new Color(1f, 0.85f, 0.4f));
+            _face.Visible = false; _back.Visible = true;
+            holder.Position = CellCenter();
+            holder.Scale = Vector2.One * CellScale;
+            holder.Rotation = -1.1f;
+            foreach (var c in _right) { var home = c.Position; c.Position = home + new Vector2(_sw * 0.7f, 0); c.SetMeta("home", home); }
+            Whoosh(0.35f);
+            var t = holder.CreateTween().SetParallel();
+            t.TweenProperty(holder, "position", CardHome, 0.42).SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.Out);
+            t.TweenProperty(holder, "scale", Vector2.One * CardScale, 0.42).SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.Out);
+            t.TweenProperty(holder, "rotation", 0f, 0.42).SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.Out);
+            foreach (var c in _right) t.TweenProperty(c, "position", (Vector2)c.GetMeta("home"), 0.38).SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.Out);
+            Trail(holder, screen, t);
+            await holder.ToSignal(t, Tween.SignalName.Finished);
+            await Flip(holder, toFace: true);
+            if (GodotObject.IsInstanceValid(screen)) TypeOut(_glyphs, screen);
         }
+        catch (Exception ex) { Log.Warn("[FMDuelist] library card in: " + ex.Message); }
+        finally { _busy = false; }
+    }
+
+    /// <summary>Going back: the card turns face down and flies back into its cell, the boxes slide away.</summary>
+    static async Task FlyBack()
+    {
+        if (_holder == null || !GodotObject.IsInstanceValid(_holder)) return;
+        var holder = _holder; var screen = _screen!;
+        await Flip(holder, toFace: false);
+        if (!GodotObject.IsInstanceValid(holder)) return;
+        Whoosh(0.3f);
+        var t = holder.CreateTween().SetParallel();
+        t.TweenProperty(holder, "position", CellCenter(), 0.36).SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.In);
+        t.TweenProperty(holder, "scale", Vector2.One * CellScale, 0.36).SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.In);
+        t.TweenProperty(holder, "rotation", 1.1f, 0.36).SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.In);
+        foreach (var c in _right) if (GodotObject.IsInstanceValid(c)) t.TweenProperty(c, "position", c.Position + new Vector2(_sw * 0.7f, 0), 0.32).SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.In);
+        Trail(holder, screen, t);
+        await holder.ToSignal(t, Tween.SignalName.Finished);
+    }
+
+    /// <summary>FM's card flip: it turns edge-on, shows its other side and turns back.</summary>
+    static async Task Flip(Control holder, bool toFace)
+    {
+        if (_face == null || _back == null) return;
+        float k = holder.Scale.Y;
+        var a = holder.CreateTween();
+        a.TweenProperty(holder, "scale:x", 0f, 0.11).SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.In);
+        await holder.ToSignal(a, Tween.SignalName.Finished);
+        if (!GodotObject.IsInstanceValid(holder)) return;
+        _face.Visible = toFace; _back.Visible = !toFace;
+        FmSfx.Play(FmSfx.Flip);
+        var b = holder.CreateTween();
+        b.TweenProperty(holder, "scale:x", k, 0.13).SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.Out);
+        await holder.ToSignal(b, Tween.SignalName.Finished);
+    }
+
+    /// <summary>The trailing outlines FM leaves behind a flying card: copies of its edge that fade as it moves on.</summary>
+    static async void Trail(Control holder, Control screen, Tween moving)
+    {
+        if (Engine.GetMainLoop() is not SceneTree tree) return;
+        var half = FmCardFace.Size / 2;
+        var corners = new[] { new Vector2(-half.X, -half.Y), new Vector2(half.X, -half.Y), new Vector2(half.X, half.Y), new Vector2(-half.X, half.Y) };
+        while (GodotObject.IsInstanceValid(holder) && GodotObject.IsInstanceValid(screen) && moving.IsValid() && moving.IsRunning())
+        {
+            var pts = corners.Select(c => holder.Position + (c * holder.Scale).Rotated(holder.Rotation)).ToArray();
+            var ghost = new Line2D { Points = pts, Closed = true, Width = Math.Max(1.5f, _px * 0.9f), DefaultColor = new Color(Lime, 0.95f), Antialiased = true };
+            screen.AddChild(ghost);
+            screen.MoveChild(ghost, holder.GetIndex());
+            var f = ghost.CreateTween();
+            f.TweenProperty(ghost, "modulate:a", 0f, 0.28);
+            f.TweenCallback(Callable.From(ghost.QueueFree));
+            await holder.ToSignal(tree, SceneTree.SignalName.ProcessFrame);
+            await holder.ToSignal(tree, SceneTree.SignalName.ProcessFrame);
+        }
+    }
+
+    // ---------------- the whoosh ----------------
+    static AudioStreamWav? _whoosh;
+
+    /// <summary>A rushing-air sweep (filtered noise rising then falling), made once in code.</summary>
+    static void Whoosh(float volume = 0.6f)
+    {
+        try
+        {
+            if (_whoosh == null)
+            {
+                const int rate = 22050; int n = (int)(rate * 0.55);
+                var data = new byte[n * 2];
+                var rng = new Random(7);
+                double low = 0, band = 0;
+                for (int i = 0; i < n; i++)
+                {
+                    double t = (double)i / n;
+                    double env = Math.Pow(Math.Sin(Math.PI * Math.Pow(t, 0.7)), 2);
+                    double cut = 0.02 + 0.25 * Math.Sin(Math.PI * t);         // the sweep
+                    double x = rng.NextDouble() * 2 - 1;
+                    low += cut * (x - low);
+                    band += cut * (low - band);
+                    short v = (short)Math.Clamp((low - band) * env * 52000, short.MinValue, short.MaxValue);
+                    data[i * 2] = (byte)(v & 0xFF); data[i * 2 + 1] = (byte)((v >> 8) & 0xFF);
+                }
+                _whoosh = new AudioStreamWav { Format = AudioStreamWav.FormatEnum.Format16Bits, MixRate = rate, Stereo = false, Data = data };
+            }
+            if (_layer == null || !GodotObject.IsInstanceValid(_layer)) return;
+            var player = new AudioStreamPlayer { Stream = _whoosh, VolumeDb = Mathf.LinearToDb(volume) };
+            _layer.AddChild(player);
+            player.Finished += player.QueueFree;
+            player.Play();
+        }
+        catch (Exception ex) { Log.Warn("[FMDuelist] whoosh: " + ex.Message); }
     }
 
     static async void TypeOut(List<CanvasItem> glyphs, Control screen)

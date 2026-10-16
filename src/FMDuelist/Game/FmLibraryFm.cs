@@ -211,7 +211,11 @@ public static class FmLibraryFm
     {
         var bar = new Control { Position = P(0, 203), Size = P(320, 37), MouseFilter = Control.MouseFilterEnum.Ignore };
         if (FmScene.Tex("textbox") is { } tb)
-            bar.AddChild(new TextureRect { Texture = tb, Size = P(320, 37), ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.Scale, MouseFilter = Control.MouseFilterEnum.Ignore });
+        {
+            var stone = new TextureRect { ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.Scale, MouseFilter = Control.MouseFilterEnum.Ignore };
+            stone.Texture = tb; stone.Size = P(320, 37);
+            bar.AddChild(stone);
+        }
         else
         {
             var p = new Panel { Size = P(320, 37), MouseFilter = Control.MouseFilterEnum.Ignore };
@@ -296,18 +300,19 @@ public static class FmLibraryFm
         // "001 - 100" in FM's outlined green digits
         Label Big(string s, float y)
         {
-            var l = new Label { Text = s, HorizontalAlignment = HorizontalAlignment.Center, Position = P(0, y), Size = P(PanelW, 46), MouseFilter = Control.MouseFilterEnum.Ignore };
+            var l = new Label { Text = s, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, Position = P(0, y), Size = P(PanelW, 62), MouseFilter = Control.MouseFilterEnum.Ignore };
             l.AddThemeFontOverride("font", new SystemFont { FontNames = new[] { "Arial Black", "Arial", "Verdana" }, FontWeight = 900 });
-            l.AddThemeFontSizeOverride("font_size", (int)(42 * _px));
+            l.AddThemeFontSizeOverride("font_size", (int)(60 * _px));
+            l.AddThemeConstantOverride("line_spacing", 0);
             l.AddThemeColorOverride("font_color", new Color(0, 0, 0, 0));
             l.AddThemeColorOverride("font_outline_color", new Color(0.2f, 0.75f, 0.15f, 0.85f));
             l.AddThemeConstantOverride("outline_size", (int)(2.2f * _px));
             panel.AddChild(l);
             return l;
         }
-        Big($"{first:000}", 8);
-        Big("-", 52);
-        Big($"{(first == 701 ? last : first + 99):000}", 96);
+        Big($"{first:000}", 2);
+        Big("-", 46);
+        Big($"{(first == 701 ? last : first + 99):000}", 92);
         for (int id = first; id <= last; id++)
         {
             int n = id - first, cx = n % 10, cy = n / 10, card = id;
@@ -353,11 +358,12 @@ public static class FmLibraryFm
         _holder.Scale = new Vector2(CardScale, CardScale);
         _face = FmCardFace.Create(_cursor);
         _holder.AddChild(_face);
-        _back = new TextureRect
-        {
-            Texture = FmRivalHand.Back(), Size = FmCardFace.Size, Position = -FmCardFace.Size / 2, Visible = false,
-            ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.Scale, MouseFilter = Control.MouseFilterEnum.Ignore,
-        };
+        // (ExpandMode before Size: otherwise the picture's own 276x388 locks in as its smallest size)
+        var back = new TextureRect { ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.Scale, MouseFilter = Control.MouseFilterEnum.Ignore, Visible = false };
+        back.Texture = FmRivalHand.Back();
+        back.Size = FmCardFace.Size;
+        back.Position = -FmCardFace.Size / 2;
+        _back = back;
         _holder.AddChild(_back);
         _screen!.AddChild(_holder);
         int before = _screen.GetChildCount();
@@ -390,7 +396,6 @@ public static class FmLibraryFm
             var t = Text(lines[i], 148, 95 + i * 13, 1.08f);
             foreach (var g in t.GetChildren().OfType<CanvasItem>()) { g.Visible = false; _glyphs.Add(g); }
         }
-        if (info.IsMonster) Text($"ATK {info.Atk}  DEF {info.Def}  Lv {info.Level}", 148, 186, 0.95f, new Color(1f, 0.85f, 0.4f));
         _right.Clear();
         for (int i = before; i < _screen.GetChildCount(); i++) if (_screen.GetChild(i) is Control c) _right.Add(c);
         if (_intro) { _intro = false; FlyIn(); }

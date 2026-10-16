@@ -84,9 +84,10 @@ public static class FmCardFace
         frameBox.AddThemeStyleboxOverride("panel", new StyleBoxFlat { BgColor = new Color("efe2c0"), BorderColor = new Color("e0761c"), BorderWidthLeft = 2, BorderWidthRight = 2, BorderWidthTop = 2, BorderWidthBottom = 2 });
         root.AddChild(frameBox);
         var text = Fixed(info.IsMonster ? desc : $"[{FmData.TypeNames[(int)info.Type]}]  {desc}", 5, ink, Serif(false));
-        text.Position = new Vector2(13, 166); text.Size = new Vector2(boxW - 6, 42);
+        // wrapping on before the size, or the one long line sets the label's width
         text.AutowrapMode = TextServer.AutowrapMode.WordSmart; text.ClipText = true;
         text.VerticalAlignment = VerticalAlignment.Top;
+        text.Position = new Vector2(13, 166); text.Size = new Vector2(boxW - 6, 42);
         root.AddChild(text);
         if (info.IsMonster)
         {

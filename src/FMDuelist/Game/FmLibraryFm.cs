@@ -116,7 +116,11 @@ public static class FmLibraryFm
         FmSfx.Play(FmSfx.Flip);
         switch (_page)
         {
-            case Page.Model: _page = Page.Card; Render(); break;
+            case Page.Model:
+                _busy = true;
+                try { await CloseModel(); } catch (Exception ex) { Log.Warn("[FMDuelist] library close card: " + ex.Message); _page = Page.Card; Render(); }
+                _busy = false;
+                break;
             case Page.Card:
                 _busy = true;
                 try { await FlyBack(); } catch (Exception ex) { Log.Warn("[FMDuelist] library card out: " + ex.Message); }
@@ -134,8 +138,8 @@ public static class FmLibraryFm
         switch (_page)
         {
             case Page.Table: _page = Page.Card; _intro = true; Render(); break;
-            case Page.Card: if (FmData.Get(_cursor).IsMonster) { Whoosh(); _page = Page.Model; Render(); } break;
-            default: _page = Page.Card; Render(); break;
+            case Page.Card: if (FmData.Get(_cursor).IsMonster) OpenModel(); break;
+            default: Back(); break;
         }
     }
 
@@ -193,7 +197,13 @@ public static class FmLibraryFm
     {
         if (_stage == null) return;
         if (_screen != null && GodotObject.IsInstanceValid(_screen)) _screen.QueueFree();
-        _screen = new Control { Size = _stage.Size, MouseFilter = Control.MouseFilterEnum.Ignore };
+        Build();
+    }
+
+    /// <summary>Builds the current page on a new screen (on top of whatever is there) and returns it.</summary>
+    static Control Build()
+    {
+        _screen = new Control { Size = _stage!.Size, MouseFilter = Control.MouseFilterEnum.Ignore };
         _stage.AddChild(_screen);
         _crossH = _crossV = _glass = null;
         switch (_page)
@@ -204,6 +214,7 @@ public static class FmLibraryFm
         }
         Bar(_page != Page.Table, _page == Page.Model);
         if (_page == Page.Table) Hover(_cursor);
+        return _screen;
     }
 
     /// <summary>FM's stone bar along the bottom: the card's number on a black tab, its name below.</summary>
@@ -399,7 +410,7 @@ public static class FmLibraryFm
         _right.Clear();
         for (int i = before; i < _screen.GetChildCount(); i++) if (_screen.GetChild(i) is Control c) _right.Add(c);
         if (_intro) { _intro = false; FlyIn(); }
-        else TypeOut(_glyphs, _screen);
+        else if (!_closing) TypeOut(_glyphs, _screen);
     }
 
     /// <summary>Where the card's cell is on the table (the card flies from and back to it).</summary>
@@ -552,6 +563,7 @@ public static class FmLibraryFm
         room.View.Position = Vector2.Zero;
         room.View.Size = P(320, 203);
         _screen!.AddChild(room.View);
+        _room = room.View;
         // the card turned on its side at the left (a slanted picture of it)
         var vp = new SubViewport { Size = new Vector2I((int)FmCardFace.Size.X, (int)FmCardFace.Size.Y), TransparentBg = true, Disable3D = true, RenderTargetUpdateMode = SubViewport.UpdateMode.Always };
         var face = FmCardFace.Create(_cursor);
@@ -563,12 +575,98 @@ public static class FmLibraryFm
         var card = new Polygon2D
         {
             Texture = tex,
-            Polygon = new[] { P(-6, -6), P(78, 6), P(78, 196), P(-6, 210) },
+            Polygon = Swung,
             UV = new[] { new Vector2(0, 0), new Vector2(w, 0), new Vector2(w, h), new Vector2(0, h) },
         };
         _screen.AddChild(card);
+        _swing = card;
         // its edge, for thickness
-        _screen.AddChild(new Polygon2D { Color = new Color(0.35f, 0.3f, 0.2f), Polygon = new[] { P(78, 6), P(81, 8), P(81, 194), P(78, 196) } });
+        _edge = new Polygon2D { Color = new Color(0.35f, 0.3f, 0.2f), Polygon = new[] { P(78, 6), P(81, 8), P(81, 194), P(78, 196) } };
+        _screen.AddChild(_edge);
+    }
+
+    // ---------------- opening the card (FM: it swings open like a door onto the monster's room) ----------------
+    static Polygon2D? _swing, _edge;
+    static Control? _room;
+    static bool _closing;
+
+    /// <summary>The card lying flat where the card page shows it.</summary>
+    static Vector2[] Shut
+    {
+        get
+        {
+            var c = CardHome; var half = FmCardFace.Size / 2 * CardScale;
+            return new[] { c - half, c + new Vector2(half.X, -half.Y), c + half, c + new Vector2(-half.X, half.Y) };
+        }
+    }
+
+    /// <summary>The card swung open on its left edge, as the monster view shows it.</summary>
+    static Vector2[] Swung => new[] { P(-6, -6), P(78, 6), P(78, 196), P(-6, 210) };
+
+    /// <summary>Between shut (0) and open (1); the right edge swings in an arc so it reads as turning, not sliding.</summary>
+    static Vector2[] Between(float t)
+    {
+        var a = Shut; var b = Swung; var r = new Vector2[4];
+        for (int i = 0; i < 4; i++) r[i] = a[i].Lerp(b[i], t);
+        // as the door turns, its far edge first comes towards you (taller) before settling
+        float bulge = Mathf.Sin(t * Mathf.Pi) * 10 * _px;
+        r[1] += new Vector2(bulge * 0.6f, -bulge); r[2] += new Vector2(bulge * 0.6f, bulge);
+        return r;
+    }
+
+    static void SetSwing(Polygon2D card, float t) { if (GodotObject.IsInstanceValid(card)) card.Polygon = Between(t); }
+
+    /// <summary>Card page to monster view: whoosh, the blue boxes slide off right and the card swings open.</summary>
+    static async void OpenModel()
+    {
+        if (_stage == null || _screen == null) return;
+        _busy = true;
+        try
+        {
+            var old = _screen; var oldRight = _right.ToList(); var oldHolder = _holder;
+            Whoosh();
+            _page = Page.Model;
+            var sc = Build();
+            _stage.MoveChild(sc, 0); // the room comes up behind the card page
+            if (oldHolder != null) oldHolder.Visible = false;
+            var card = _swing!; var room = _room!;
+            if (_edge != null) _edge.Visible = false;
+            SetSwing(card, 0);
+            room.Modulate = new Color(1, 1, 1, 0);
+            var t = card.CreateTween().SetParallel();
+            t.TweenMethod(Callable.From<float>(v => SetSwing(card, v)), 0f, 1f, 0.55).SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut);
+            t.TweenProperty(room, "modulate:a", 1f, 0.45).SetDelay(0.1);
+            foreach (var c in oldRight) if (GodotObject.IsInstanceValid(c)) t.TweenProperty(c, "position", c.Position + new Vector2(_sw * 0.75f, 0), 0.4).SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.In);
+            await card.ToSignal(t, Tween.SignalName.Finished);
+            if (GodotObject.IsInstanceValid(old)) old.QueueFree();
+            if (_edge != null && GodotObject.IsInstanceValid(_edge)) _edge.Visible = true;
+        }
+        catch (Exception ex) { Log.Warn("[FMDuelist] library open card: " + ex.Message); }
+        finally { _busy = false; }
+    }
+
+    /// <summary>Monster view back to the card page: the card swings shut and the blue boxes slide back in.</summary>
+    static async Task CloseModel()
+    {
+        if (_stage == null || _screen == null || _swing == null) { _page = Page.Card; Render(); return; }
+        var old = _screen; var card = _swing; var room = _room;
+        Whoosh(0.45f);
+        if (_edge != null) _edge.Visible = false;
+        _page = Page.Card;
+        _closing = true;
+        Build();
+        _closing = false;
+        var holder = _holder!;
+        holder.Visible = false;
+        foreach (var c in _right) { var home = c.Position; c.Position = home + new Vector2(_sw * 0.75f, 0); c.SetMeta("home", home); }
+        var t = card.CreateTween().SetParallel();
+        t.TweenMethod(Callable.From<float>(v => SetSwing(card, v)), 1f, 0f, 0.5).SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut);
+        if (room != null) t.TweenProperty(room, "modulate:a", 0f, 0.35);
+        foreach (var c in _right) t.TweenProperty(c, "position", (Vector2)c.GetMeta("home"), 0.42).SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.Out);
+        await card.ToSignal(t, Tween.SignalName.Finished);
+        if (GodotObject.IsInstanceValid(holder)) holder.Visible = true;
+        if (GodotObject.IsInstanceValid(old)) old.QueueFree();
+        if (_screen != null) TypeOut(_glyphs, _screen);
     }
 }
 

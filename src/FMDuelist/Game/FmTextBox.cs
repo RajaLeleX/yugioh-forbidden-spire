@@ -84,6 +84,53 @@ public sealed class FmTextBox
 
     public CanvasItem Root => _root;
 
+    /// <summary>A line in FM's font as its own control (<paramref name="px"/> screen pixels per PSX pixel).</summary>
+    public static Control Text(string s, float px, Color? tint = null)
+    {
+        LoadFont();
+        var root = new Control { MouseFilter = Control.MouseFilterEnum.Ignore, Size = new Vector2(s.Length * CellW * px, CellH * px) };
+        if (_sheet == null || _glyphs == null)
+        {
+            var l = new Label { Text = s, MouseFilter = Control.MouseFilterEnum.Ignore };
+            l.AddThemeFontOverride("font", new SystemFont { FontNames = new[] { "Lucida Console", "Consolas", "Courier New" }, FontWeight = 600 });
+            l.AddThemeFontSizeOverride("font_size", (int)(10 * px));
+            if (tint is { } c0) l.AddThemeColorOverride("font_color", c0);
+            root.AddChild(l);
+            return root;
+        }
+        for (int i = 0; i < s.Length; i++)
+        {
+            if (s[i] == ' ' || !_glyphs.TryGetValue(s[i], out var rect)) continue;
+            root.AddChild(new TextureRect
+            {
+                Texture = new AtlasTexture { Atlas = _sheet, Region = rect }, Position = new Vector2(i * CellW * px, 0), Size = new Vector2(CellW, CellH) * px,
+                ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.Scale,
+                TextureFilter = CanvasItem.TextureFilterEnum.Nearest, MouseFilter = Control.MouseFilterEnum.Ignore, Modulate = tint ?? Colors.White,
+            });
+        }
+        return root;
+    }
+
+    /// <summary>Width in screen pixels of a line in FM's font.</summary>
+    public static float TextWidth(string s, float px) => s.Length * CellW * px;
+
+    /// <summary>Wraps text to lines of at most <paramref name="cols"/> letters (FM's boxes are fixed-width).</summary>
+    public static List<string> Wrap(string text, int cols)
+    {
+        var lines = new List<string>();
+        foreach (var para in text.Replace("\r", "").Split('\n'))
+        {
+            var cur = "";
+            foreach (var w in para.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+            {
+                if (cur.Length > 0 && cur.Length + 1 + w.Length > cols) { lines.Add(cur); cur = w; }
+                else cur = cur.Length == 0 ? w : cur + " " + w;
+            }
+            if (cur.Length > 0) lines.Add(cur);
+        }
+        return lines;
+    }
+
     /// <summary>Feed the player's clicks here (the scene's input catcher).</summary>
     public void Click()
     {

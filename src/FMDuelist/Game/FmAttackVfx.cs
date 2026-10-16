@@ -124,15 +124,17 @@ public static class FmAttackVfx
 
     // ---------------- playing it ----------------
     /// <summary>Plays the attack from the monster's card to the target; returns when it connects.</summary>
-    public static async Task Play(int id, Vector2 from, Vector2 to)
+    /// <param name="host">Where to draw it (e.g. the Library's small stage); null = over the battle.</param>
+    public static async Task Play(int id, Vector2 from, Vector2 to, Node? host = null)
     {
-        if (NCombatRoom.Instance is null || Engine.GetMainLoop() is not SceneTree tree) return;
+        if ((host == null && NCombatRoom.Instance is null) || Engine.GetMainLoop() is not SceneTree tree) return;
         var c = FmData.Get(id);
         var (style, main, accent) = For(id);
         float size = Mathf.Clamp(0.8f + c.Atk / 3000f, 0.8f, 1.9f);
         int hits = 1 + Math.Clamp(c.Level, 1, 12) / 4;
-        var layer = new CanvasLayer { Layer = 60 };
-        tree.Root.AddChild(layer);
+        Node layer;
+        if (host != null) { layer = new Node2D(); host.AddChild(layer); }
+        else { layer = new CanvasLayer { Layer = 60 }; tree.Root.AddChild(layer); }
         FmAttackSfx.Play(style, size);
         try
         {

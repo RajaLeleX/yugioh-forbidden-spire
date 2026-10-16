@@ -27,6 +27,12 @@ static class NGameInputPatch
                 __instance.GetViewport().SetInputAsHandled();
                 return false;
             }
+            if (FmLibraryChoice.Open) return true; // its own buttons
+            if (FmLibraryFm.Open)
+            {
+                if (FmLibraryFm.HandleInput(inputEvent)) { __instance.GetViewport().SetInputAsHandled(); return false; }
+                return true;
+            }
             if (FmLibrary.Open)
             {
                 if (FmLibrary.HandleKey(inputEvent)) { __instance.GetViewport().SetInputAsHandled(); return false; }

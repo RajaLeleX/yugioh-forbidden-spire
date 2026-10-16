@@ -25,6 +25,7 @@ public static class FmLibrary
     static LineEdit? _search;
     static OptionButton? _filter, _sort;
     static RichTextLabel? _detail;
+    static VBoxContainer? _attack;
     static TextureRect? _art;
     static List<int> _shown = new();
     static int _selected;
@@ -69,6 +70,11 @@ public static class FmLibrary
 
             game.AddChild(layer);
             _layer = layer;
+            // the filter and sort lists open inside the game's window; as separate windows they take its focus and
+            // the game mutes itself in the background (the music stopped)
+            var gameView = game.GetViewport();
+            _embedWas = gameView.GuiEmbedSubwindows;
+            gameView.GuiEmbedSubwindows = true;
             Refresh();
             Select(_shown.FirstOrDefault(1));
             FmMusic.Play(MusicTrack);
@@ -77,10 +83,15 @@ public static class FmLibrary
         catch (Exception ex) { Log.Warn("[FMDuelist] library: " + ex); }
     }
 
-    public static void Close()
+    static bool _embedWas;
+
+    public static async void Close()
     {
-        if (Open) _layer!.QueueFree();
+        if (!Open) return;
+        var layer = _layer!;
         _layer = null;
+        if (NGame.Instance?.GetViewport() is { } root) root.GuiEmbedSubwindows = _embedWas;
+        await FmLibraryChoice.FadeAway(layer);
         FmMusic.Play(FmMedia.MenuTrack);
     }
 
@@ -160,7 +171,9 @@ public static class FmLibrary
         left.AddChild(_list);
         tab.AddChild(left);
 
-        var right = new ScrollContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
+        var side = new TabContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        side.AddThemeFontSizeOverride("font_size", 20);
+        var right = new ScrollContainer { Name = "Card", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
         var rbox = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         rbox.AddThemeConstantOverride("separation", 10);
         _art = new TextureRect { CustomMinimumSize = new Vector2(306, 288), ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered, TextureFilter = CanvasItem.TextureFilterEnum.Nearest };
@@ -172,7 +185,11 @@ public static class FmLibrary
         _detail.AddThemeColorOverride("default_color", Ink);
         rbox.AddChild(_detail);
         right.AddChild(rbox);
-        tab.AddChild(right);
+        side.AddChild(right);
+        // the monster attacking a dummy (no damage numbers), sized to the window
+        _attack = new VBoxContainer { Name = "Attack", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ExpandFill };
+        side.AddChild(_attack);
+        tab.AddChild(side);
         return tab;
     }
 
@@ -244,6 +261,20 @@ public static class FmLibrary
             lines.Add($"[color=#ffd15a][b]Equips {targets.Count} monsters[/b][/color], e.g. {string.Join(", ", targets.Take(8).Select(t => FmData.Get(t).Name))}");
         }
         _detail.Text = string.Join("\n", lines);
+        ShowAttack(id);
+    }
+
+    static void ShowAttack(int id)
+    {
+        if (_attack == null) return;
+        foreach (var c in _attack.GetChildren()) c.QueueFree();
+        if (!FmData.Get(id).IsMonster) { _attack.AddChild(Caption("Only monsters attack.", 22)); return; }
+        var stage = new FmMonsterStage(id);
+        stage.View.SizeFlagsVertical = Control.SizeFlags.ExpandFill;
+        stage.View.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+        stage.View.CustomMinimumSize = new Vector2(360, 220);
+        _attack.AddChild(stage.View);
+        _attack.AddChild(Caption($"{FmData.Get(id).Name} attacks ({FmAttackVfx.For(id).style})", 18));
     }
 
     // ---------------- Fusion Calculator tab ----------------

@@ -61,7 +61,7 @@ static class MenuUnlockPatches
     [HarmonyPrefix, HarmonyPatch(typeof(NMainMenu), "OpenTimelineScreen")]
     static bool Library()
     {
-        FmLibrary.Show();
+        FmLibraryChoice.Show();
         return false;
     }
 }

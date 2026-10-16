@@ -28,6 +28,8 @@ public static class FmCardFace
         l.AddThemeConstantOverride("line_spacing", -1);
         l.AddThemeConstantOverride("outline_size", 0);
         l.AddThemeColorOverride("font_shadow_color", new Color(0, 0, 0, 0));
+        // no padding from the game's label style: the text sits exactly in its box
+        l.AddThemeStyleboxOverride("normal", new StyleBoxEmpty());
         return l;
     }
 
@@ -50,6 +52,7 @@ public static class FmCardFace
         name.AddThemeFontOverride("font", Serif(true));
         name.AddThemeFontSizeOverride("font_size", 12);
         name.AddThemeConstantOverride("outline_size", 0);
+        name.AddThemeStyleboxOverride("normal", new StyleBoxEmpty());
         name.VerticalAlignment = VerticalAlignment.Center;
         name.AddThemeColorOverride("font_color", new Color("1a1208"));
         root.AddChild(name);
@@ -60,6 +63,7 @@ public static class FmCardFace
             stars.AddThemeFontOverride("font", new SystemFont { FontNames = new[] { "Segoe UI Symbol", "Arial Unicode MS", "Arial" } });
             stars.AddThemeFontSizeOverride("font_size", 10);
             stars.AddThemeConstantOverride("outline_size", 0);
+            stars.AddThemeStyleboxOverride("normal", new StyleBoxEmpty());
             stars.VerticalAlignment = VerticalAlignment.Center;
             stars.AddThemeColorOverride("font_color", new Color("d8281c"));
             root.AddChild(stars);
@@ -96,12 +100,14 @@ public static class FmCardFace
             root.AddChild(statBox);
             for (int i = 0; i < 2; i++)
             {
-                float y = 168 + i * 20;
+                // two equal rows filling the box; the word and the number share one size so they share a baseline
+                float y = 165 + i * 22;
                 var key = Fixed(i == 0 ? "ATK" : "DEF", 10, ink, Serif(true));
-                key.Position = new Vector2(82, y); key.Size = new Vector2(24, 16);
+                key.Position = new Vector2(82, y); key.Size = new Vector2(20, 22);
                 root.AddChild(key);
-                var val = Fixed((i == 0 ? info.Atk : info.Def).ToString(), 12, ink, Serif(true));
-                val.Position = new Vector2(104, y - 1); val.Size = new Vector2(33, 17);
+                // a wide slot ending inside the box's right edge, so even "3000" stays in
+                var val = Fixed((i == 0 ? info.Atk : info.Def).ToString(), 10, ink, Serif(true));
+                val.Position = new Vector2(100, y); val.Size = new Vector2(36, 22);
                 val.HorizontalAlignment = HorizontalAlignment.Right;
                 root.AddChild(val);
             }

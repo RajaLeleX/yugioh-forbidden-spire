@@ -16,6 +16,21 @@ public static class FmCardFace
         _ => new Color("c9923e"),
     };
 
+    static SystemFont Serif(bool bold) => new() { FontNames = new[] { "Times New Roman", "Georgia", "Serif" }, FontWeight = bold ? 700 : 400 };
+
+    /// <summary>A label with its own font, size and no extra line spacing (so it sits where it's put).</summary>
+    static Label Fixed(string text, int size, Color color, Font font)
+    {
+        var l = new Label { Text = text, MouseFilter = Control.MouseFilterEnum.Ignore, VerticalAlignment = VerticalAlignment.Center };
+        l.AddThemeFontOverride("font", font);
+        l.AddThemeFontSizeOverride("font_size", size);
+        l.AddThemeColorOverride("font_color", color);
+        l.AddThemeConstantOverride("line_spacing", -1);
+        l.AddThemeConstantOverride("outline_size", 0);
+        l.AddThemeColorOverride("font_shadow_color", new Color(0, 0, 0, 0));
+        return l;
+    }
+
     /// <summary>Card centered on (0,0) so it can be rotated in place.</summary>
     public static Control Create(int id)
     {
@@ -32,14 +47,20 @@ public static class FmCardFace
         root.AddChild(frame);
 
         var name = new Label { Text = info.Name, Position = new Vector2(8, 6), Size = new Vector2(134, 18), ClipText = true, MouseFilter = Control.MouseFilterEnum.Ignore };
+        name.AddThemeFontOverride("font", Serif(true));
         name.AddThemeFontSizeOverride("font_size", 12);
+        name.AddThemeConstantOverride("outline_size", 0);
+        name.VerticalAlignment = VerticalAlignment.Center;
         name.AddThemeColorOverride("font_color", new Color("1a1208"));
         root.AddChild(name);
 
         if (info.IsMonster)
         {
             var stars = new Label { Text = new string('★', Math.Clamp(info.Level, 0, 12)), Position = new Vector2(8, 24), Size = new Vector2(134, 14), HorizontalAlignment = HorizontalAlignment.Right, MouseFilter = Control.MouseFilterEnum.Ignore };
+            stars.AddThemeFontOverride("font", new SystemFont { FontNames = new[] { "Segoe UI Symbol", "Arial Unicode MS", "Arial" } });
             stars.AddThemeFontSizeOverride("font_size", 10);
+            stars.AddThemeConstantOverride("outline_size", 0);
+            stars.VerticalAlignment = VerticalAlignment.Center;
             stars.AddThemeColorOverride("font_color", new Color("d8281c"));
             root.AddChild(stars);
         }
@@ -54,17 +75,36 @@ public static class FmCardFace
         };
         root.AddChild(art);
 
-        var box = new ColorRect { Color = new Color("efe2c0"), Position = new Vector2(10, 164), Size = new Vector2(130, 46), MouseFilter = Control.MouseFilterEnum.Ignore };
-        root.AddChild(box);
-        var text = new Label
-        {
-            Text = info.IsMonster ? $"[{FmData.TypeNames[(int)info.Type]}]\nATK/{info.Atk}  DEF/{info.Def}" : $"[{FmData.TypeNames[(int)info.Type]}]",
-            Position = new Vector2(14, 166), Size = new Vector2(122, 42), MouseFilter = Control.MouseFilterEnum.Ignore,
-            HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center,
-        };
-        text.AddThemeFontSizeOverride("font_size", 12);
-        text.AddThemeColorOverride("font_color", new Color("1a1208"));
+        // the bottom like FM's cards: a small framed text box, and ATK / DEF on two rows beside it (monsters);
+        // fixed fonts and sizes so the game's theme can't push the lines out of place
+        var ink = new Color("1a1208");
+        string desc = string.Join(" ", info.Desc.Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(t => t.Trim()));
+        float boxW = info.IsMonster ? 66 : 130;
+        var frameBox = new Panel { Position = new Vector2(10, 164), Size = new Vector2(boxW, 46), MouseFilter = Control.MouseFilterEnum.Ignore };
+        frameBox.AddThemeStyleboxOverride("panel", new StyleBoxFlat { BgColor = new Color("efe2c0"), BorderColor = new Color("e0761c"), BorderWidthLeft = 2, BorderWidthRight = 2, BorderWidthTop = 2, BorderWidthBottom = 2 });
+        root.AddChild(frameBox);
+        var text = Fixed(info.IsMonster ? desc : $"[{FmData.TypeNames[(int)info.Type]}]  {desc}", 5, ink, Serif(false));
+        text.Position = new Vector2(13, 166); text.Size = new Vector2(boxW - 6, 42);
+        text.AutowrapMode = TextServer.AutowrapMode.WordSmart; text.ClipText = true;
+        text.VerticalAlignment = VerticalAlignment.Top;
         root.AddChild(text);
+        if (info.IsMonster)
+        {
+            var statBox = new Panel { Position = new Vector2(79, 164), Size = new Vector2(61, 46), MouseFilter = Control.MouseFilterEnum.Ignore };
+            statBox.AddThemeStyleboxOverride("panel", new StyleBoxFlat { BgColor = new Color(0, 0, 0, 0.08f), BorderColor = new Color("8a6a1c"), BorderWidthLeft = 1, BorderWidthRight = 1, BorderWidthTop = 1, BorderWidthBottom = 1 });
+            root.AddChild(statBox);
+            for (int i = 0; i < 2; i++)
+            {
+                float y = 168 + i * 20;
+                var key = Fixed(i == 0 ? "ATK" : "DEF", 10, ink, Serif(true));
+                key.Position = new Vector2(82, y); key.Size = new Vector2(24, 16);
+                root.AddChild(key);
+                var val = Fixed((i == 0 ? info.Atk : info.Def).ToString(), 12, ink, Serif(true));
+                val.Position = new Vector2(104, y - 1); val.Size = new Vector2(33, 17);
+                val.HorizontalAlignment = HorizontalAlignment.Right;
+                root.AddChild(val);
+            }
+        }
         return root;
     }
 }

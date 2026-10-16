@@ -72,6 +72,16 @@ public static class FmLibraryFm
     /// <summary>Keys and the wheel (from the game's input hook): Esc goes back, arrows and the wheel move.</summary>
     public static bool HandleInput(InputEvent e)
     {
+        if (e is InputEventMouseButton { Pressed: true } m)
+        {
+            switch (m.ButtonIndex)
+            {
+                case MouseButton.Right: Back(); return true;
+                case MouseButton.WheelUp: if (_page == Page.Table) Turn(-1); else Step(-1); return true;
+                case MouseButton.WheelDown: if (_page == Page.Table) Turn(1); else Step(1); return true;
+            }
+            return false;
+        }
         if (e is InputEventKey { Pressed: true } k)
         {
             switch (k.Keycode)
@@ -94,9 +104,6 @@ public static class FmLibraryFm
         if (e is not InputEventMouseButton { Pressed: true } m) return;
         switch (m.ButtonIndex)
         {
-            case MouseButton.Right: Back(); break;
-            case MouseButton.WheelUp: if (_page == Page.Table) Turn(-1); else Step(-1); break;
-            case MouseButton.WheelDown: if (_page == Page.Table) Turn(1); else Step(1); break;
             case MouseButton.Left: if (_page != Page.Table) Forward(); break;
         }
     }
@@ -205,6 +212,16 @@ public static class FmLibraryFm
         _screen!.AddChild(bar);
         _barNumber = Text("", 10, 4, 1f, null, bar);
         _barName = Text("", 14, 22, 1.15f, null, bar);
+        string label = _page == Page.Table ? "EXIT" : "BACK";
+        var back = new Button { Flat = true, Position = P(246, 1), Size = P(48, 15), FocusMode = Control.FocusModeEnum.None, MouseDefaultCursorShape = Control.CursorShape.PointingHand };
+        var idle = new StyleBoxFlat { BgColor = Colors.Black, BorderColor = StoneEdge, BorderWidthLeft = 1, BorderWidthRight = 1, BorderWidthTop = 1, BorderWidthBottom = 1 };
+        var lit = new StyleBoxFlat { BgColor = new Color(0.86f, 0.9f, 0.1f, 0.9f), BorderColor = StoneEdge, BorderWidthLeft = 1, BorderWidthRight = 1, BorderWidthTop = 1, BorderWidthBottom = 1 };
+        back.AddThemeStyleboxOverride("normal", idle); back.AddThemeStyleboxOverride("hover", lit); back.AddThemeStyleboxOverride("pressed", lit);
+        var word = FmTextBox.Text(label, _px);
+        word.Position = P((48 - label.Length * 8) / 2f, 2);
+        back.AddChild(word);
+        back.Pressed += Back;
+        bar.AddChild(back);
         if (flag) bar.AddChild(new Polygon2D { Color = new Color(0.85f, 0.1f, 0.08f), Polygon = new[] { P(298, 6), P(312, 2), P(312, 12) } });
         SetBar(_cursor, showName);
     }

@@ -32,10 +32,16 @@ namespace FMDuelist.Game;
 /// </summary>
 public static class FmRival
 {
-    /// <summary>How many cards he shows: always a hand of 5 face-down cards...</summary>
+    /// <summary>A duelist holds a hand of 5 cards and plays only from those, as in FM...</summary>
     public const int HandSize = 5;
-    /// <summary>...but like FM's boss duelists he secretly chooses from a hidden pool of up to 20 cards.</summary>
+    /// <summary>...except the final bosses at the end of Act 3, who secretly choose from a hidden pool of 20.</summary>
     public const int HiddenHandSize = 20;
+
+    /// <summary>The duelists who play from the hidden 20-card pool (the six final bosses of Act 3, once they're in).</summary>
+    public static readonly HashSet<int> FinalBosses = new();
+
+    /// <summary>How many cards he holds to choose from.</summary>
+    static int PoolSize => Current is { } c && FinalBosses.Contains(c.DuelistIndex) ? HiddenHandSize : HandSize;
     /// <summary>Face-down cards still shown this turn (5 at the start of his turn, fewer as he plays them).</summary>
     static int _visible;
 
@@ -213,7 +219,7 @@ public static class FmRival
 
     static void Draw()
     {
-        while (Hand.Count < HiddenHandSize)
+        while (Hand.Count < PoolSize)
         {
             if (Deck.Count == 0) BuildDeck();
             int i = Rng.Next(Deck.Count);

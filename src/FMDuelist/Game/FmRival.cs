@@ -510,6 +510,7 @@ public static class FmRival
         // FM: if it can't beat anything of yours it goes into Defense; it's set face down unless a fusion revealed it
         zone.Position = mine.Count == 0 || info.Atk > myBest || info.Atk >= info.Def ? FmPosition.Attack : FmPosition.Defense;
         zone.FaceDown = !fused;
+        if (zone.FaceDown) FmDuelStats.ComFaceDown++;
         zone.Visual.Attach(player);
         FmField.NotifyChanged();
         Banner(zone.FaceDown

@@ -21,13 +21,15 @@ public static class FmDuelStats
     public static Side You = new(), Com = new();
     /// <summary>Your plays that Duel Skill counts: fusions you started, equips, pure magic and traps that sprang.</summary>
     public static int Fusions, Equips, Magic, Traps;
-    public static bool Exodia;
+    /// <summary>Cards you set face down (your traps; your monsters are always played face up).</summary>
+    public static int FaceDown, ComFaceDown;
+    public static bool Exodia, Attrition;
 
     public static void Reset()
     {
         You = new(); Com = new();
-        Fusions = Equips = Magic = Traps = 0;
-        Exodia = false;
+        Fusions = Equips = Magic = Traps = FaceDown = ComFaceDown = 0;
+        Exodia = Attrition = false;
     }
 
     /// <summary>One battle: who attacked, the attacker's ATK, the defender's ATK or DEF, and what happened.</summary>
@@ -53,22 +55,30 @@ public static class FmDuelStats
     // ---------------- Duel Skill (Forbidden Memories' rank table) ----------------
     static int Band(int v, (int max, int pts)[] bands, int over) { foreach (var (max, pts) in bands) if (v <= max) return pts; return over; }
 
-    /// <summary>FM's Duel Skill points: start at 52 and adjust for each statistic.</summary>
-    public static int SkillPoints(int turns, int lpLeft)
+    /// <summary>
+    /// Forbidden Memories' hidden Duel Skill score: it starts at 50, every category below moves it up or down, and
+    /// the total is held between 0 and 99. 50 and up is POW (S at 90+), below 50 is TEC (S under 10).
+    /// </summary>
+    public static List<(string name, string value, int points)> Breakdown(int turns, int lpLeft)
     {
-        int p = 52;
-        p += Exodia ? 40 : 2; // victory condition: total annihilation (or Exodia)
-        p += Band(turns, new[] { (4, 12), (8, 8), (28, 0), (32, -8) }, -12);
-        p += Band(You.EffectiveAttacks, new[] { (1, 4), (3, 2), (9, 0), (19, -2) }, -4);
-        p += Band(You.DefWins, new[] { (1, 0), (5, -10), (9, -20), (14, -30) }, -40);
-        p += Band(Fusions, new[] { (0, 4), (4, 0), (9, -4), (14, -8) }, -12);
-        p += Band(Equips, new[] { (0, 4), (4, 0), (9, -4), (14, -8) }, -12);
-        p += Band(Magic, new[] { (0, 2), (3, -4), (6, -8), (9, -12) }, -16);
-        p += Band(Traps, new[] { (0, 2), (2, -8), (4, -16), (6, -24) }, -32);
-        p += Band(You.CardsUsed, new[] { (8, 15), (12, 12), (32, 0), (36, -5) }, -7);
-        p += lpLeft < 100 ? -7 : lpLeft < 1000 ? -5 : lpLeft < 7000 ? 0 : lpLeft < 8000 ? 4 : 6;
-        return p;
+        string cond = Exodia ? "EXODIA" : Attrition ? "ATTRITION" : "TOTAL ANNIHILATION";
+        return new()
+        {
+            ("VICTORY CONDITION", cond, Exodia ? 40 : Attrition ? -40 : 2),
+            ("TOTAL TURNS", turns.ToString(), Band(turns, new[] { (4, 12), (8, 8), (28, 0), (32, -8) }, -12)),
+            ("EFFECTIVE ATTACKS", You.EffectiveAttacks.ToString(), Band(You.EffectiveAttacks, new[] { (1, 4), (3, 2), (9, 0), (19, -2) }, -4)),
+            ("DEFENSIVE WINS", You.DefWins.ToString(), Band(You.DefWins, new[] { (1, 0), (5, -10), (9, -20), (14, -30) }, -40)),
+            ("FACE-DOWN PLAYS", FaceDown.ToString(), Band(FaceDown, new[] { (0, 0), (10, -2), (20, -4), (30, -6) }, -8)),
+            ("FUSIONS INITIATED", Fusions.ToString(), Band(Fusions, new[] { (0, 4), (4, 0), (9, -4), (14, -8) }, -12)),
+            ("EQUIP MAGIC ACTIVATED", Equips.ToString(), Band(Equips, new[] { (0, 4), (4, 0), (9, -4), (14, -8) }, -12)),
+            ("PURE MAGIC ACTIVATED", Magic.ToString(), Band(Magic, new[] { (0, 2), (3, -4), (6, -8), (9, -12) }, -16)),
+            ("TRAPS TRIGGERED", Traps.ToString(), Band(Traps, new[] { (0, 2), (2, -8), (4, -16), (6, -24) }, -32)),
+            ("CARDS USED", You.CardsUsed.ToString(), Band(You.CardsUsed, new[] { (8, 15), (12, 12), (32, 0), (36, -5) }, -7)),
+            ("REMAINING LP", lpLeft.ToString(), lpLeft < 100 ? -7 : lpLeft < 1000 ? -5 : lpLeft < 7000 ? 0 : lpLeft < 8000 ? 4 : 6),
+        };
     }
+
+    public static int SkillPoints(int turns, int lpLeft) => Math.Clamp(50 + Breakdown(turns, lpLeft).Sum(b => b.points), 0, 99);
 
     /// <summary>POW for high scores, TEC for low ones; the letter is how far from the middle.</summary>
     public static (string kind, string letter, int stars) Rank(int points)
@@ -90,11 +100,11 @@ public static class FmDuelEnd
 
     /// <summary>Plays the whole sequence and returns once the player clicks past the results.</summary>
     /// <summary>FM's own music for the end of a duel: the win jingle, the lose jingle, and the Results of Duel theme.</summary>
-    public const int WinJingle = 46, LoseJingle = 47, ResultsTrack = 39;
+    public const int WinJingle = 46, LoseJingle = 47, DuelResultsTheme = 57;
 
     public static async Task Show(bool won, Player player, int comLp, string comName, int turns, bool spoils = true)
     {
-        FmMusic.PlayOnceThenLoop(won ? WinJingle : LoseJingle, ResultsTrack);
+        FmMusic.PlayOnce(won ? WinJingle : LoseJingle);
         if (Engine.GetMainLoop() is not SceneTree tree) return;
         int youLp = Math.Max(0, player.Creature.CurrentHp);
         int points = FmDuelStats.SkillPoints(turns, youLp);
@@ -114,21 +124,22 @@ public static class FmDuelEnd
 
             await Banner(layer, view, won);
 
+            // the results screen: FM's Duel Results theme starts exactly as it comes up
+            if (FmMusic.HasFileTrack(DuelResultsTheme)) FmMusic.Play(DuelResultsTheme);
             var dt2 = dim.CreateTween(); dt2.TweenProperty(dim, "color:a", 0.88f, 0.3);
             var page1 = Page1(view, won, youLp, comLp, comName, kind, letter, stars, chips);
-            var page2 = Page2(view, won, turns);
-            layer.AddChild(page1); layer.AddChild(page2);
-            page2.Visible = false;
+            var pages = new[] { page1, Page2(view, won, turns), Page3(view), Page4(view, won, turns, youLp, points, kind, letter) };
+            foreach (var pg in pages) { layer.AddChild(pg); pg.Visible = pg == page1; }
             page1.Modulate = new Color(1, 1, 1, 0);
             var pt = page1.CreateTween(); pt.TweenProperty(page1, "modulate:a", 1f, 0.3);
 
             var done = new TaskCompletionSource();
-            int page = 1;
-            void Flip(int to) { page = to; page1.Visible = page == 1; page2.Visible = page == 2; FmSfx.Play(FmSfx.Flip); }
-            foreach (var pg in new[] { page1, page2 })
+            int page = 0;
+            void Flip(int to) { page = (to + pages.Length) % pages.Length; for (int i = 0; i < pages.Length; i++) pages[i].Visible = i == page; FmSfx.Play(FmSfx.Flip); }
+            foreach (var pg in pages)
             {
-                (pg.GetNode<Button>("Prev")).Pressed += () => Flip(page == 1 ? 2 : 1);
-                (pg.GetNode<Button>("Next")).Pressed += () => Flip(page == 1 ? 2 : 1);
+                (pg.GetNode<Button>("Prev")).Pressed += () => Flip(page - 1);
+                (pg.GetNode<Button>("Next")).Pressed += () => Flip(page + 1);
                 (pg.GetNode<Button>("Continue")).Pressed += () => done.TrySetResult();
             }
             await done.Task;
@@ -296,7 +307,7 @@ public static class FmDuelEnd
     {
         var root = Frame(view, out var box, out var s);
         var you = FmDuelStats.You; var com = FmDuelStats.Com;
-        string cond = FmDuelStats.Exodia ? "EXODIA" : "TOTAL ANNIHILATION";
+        string cond = FmDuelStats.Exodia ? "EXODIA" : FmDuelStats.Attrition ? "ATTRITION" : "TOTAL ANNIHILATION";
         var vc = Text("VICTORY CONDITIONS", 28 * s, Colors.White, Colors.Black, 4 * s); vc.Position = new Vector2(30 * s, 110 * s); box.AddChild(vc);
         var vcv = Text(won ? cond : "-", 30 * s, Colors.White, Colors.Black, 4 * s); vcv.Position = new Vector2(30 * s, 145 * s); box.AddChild(vcv);
         var tn = Text($"TURNS   {turns}", 30 * s, LabelBlue, Colors.Black, 4 * s); tn.Position = new Vector2(box.Size.X * 0.65f, 125 * s); box.AddChild(tn);
@@ -308,6 +319,45 @@ public static class FmDuelEnd
         Row(box, 530 * s, s, "AVERAGE DFD FACTOR", you.AvgDef.ToString(), com.AvgDef.ToString());
         Row(box, 600 * s, s, "DEFENSIVE LOSSES", you.DefLosses.ToString(), com.DefLosses.ToString(), false);
         Row(box, 670 * s, s, "DEFENSIVE WINS", you.DefWins.ToString(), com.DefWins.ToString(), false);
+        return root;
+    }
+
+    /// <summary>Page 3: the technique statistics (what FM counts against a POW rank).</summary>
+    static Control Page3(Vector2 view)
+    {
+        var root = Frame(view, out var box, out var s);
+        var you = FmDuelStats.You;
+        var t = Text("TECHNIQUE STATISTICS", 26 * s, Gold, Colors.Black, 4 * s); t.Position = new Vector2(30 * s, 110 * s); box.AddChild(t);
+        Row(box, 170 * s, s, "FACE-DOWN PLAYS", FmDuelStats.FaceDown.ToString(), FmDuelStats.ComFaceDown.ToString(), false);
+        Row(box, 240 * s, s, "FUSIONS INITIATED", FmDuelStats.Fusions.ToString(), "-", false);
+        Row(box, 310 * s, s, "EQUIP MAGIC ACTIVATED", FmDuelStats.Equips.ToString(), "-", false);
+        Row(box, 380 * s, s, "PURE MAGIC ACTIVATED", FmDuelStats.Magic.ToString(), "-", false);
+        Row(box, 450 * s, s, "TRAPS TRIGGERED", FmDuelStats.Traps.ToString(), "-", false);
+        Row(box, 520 * s, s, "CARD DESTRUCTION", you.Destroyed.ToString(), FmDuelStats.Com.Destroyed.ToString(), false);
+        var note = Text("Fusions, magic and traps lower a POW rank and raise a TEC rank.", 22 * s, new Color(0.8f, 0.8f, 0.85f), Colors.Black, 3 * s);
+        note.Position = new Vector2(30 * s, 620 * s); box.AddChild(note);
+        return root;
+    }
+
+    /// <summary>Page 4: how the Duel Skill rank was worked out, category by category.</summary>
+    static Control Page4(Vector2 view, bool won, int turns, int youLp, int points, string kind, string letter)
+    {
+        var root = Frame(view, out var box, out var s);
+        var t = Text("DUEL SKILL", 26 * s, Gold, Colors.Black, 4 * s); t.Position = new Vector2(30 * s, 100 * s); box.AddChild(t);
+        float y = 140 * s;
+        var start = Text("STARTING POINTS", 21 * s, Colors.White, Colors.Black, 3 * s); start.Position = new Vector2(30 * s, y); box.AddChild(start);
+        var sv = Text("50", 21 * s, LabelBlue, Colors.Black, 3 * s); sv.Position = new Vector2(box.Size.X - 140 * s, y); box.AddChild(sv);
+        foreach (var (name, value, pts) in FmDuelStats.Breakdown(turns, youLp))
+        {
+            y += 40 * s;
+            var n = Text(name, 21 * s, Colors.White, Colors.Black, 3 * s); n.Position = new Vector2(30 * s, y); box.AddChild(n);
+            var v = Text(value, 21 * s, new Color(0.85f, 0.85f, 0.9f), Colors.Black, 3 * s); v.Position = new Vector2(box.Size.X * 0.55f, y); box.AddChild(v);
+            var p = Text(pts > 0 ? $"+{pts}" : pts.ToString(), 21 * s, pts > 0 ? new Color(1f, 0.45f, 0.4f) : pts < 0 ? new Color(0.4f, 1f, 0.55f) : Colors.White, Colors.Black, 3 * s);
+            p.Position = new Vector2(box.Size.X - 140 * s, y); box.AddChild(p);
+        }
+        y += 52 * s;
+        var total = Text(won ? $"TOTAL  {points}   -   {letter}-{kind}" : $"TOTAL  {points}", 28 * s, Gold, Colors.Black, 4 * s);
+        total.Position = new Vector2(30 * s, y); box.AddChild(total);
         return root;
     }
 

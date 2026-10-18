@@ -131,7 +131,7 @@ public static partial class FmMusic
         {
             try
             {
-                var r = _cache.GetOrAdd(index, i => FmMusicBank.Render(bgm, i) ?? (Array.Empty<short>(), -1, -1));
+                var r = _cache.GetOrAdd(index, i => i >= FileTrackBase ? FileTrack(bgm, i) : FmMusicBank.Render(bgm, i) ?? (Array.Empty<short>(), -1, -1));
                 if (r.pcm.Length == 0) return;
                 var pcm = once ? r.pcm : Seamless(r.pcm, r.loop, r.end);
                 Log.Info($"[FMDuelist] track {index}: loop {r.loop}..{r.end} of {r.pcm.Length / 2} frames");
@@ -139,6 +139,34 @@ public static partial class FmMusic
             }
             catch (Exception ex) { Log.Warn("[FMDuelist] music render: " + ex.Message); }
         });
+    }
+
+    /// <summary>Tracks from 57 up aren't in the disc's music bank: they're local files next to the mod (never shipped).</summary>
+    public const int FileTrackBase = 57;
+
+    /// <summary>The mod's own copy of a local track exists (e.g. track 57, FM's Duel Results theme).</summary>
+    public static bool HasFileTrack(int index) => File.Exists(FileTrackPath(index));
+
+    static string FileTrackPath(int index) =>
+        Path.Combine(Path.GetDirectoryName(typeof(FmMusic).Assembly.Location) ?? ".", "music", $"track{index}.pcm");
+
+    /// <summary>
+    /// A local track: 16-bit stereo PCM at the synth's rate, one exact loop of the song. Its loudness is matched to
+    /// FM's own music (the disc's Results of Duel track) so it sits at the same volume as everything else.
+    /// </summary>
+    static (short[] pcm, int loop, int end) FileTrack(byte[] bgm, int index)
+    {
+        var path = FileTrackPath(index);
+        if (!File.Exists(path)) return (Array.Empty<short>(), -1, -1);
+        var bytes = File.ReadAllBytes(path);
+        var pcm = new short[bytes.Length / 2];
+        Buffer.BlockCopy(bytes, 0, pcm, 0, pcm.Length * 2);
+        var reference = _cache.GetOrAdd(39, i => FmMusicBank.Render(bgm, i) ?? (Array.Empty<short>(), -1, -1));
+        double Rms(short[] p) { double s = 0; for (int i = 0; i < p.Length; i += 7) s += (double)p[i] * p[i]; return Math.Sqrt(s / Math.Max(1, p.Length / 7)); }
+        double gain = reference.pcm.Length > 0 ? Math.Clamp(Rms(reference.pcm) / Math.Max(1, Rms(pcm)), 0.2, 3.0) : 1.0;
+        for (int i = 0; i < pcm.Length; i++) pcm[i] = (short)Math.Clamp(pcm[i] * gain, short.MinValue, short.MaxValue);
+        Log.Info($"[FMDuelist] track {index}: local file, {pcm.Length / 2} frames, volume x{gain:0.00} to match the disc's music");
+        return (pcm, 0, pcm.Length / 2);
     }
 
     /// <summary>

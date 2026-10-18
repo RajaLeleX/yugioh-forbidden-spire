@@ -155,6 +155,7 @@ public abstract class FmSpellCard : FmCardBase
                 break;
             case FmSpellKind.Trap:
                 FmField.Traps.Add(FmId);
+                if (Game.FmRival.Active) Game.FmDuelStats.FaceDown++;
                 await PowerCmd.Apply<FmTrapPower>(ctx, me, 1, me, this);
                 FmField.NotifyChanged();
                 break;

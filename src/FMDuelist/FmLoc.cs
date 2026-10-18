@@ -74,7 +74,7 @@ public static class FmLoc
             });
 
             var monsters = new Dictionary<string, string>();
-            foreach (var (t, n) in new[] { (typeof(FMDuelist.Game.FmZonePet2), 2), (typeof(FMDuelist.Game.FmZonePet3), 3) })
+            foreach (var (t, n) in new[] { (typeof(FMDuelist.Game.FmZonePet2), 2), (typeof(FMDuelist.Game.FmZonePet3), 3), (typeof(FMDuelist.Game.FmZonePet4), 4), (typeof(FMDuelist.Game.FmZonePet5), 5) })
             {
                 monsters[E(t) + ".name"] = $"Monster Zone {n}";
                 monsters[E(t) + ".moves.NOTHING_MOVE.title"] = "Stand Guard";

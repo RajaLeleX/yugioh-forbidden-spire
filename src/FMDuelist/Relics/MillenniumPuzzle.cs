@@ -111,6 +111,12 @@ public sealed class MillenniumPuzzle : RelicModel
         // boss duel: the Kin Priest duels by FM rules
         if (Owner.Creature.CombatState!.Enemies.Any(e => e.Monster != null && FmRival.AllDuelists.Any(b => b.Monster == e.Monster.GetType()))) await FmRival.Begin(Owner, Owner.Creature.CombatState!);
         if (storyDuel != null && FmRival.Priest != null) FmStoryAct1.Dress(FmRival.Priest, storyDuel);
+        // the story's boss and Heishin wear their FM pictures too
+        else if (FmRival.Priest != null && FmStoryAct1.StoryRun(Owner.RunState))
+        {
+            if (FmRival.Current == FmRival.Bosses[0]) FmStoryAct1.Dress(FmRival.Priest, FmStoryAct1.SetoLook);
+            else if (FmAct1Story.IsHeishin(FmRival.Priest)) FmStoryAct1.Dress(FmRival.Priest, FmStoryAct1.HeishinLook);
+        }
         // the secret level: Heishin's unwinnable duel
         if (Owner.Creature.CombatState!.Enemies.Any(FmAct1Story.IsHeishin))
             await FmAct1Story.StartHeishin(new MegaCrit.Sts2.Core.GameActions.Multiplayer.BlockingPlayerChoiceContext(), Owner);

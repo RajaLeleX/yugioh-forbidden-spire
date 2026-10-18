@@ -59,8 +59,8 @@ public sealed class FmSlot
 public static class FmField
 {
     public const int ZoneCount = 3;
-    public const int MaxTraps = 3;
-    public static readonly FmSlot[] Slots = { new(0), new(1), new(2) };
+    public const int MaxTraps = 5;
+    public static readonly FmSlot[] Slots = { new(0), new(1), new(2), new(3), new(4) };
 
     public static int PendingAtkBonus, PendingDefBonus;
     /// <summary>Equips used in a fusion chain (id, bonus); they go onto the monster the chain summons.</summary>
@@ -119,6 +119,7 @@ public static class FmField
         foreach (var s in Slots) s.Clear();
         FmGuardianStars.Reset();
         SummonedThisTurn = false; SummonsThisTurn = 0; SummonsThisCombat = 0; MassSpellThisTurn = false; Aiming = false; SwordsTurns = 0; BindStun = false;
+        try { FmFieldHud.Clear(); } catch { }
         Traps.Clear(); FieldBoost.Clear(); Marked.Clear(); PendingEquips.Clear(); PendingAtkBonus = PendingDefBonus = 0;
         try { FmBackdrop.Clear(); } catch { }
         NotifyChanged();
@@ -153,26 +154,26 @@ public static class FmField
         }
         else
         {
-            creature = slot.Index == 1 ? await PlayerCmd.AddPet<FmZonePet2>(player) : await PlayerCmd.AddPet<FmZonePet3>(player);
+            creature = slot.Index switch
+            {
+                1 => await PlayerCmd.AddPet<FmZonePet2>(player),
+                2 => await PlayerCmd.AddPet<FmZonePet3>(player),
+                3 => await PlayerCmd.AddPet<FmZonePet4>(player),
+                _ => await PlayerCmd.AddPet<FmZonePet5>(player),
+            };
             await CreatureCmd.SetMaxAndCurrentHp(creature, FmRules.MonsterHp);
         }
-        foreach (var z in Slots) PlaceZone(player, z);
         slot.Visual.Attach(player);
+        FmDuelLayout.PlaceAll(player);
         NotifyChanged();
     }
 
-    public static void PlaceAll(Player player) { foreach (var z in Slots) PlaceZone(player, z); }
+    public static void PlaceAll(Player player) => FmDuelLayout.PlaceAll(player);
 
     /// <summary>Zones 2 and 3 stand in a row to the right of Osty's spot.</summary>
     public static void PlaceZone(Player player, FmSlot slot)
     {
-        if (slot.Index == 0) return;
-        var room = NCombatRoom.Instance;
-        var me = room?.GetCreatureNode(player.Creature);
-        var node = slot.Creature(player) is { } c ? room?.GetCreatureNode(c) : null;
-        if (me == null || node == null) return;
-        float gap = FmPractice.Compact ? FmPractice.ZoneGap : 150f, step = FmPractice.Compact ? FmPractice.ZoneStep : 190f;
-        node.Position = me.Position + new Godot.Vector2(me.Hitbox.Size.X * 0.5f + gap + slot.Index * step, -75f);
+        FmDuelLayout.Place(player, slot);
     }
 
     public static void TogglePosition(FmSlot slot)

@@ -312,6 +312,7 @@ void fragment(){
         node.Visuals.AddChild(_root);
         _shownId = 0;
         Refresh();
+        FmDuelLayout.Place(player, _slot);
     }
 
     Label MakeLabel(int size, Vector2 pos)
@@ -323,6 +324,9 @@ void fragment(){
         _root!.AddChild(l);
         return l;
     }
+
+    /// <summary>Where this zone's card rests (world coordinates), once it's showing.</summary>
+    public Vector2? RestingSpot() => Valid && _group != null ? _group.GetGlobalTransform() * Home : null;
 
     public Vector2 CardCenter() => Valid && _holder != null ? _holder.GetGlobalTransformWithCanvas().Origin : Vector2.Zero;
 

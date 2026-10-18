@@ -39,3 +39,5 @@ public abstract class FmZonePet : MonsterModel
 
 public sealed class FmZonePet2 : FmZonePet { public override int ZoneIndex => 1; }
 public sealed class FmZonePet3 : FmZonePet { public override int ZoneIndex => 2; }
+public sealed class FmZonePet4 : FmZonePet { public override int ZoneIndex => 3; }
+public sealed class FmZonePet5 : FmZonePet { public override int ZoneIndex => 4; }

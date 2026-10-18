@@ -79,7 +79,13 @@ public static class FmStoryAct1
     public static float HalfWidth;
 
     /// <summary>A story duel is on (its layout is the compact one, like the Free Duel).</summary>
-    public static bool InDuel => FmRival.Active && ForMonster(FmRival.Current?.Monster) != null;
+    public static bool InDuel => FmRival.Active && (ForMonster(FmRival.Current?.Monster) != null || _dressed);
+    static bool _dressed;
+
+    /// <summary>The Act 1 boss as FM's Priest Seto, in front of the night pillars of his scene.</summary>
+    public static readonly StoryDuel SetoLook = new("seto", "Young Priest Seto", 7, typeof(MegaCrit.Sts2.Core.Models.Encounters.TheKinBoss), typeof(MegaCrit.Sts2.Core.Models.Monsters.KinPriest), "bg_cols", "chr_seto_cols");
+    /// <summary>The secret level's Heishin (his duel keeps the Umi field as its scenery).</summary>
+    public static readonly StoryDuel HeishinLook = new("heishin", "High Mage Heishin", 8, typeof(FmHeishinEncounter), typeof(FmHeishin), "", "chr_heishin_pillars");
 
     public static void Dress(Creature duelist, StoryDuel d)
     {
@@ -97,13 +103,12 @@ public static class FmStoryAct1
                 spr.Modulate = new Color(1, 1, 1, 0);
                 var t = spr.CreateTween(); t.TweenProperty(spr, "modulate:a", 1f, 0.5);
             }
-            Background(d.Bg);
+            _dressed = true;
+            if (d.Bg.Length > 0) Background(d.Bg);
             // you at the left and the duelist at the right, each with three evenly spaced zones in front
             if (FmRival.Current is { } cur && FmPractice.Duelist != cur && duelist.CombatState?.Players.FirstOrDefault() is { } p)
             {
-                FmPractice.Place(p, duelist);
-                FmRival.PlaceZones();
-                FmField.PlaceAll(p);
+                FmDuelLayout.Duel(p);
             }
         }
         catch (Exception ex) { Log.Warn("[FMDuelist] dress duelist: " + ex.Message); }
@@ -133,6 +138,7 @@ public static class FmStoryAct1
 
     public static void ClearBackground()
     {
+        _dressed = false;
         if (_bgRoot != null && GodotObject.IsInstanceValid(_bgRoot)) _bgRoot.QueueFree();
         _bgRoot = null;
     }

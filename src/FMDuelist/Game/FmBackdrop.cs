@@ -10,6 +10,9 @@ public static class FmBackdrop
     static Control? _root;
     static int _shown;
 
+    /// <summary>The field card in play (0: none).</summary>
+    public static int Current => _shown;
+
     static readonly Dictionary<int, Color> Tint = new()
     {
         [330] = new Color(0.10f, 0.30f, 0.12f, 0.35f), // Forest
@@ -65,6 +68,7 @@ void fragment(){
         var room = NCombatRoom.Instance;
         if (room?.Background?.GetParent() is not Control container) return;
         if (fieldId == _shown && _root != null && GodotObject.IsInstanceValid(_root)) return;
+        try { FmFieldHud.Refresh(); } catch { }
         var old = _root;
         _shown = fieldId;
         _root = null;

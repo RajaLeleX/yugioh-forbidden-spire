@@ -24,9 +24,34 @@ public static class FmMod
     public const string Id = "FMDuelist";
     public static Harmony Harmony = null!;
 
+    /// <summary>
+    /// The game finds [SavedProperty] values only on its own model classes (a fixed list), so the Millennium
+    /// Puzzle's story flags were never written and a reloaded run forgot it was a story run. Add the mod's classes.
+    /// </summary>
+    static void RegisterSavedProperties()
+    {
+        try
+        {
+            var cache = typeof(MegaCrit.Sts2.Core.Saves.Runs.SavedPropertiesTypeCache);
+            System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(cache.TypeHandle);
+            var add = HarmonyLib.AccessTools.Method(cache, "CachePropertiesForType");
+            int n = 0;
+            foreach (var t in typeof(FmMod).Assembly.GetTypes())
+                if (!t.IsAbstract && typeof(MegaCrit.Sts2.Core.Models.AbstractModel).IsAssignableFrom(t)
+                    && t.GetProperties(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic)
+                        .Any(p => p.IsDefined(typeof(MegaCrit.Sts2.Core.Saves.Runs.SavedPropertyAttribute), true)))
+                { add.Invoke(null, new object[] { t }); n++; }
+            var names = (System.Collections.IList)HarmonyLib.AccessTools.Field(cache, "_netIdToPropertyNameMap").GetValue(null)!;
+            HarmonyLib.AccessTools.Property(cache, "NetIdBitSize").SetValue(null, (int)Math.Ceiling(Math.Log2(Math.Max(2, names.Count))));
+            Log.Info($"[FMDuelist] Saved properties registered for {n} mod classes");
+        }
+        catch (Exception ex) { Log.Error("[FMDuelist] saved properties: " + ex); }
+    }
+
     public static void Init()
     {
         Log.Info("[FMDuelist] Init");
+        RegisterSavedProperties();
         FmData.Load();
         Game.FmPractice.Preload();
         ModHelper.AddModelToPool<MegaCrit.Sts2.Core.Models.RelicPools.NecrobinderRelicPool, MillenniumPuzzle>();

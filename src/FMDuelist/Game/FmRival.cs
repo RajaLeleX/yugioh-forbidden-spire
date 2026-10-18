@@ -62,7 +62,10 @@ public static class FmRival
     public static bool Bound;
     /// <summary>Spellbinding Circle: his monsters attack for 1000 less while it lasts.</summary>
     public static int BoundAtk => Priest?.GetPower<Powers.FmSpellboundPower>() != null ? 1000 : 0;
-    public static readonly FmSlot[] Slots = { new(0, true), new(1, true), new(2, true) };
+    public static readonly FmSlot[] Slots = { new(0, true), new(1, true), new(2, true), new(3, true), new(4, true) };
+
+    /// <summary>How many traps he has set face down.</summary>
+    public static int TrapCount => Traps.Count;
     static readonly List<int> Deck = new();
     static readonly List<int> Hand = new();
     static readonly Dictionary<int, int[]> _weights = new();
@@ -122,16 +125,16 @@ public static class FmRival
         // the boss's own buffs and passives don't belong in a duel
         foreach (var pw in Priest.Powers.ToList()) await PowerCmd.Remove(pw);
         await FmRules.Raw(() => CreatureCmd.SetMaxAndCurrentHp(Priest, LifePoints));
-        // three monster zones for him (invisible stand-ins under his cards)
-        MonsterModel[] zones = { ModelDb.Monster<FmRivalZone1>(), ModelDb.Monster<FmRivalZone2>(), ModelDb.Monster<FmRivalZone3>() };
+        // five monster zones for him (invisible stand-ins under his cards)
+        MonsterModel[] zones = { ModelDb.Monster<FmRivalZone1>(), ModelDb.Monster<FmRivalZone2>(), ModelDb.Monster<FmRivalZone3>(), ModelDb.Monster<FmRivalZone4>(), ModelDb.Monster<FmRivalZone5>() };
         if (Current == FmPractice.Duelist) FmPractice.Layout(player, Priest);
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < zones.Length; i++)
         {
             var c = await CreatureCmd.Add(zones[i].ToMutable(), combat, CombatSide.Enemy, null);
             Slots[i].RivalCreature = c;
         }
-        PlaceZones();
         foreach (var s in Slots) s.Visual.Attach(player);
+        FmDuelLayout.Duel(player);
         if (Priest.Monster is { } pm) pm.SetMoveImmediate(Idle(), true);
         BuildDeck();
         Draw();
@@ -143,6 +146,7 @@ public static class FmRival
     public static void Reset()
     {
         Active = false; Bound = false; Priest = null; Current = null; Deck.Clear(); Hand.Clear(); Traps.Clear();
+        try { FmFieldHud.Clear(); } catch { }
         FmRivalHand.Hide();
         FmPractice.RemoveLabels();
         foreach (var s in Slots) { s.Clear(); s.RivalCreature = null; }
@@ -158,15 +162,7 @@ public static class FmRival
     /// <summary>His three zones stand in a row in front of him.</summary>
     public static void PlaceZones()
     {
-        var room = NCombatRoom.Instance;
-        if (room == null || Priest == null || room.GetCreatureNode(Priest) is not { } pn) return;
-        for (int i = 0; i < 3; i++)
-            if (Slots[i].RivalCreature is { } c && room.GetCreatureNode(c) is { } n)
-            {
-                float gap = FmPractice.Compact ? FmPractice.ZoneGap : 150f, step = FmPractice.Compact ? FmPractice.ZoneStep : 190f;
-                float half = Math.Max(pn.Hitbox.Size.X * 0.5f, FmStoryAct1.InDuel ? FmStoryAct1.HalfWidth : 0f);
-                n.Position = pn.Position + new Vector2(-half - gap - (2 - i) * step, -75f);
-            }
+        if (FmField.Duelist is { } p) FmDuelLayout.Duel(p);
     }
 
     static readonly int[] Usable = { 336, 337, 338, 339, 340, 341, 342, 343, 344, 345, 346, 347, 681, 682, 683, 684, 685, 686 };
@@ -361,7 +357,7 @@ public static class FmRival
                 ["KNOWLEDGE_DEMON.name"] = Bosses[1].Name,
                 ["QUEEN.name"] = Bosses[2].Name,
             };
-            foreach (var t in new[] { typeof(FmRivalZone1), typeof(FmRivalZone2), typeof(FmRivalZone3) })
+            foreach (var t in new[] { typeof(FmRivalZone1), typeof(FmRivalZone2), typeof(FmRivalZone3), typeof(FmRivalZone4), typeof(FmRivalZone5) })
                 monsters[ModelDb.GetEntry(t) + ".name"] = "Monster Zone";
             loc.GetTable("monsters").MergeWith(monsters);
             loc.GetTable("encounters").MergeWith(new Dictionary<string, string>
@@ -544,7 +540,7 @@ public static class FmRival
     /// <summary>He sets the traps in his hand face down (up to 3 on the field).</summary>
     static async Task<bool> SetTrap()
     {
-        if (Traps.Count >= 3 || Hand.FirstOrDefault(id => FmData.Get(id).Type == FmType.Trap) is var id && id == 0) return false;
+        if (Traps.Count >= FmField.MaxTraps || Hand.FirstOrDefault(id => FmData.Get(id).Type == FmType.Trap) is var id && id == 0) return false;
         await UseCard(id);
         Traps.Add(id);
         FmRivalHand.SetTraps(Traps.Count);
@@ -770,6 +766,8 @@ public abstract class FmRivalZone : MonsterModel
 public sealed class FmRivalZone1 : FmRivalZone { }
 public sealed class FmRivalZone2 : FmRivalZone { }
 public sealed class FmRivalZone3 : FmRivalZone { }
+public sealed class FmRivalZone4 : FmRivalZone { }
+public sealed class FmRivalZone5 : FmRivalZone { }
 
 // ---------------- hooks into the game ----------------
 

@@ -293,6 +293,10 @@ public static class FmRivalHand
     /// <summary>His face-down set traps, a small row above him.</summary>
     public static void SetTraps(int count)
     {
+        FmFieldHud.Refresh();
+        return;
+#pragma warning disable CS0162
+
         if (Engine.GetMainLoop() is not SceneTree tree || NCombatRoom.Instance is not { } room) return;
         if (_trapLayer == null || !GodotObject.IsInstanceValid(_trapLayer))
         {
@@ -310,6 +314,7 @@ public static class FmRivalHand
         var tex = Back();
         for (int i = 0; i < count; i++)
             _trapRow.AddChild(new Sprite2D { Texture = tex, Position = new Vector2(i * 60, 0), Scale = new Vector2(52, 74) / new Vector2(tex.GetWidth(), tex.GetHeight()), Modulate = new Color(0.85f, 0.75f, 1f) });
+#pragma warning restore CS0162
     }
 
     // ---------------- the card back ----------------

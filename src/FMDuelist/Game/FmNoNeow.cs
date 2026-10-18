@@ -26,13 +26,24 @@ static class FmNoNeowPatch
                 var place = new Control { MouseFilter = Control.MouseFilterEnum.Ignore };
                 place.SetAnchorsPreset(Control.LayoutPreset.FullRect);
                 place.AddChild(new ColorRect { Color = Colors.Black, MouseFilter = Control.MouseFilterEnum.Ignore, AnchorRight = 1, AnchorBottom = 1 });
-                foreach (var key in new[] { "bg_palace", "chr_simon_palace" })
-                    if (FmScene.Tex(key) is { } tex)
-                    {
-                        var r = new TextureRect { Texture = tex, ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.KeepAspectCovered, MouseFilter = Control.MouseFilterEnum.Ignore };
-                        r.SetAnchorsPreset(Control.LayoutPreset.FullRect);
-                        place.AddChild(r);
-                    }
+                // just the palace at night (no one in it), shown whole: a soft blurred copy fills the sides
+                if (FmScene.Tex("bg_palace") is { } tex)
+                {
+                    var src = tex.GetImage();
+                    var blur = (Image)src.Duplicate();
+                    blur.Resize(Math.Max(1, src.GetWidth() / 12), Math.Max(1, src.GetHeight() / 12), Image.Interpolation.Bilinear);
+                    blur.Resize(src.GetWidth(), src.GetHeight(), Image.Interpolation.Cubic);
+                    var fill = new TextureRect { ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.KeepAspectCovered, MouseFilter = Control.MouseFilterEnum.Ignore, Modulate = new Color(0.5f, 0.5f, 0.55f) };
+                    fill.Texture = ImageTexture.CreateFromImage(blur);
+                    fill.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+                    place.AddChild(fill);
+                    var r = new TextureRect { ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered, MouseFilter = Control.MouseFilterEnum.Ignore };
+                    r.Texture = tex;
+                    r.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+                    r.Material = new ShaderMaterial { Shader = new Shader { Code = @"shader_type canvas_item;
+void fragment(){ vec4 c = texture(TEXTURE, UV) * COLOR; float e = smoothstep(0.0, 0.05, UV.x) * smoothstep(0.0, 0.05, 1.0 - UV.x); COLOR = vec4(c.rgb, c.a * e); }" } };
+                    place.AddChild(r);
+                }
                 bg.AddChild(place);
             }
             if (t.Field("_ancientNameBanner").GetValue<Control>() is { } banner) banner.Visible = false;

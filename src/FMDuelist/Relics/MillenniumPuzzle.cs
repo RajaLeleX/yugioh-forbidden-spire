@@ -48,7 +48,7 @@ public sealed class MillenniumPuzzle : RelicModel
         => actIndex == 0 && StoryMap && runState.Players.Contains(Owner) ? new FmStoryActMap() : map;
 
     public override bool TryModifyRewards(Player player, List<MegaCrit.Sts2.Core.Rewards.Reward> rewards, AbstractRoom? room)
-        => Mine(player) && FmAct1Story.HeishinRewards(player, rewards, room);
+        => Mine(player) && (FmAct1Story.HeishinRewards(player, rewards, room) | FmRelicDrops.Apply(player, rewards, room));
     private readonly List<(Creature attacker, int trapId, decimal hit)> _sprung = new();
 
     private bool Mine(Player? p) => p == Owner;
@@ -609,9 +609,10 @@ public sealed class DragonTreasure : RelicModel
 
     public override async Task AfterObtained()
     {
-        foreach (var t in FmSheet.DragonBuffCards)
+        // Joey's Trump Card: Baby Dragon and the Thousand Dragon it grows into
+        foreach (int id in new[] { 4, 69 })
         {
-            var card = Owner.RunState.CreateCard(ModelDb.GetById<CardModel>(ModelDb.GetId(t)), Owner);
+            var card = Owner.RunState.CreateCard(ModelDb.GetById<CardModel>(ModelDb.GetId(FmSheet.TypeFor(id))), Owner);
             await CardPileCmd.Add(card, PileType.Deck);
         }
     }

@@ -256,7 +256,20 @@ static class FmStoryRoomsPatch
 // ---------------- the festival: a "?" point that is just the cutscene ----------------
 public sealed class FmFestivalEvent : EventModel
 {
-    protected override IReadOnlyList<EventOption> GenerateInitialOptions() => Array.Empty<EventOption>();
+    protected override IReadOnlyList<EventOption> GenerateInitialOptions() =>
+        new[] { new EventOption(this, Gift, Id.Entry + ".pages.INITIAL.options.CONTINUE") };
+
+    /// <summary>Leaving the festival: one of the mages' gifts, a Millennium Item.</summary>
+    async Task Gift()
+    {
+        try
+        {
+            if (Owner != null && Relics.FmRelicDrops.Random(Owner, festival: true) is { } relic)
+                await MegaCrit.Sts2.Core.Commands.RelicCmd.Obtain(relic, Owner);
+        }
+        catch (Exception ex) { Log.Warn("[FMDuelist] festival gift: " + ex.Message); }
+        SetEventFinished(L10NLookup(Id.Entry + ".pages.DONE.description"));
+    }
 
     protected override async Task BeforeEventStarted(bool isPreFinished)
     {
@@ -264,7 +277,6 @@ public sealed class FmFestivalEvent : EventModel
         try { await FmAct1Story.Festival(); } catch (Exception ex) { Log.Warn("[FMDuelist] festival: " + ex); }
     }
 
-    protected override void SetInitialEventState(bool isPreFinished) => SetEventFinished(InitialDescription);
 
     public override IEnumerable<string> GetAssetPaths(IRunState runState) =>
         base.GetAssetPaths(runState).Where(p => !p.Contains(Id.Entry.ToLowerInvariant()));

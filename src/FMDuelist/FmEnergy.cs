@@ -59,6 +59,8 @@ static class EnergyRelicPatch
     static void Postfix(RelicModel __instance, IRunState runState, ref bool __result)
     {
         if (__result && runState.Players.Any(FmRules.IsFmPlayer) && FmEnergyFilter.IsEnergyRelic(__instance)) __result = false;
+        // a Forbidden Memories run only ever finds the Millennium Items
+        if (__result && runState.Players.Any(FmRules.IsFmPlayer) && !FMDuelist.Relics.FmMillenniumItems.Allowed(__instance)) __result = false;
     }
 }
 

@@ -43,9 +43,9 @@ public static class FmLoc
                 [E(typeof(MagicProtectionKit)) + ".title"] = "Magic Protection Kit",
                 [E(typeof(MagicProtectionKit)) + ".description"] = "Add Swords of Revealing Light and Spellbinding Circle to your deck.",
                 [E(typeof(MagicProtectionKit)) + ".flavor"] = "A duelist never leaves home without a defense.",
-                [E(typeof(DragonTreasure)) + ".title"] = "Dragon Treasure",
-                [E(typeof(DragonTreasure)) + ".description"] = "Fusions may now create powerful Dragons (level 5+), like Twin-headed Thunder Dragon. Add Baby Dragon and Petit Dragon to your deck.",
-                [E(typeof(DragonTreasure)) + ".flavor"] = "A hoard guarded by scales.",
+                [E(typeof(DragonTreasure)) + ".title"] = "Joey's Trump Card",
+                [E(typeof(DragonTreasure)) + ".description"] = "Add Baby Dragon and Thousand Dragon to your deck. Powerful Dragons (level 5+) can be played and fused into.",
+                [E(typeof(DragonTreasure)) + ".flavor"] = "\"Baby Dragon, plus Time Wizard... Thousand Dragon!\"",
             });
 
             var relicText = new Dictionary<string, string>();
@@ -54,6 +54,12 @@ public static class FmLoc
                 relicText[E(t) + ".title"] = title;
                 relicText[E(t) + ".description"] = text;
                 relicText[E(t) + ".flavor"] = "A memory from Forbidden Memories.";
+            }
+            foreach (var (t, (title, text, flavor)) in FmMillenniumItems.Text)
+            {
+                relicText[E(t) + ".title"] = title;
+                relicText[E(t) + ".description"] = text;
+                relicText[E(t) + ".flavor"] = flavor;
             }
             loc.GetTable("relics").MergeWith(relicText);
 

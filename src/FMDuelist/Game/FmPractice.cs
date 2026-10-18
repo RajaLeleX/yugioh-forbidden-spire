@@ -107,7 +107,12 @@ public static class FmPractice
             l.AddThemeColorOverride("font_outline_color", Colors.Black);
             box.AddChild(l);
             _labels!.AddChild(box);
-            box.Position = screen - new Vector2(130, 70);
+            // at the top of the screen, in the duelist's corner (clear of the zones, traps and field box)
+            var view = who.GetViewport().GetVisibleRect().Size;
+            bool right = tag == "COM";
+            box.Position = new Vector2(right ? view.X - 24 : 24, 18);
+            if (right) box.Resized += () => box.Position = new Vector2(view.X - 24 - box.Size.X, 18);
+            _ = screen;
         }
         Tag(me, "YOU", "Duel Master K", new Color(0.75f, 0.05f, 0.05f, 0.9f));
         Tag(him, "COM", "Duel Master K", new Color(0.1f, 0.2f, 0.75f, 0.9f));

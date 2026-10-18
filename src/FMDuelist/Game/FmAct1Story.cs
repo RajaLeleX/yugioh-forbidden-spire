@@ -75,9 +75,43 @@ static partial class FmAct1Story
             await s.Say("sm_stop");
             await s.Chr(null);
             await s.Say("sm_drat");
+            await ChooseStarter(s);
         }
         catch (Exception ex) { Log.Warn("[FMDuelist] Simon's scolding: " + ex); }
         await s.Close();
+    }
+
+    /// <summary>
+    /// The starting choice in FM's style: the three starters as dialogue choices over the palace at night, and
+    /// what each one includes shown while the mouse is on it. The pick is made in the game's own starting event.
+    /// </summary>
+    static async Task ChooseStarter(FmScene s)
+    {
+        if (s.Skipped) return;
+        var sync = MegaCrit.Sts2.Core.Runs.RunManager.Instance.EventSynchronizer;
+        var ev = sync?.GetLocalEvent();
+        if (ev == null) return;
+        for (int wait = 0; wait < 50 && ev.CurrentOptions.Count == 0; wait++) await s.Wait(0.1);
+        var options = ev.CurrentOptions.Where(o => !o.IsLocked && !o.IsProceed).ToList();
+        if (options.Count == 0) return;
+        static string Plain(MegaCrit.Sts2.Core.Localization.LocString? l)
+        {
+            if (l == null) return "";
+            try { return System.Text.RegularExpressions.Regex.Replace(l.GetFormattedText(), @"\[[^\]]*\]", "").Replace("\n", " ").Trim(); }
+            catch { return ""; }
+        }
+        var names = options.Select(o => Plain(o.Title)).Select(n => n.Length > 30 ? n[..30] : n).ToList();
+        var infos = options.Select(o =>
+        {
+            string name = Plain(o.Title);
+            string what = o.Relic != null ? Plain(o.Relic.DynamicDescription) : "";
+            if (what.Length == 0) what = Plain(o.Description);
+            return $"{name}\n{what}";
+        }).ToList();
+        await s.Lit("simon", "Now then, Prince. Before you go, choose what you will take with you.");
+        int pick = await s.ChooseInfo(names, infos, "CHOOSE YOUR STARTER");
+        int index = ev.CurrentOptions.ToList().IndexOf(options[pick]);
+        if (index >= 0) sync!.ChooseLocalOption(index);
     }
 
     // ---------------- the story duels ----------------

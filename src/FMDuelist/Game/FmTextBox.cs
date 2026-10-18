@@ -200,7 +200,7 @@ public sealed class FmTextBox
     /// A choice in FM's style: each option on its own line as "&lt;Option&gt;", the one under the mouse lit by FM's
     /// yellow bar. Click an option to pick it (the 0.4 s click cooldown applies). Returns the option's index.
     /// </summary>
-    public async Task<int> Choose(IReadOnlyList<string> options)
+    public async Task<int> Choose(IReadOnlyList<string> options, Action<int>? onHover = null)
     {
         if (Engine.GetMainLoop() is not SceneTree tree || options.Count == 0) return 0;
         Clear();
@@ -217,7 +217,7 @@ public sealed class FmTextBox
             DrawLine("<" + options[i] + ">", _origin + new Vector2(0, i * lineH));
             var hit = new Button { Flat = true, Position = pos, Size = bar.Size, FocusMode = Control.FocusModeEnum.None, MouseDefaultCursorShape = Control.CursorShape.PointingHand };
             hit.AddThemeStyleboxOverride("normal", new StyleBoxEmpty()); hit.AddThemeStyleboxOverride("hover", new StyleBoxEmpty()); hit.AddThemeStyleboxOverride("pressed", new StyleBoxEmpty());
-            hit.MouseEntered += () => { if (hover == idx) return; hover = idx; for (int k = 0; k < bars.Count; k++) bars[k].Visible = k == idx; FmSfx.Play(FmSfx.Flip); };
+            hit.MouseEntered += () => { if (hover == idx) return; hover = idx; for (int k = 0; k < bars.Count; k++) bars[k].Visible = k == idx; FmSfx.Play(FmSfx.Flip); onHover?.Invoke(idx); };
             hit.Pressed += () =>
             {
                 double now = Time.GetTicksMsec() / 1000.0;
@@ -228,6 +228,7 @@ public sealed class FmTextBox
             _textLayer.AddChild(hit);
         }
         FmSfx.Play(FmSfx.Flip);
+        onHover?.Invoke(0);
         while (picked < 0) await tree.ToSignal(tree, SceneTree.SignalName.ProcessFrame);
         FmSfx.Play(FmSfx.Mark);
         _clicked = false;

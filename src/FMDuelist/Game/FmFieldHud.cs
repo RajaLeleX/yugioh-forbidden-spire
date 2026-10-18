@@ -126,9 +126,8 @@ public static class FmFieldHud
         var him = FmRival.Active && FmRival.Priest != null ? room.GetCreatureNode(FmRival.Priest) : null;
         if (me != null) Over(_mine!, me);
         if (him != null) Over(_his!, him);
-        var view = _layer.GetViewport().GetVisibleRect().Size;
-        float top = Math.Min(_mine!.Position.Y, him != null ? _his!.Position.Y : _mine.Position.Y);
-        _field!.Position = new Vector2((view.X - _field.Size.X) / 2, Math.Max(90, top - 4));
+        // the field box sits in the top left, under the top bar and the relics
+        _field!.Position = new Vector2(24, 150);
     }
 
     static void Over(Control row, NCreature who)

@@ -286,6 +286,46 @@ void fragment() {
 
     public Task<int> Choose(params string[] options) { _plate.Visible = false; return _text.Choose(options); }
 
+    /// <summary>
+    /// A choice where each option is explained: while the mouse is on an option, an FM box over the picture shows
+    /// what it is (e.g. what a starter relic includes). Returns the option's index.
+    /// </summary>
+    public async Task<int> ChooseInfo(IReadOnlyList<string> options, IReadOnlyList<string> infos, string heading)
+    {
+        _plate.Visible = false;
+        float s = _sw / 1440f, px = _sh / 240f;
+        var box = new Panel { Position = new Vector2(60 * s, 40 * s), Size = new Vector2(_sw - 120 * s, _imgH - 80 * s), MouseFilter = Control.MouseFilterEnum.Ignore };
+        box.AddThemeStyleboxOverride("panel", new StyleBoxFlat
+        {
+            BgColor = new Color(0.08f, 0.1f, 0.26f, 0.93f), BorderColor = new Color(0.72f, 0.66f, 0.5f),
+            BorderWidthLeft = 4, BorderWidthRight = 4, BorderWidthTop = 4, BorderWidthBottom = 4, ShadowColor = new Color(0, 0, 0, 0.6f), ShadowSize = 6,
+        });
+        _stage.AddChild(box);
+        var head = FmTextBox.Text(heading, px * 1.3f, new Color(1f, 0.86f, 0.35f));
+        head.Position = new Vector2((box.Size.X - FmTextBox.TextWidth(heading, px * 1.3f)) / 2, 10 * px);
+        box.AddChild(head);
+        var body = new Control { Position = new Vector2(12 * px, 30 * px), MouseFilter = Control.MouseFilterEnum.Ignore };
+        box.AddChild(body);
+        int cols = Math.Max(10, (int)((box.Size.X - 24 * px) / (8 * px)));
+        void Show(int i)
+        {
+            foreach (var c in body.GetChildren()) c.QueueFree();
+            if (i < 0 || i >= infos.Count) return;
+            var lines = FmTextBox.Wrap(infos[i], cols);
+            for (int k = 0; k < lines.Count && k < 9; k++)
+            {
+                var t = FmTextBox.Text(lines[k], px, k == 0 ? new Color(1f, 0.92f, 0.6f) : Colors.White);
+                t.Position = new Vector2(0, k * 14 * px);
+                body.AddChild(t);
+            }
+        }
+        box.Modulate = new Color(1, 1, 1, 0);
+        Fade(box, 1, 0.25);
+        int r = await _text.Choose(options, Show);
+        box.QueueFree();
+        return r;
+    }
+
     public async Task Flash()
     {
         var t = _flash.CreateTween();

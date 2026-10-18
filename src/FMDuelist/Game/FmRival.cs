@@ -414,7 +414,7 @@ public static class FmRival
         }
         // Raigeki: wipe your field when you're ahead on monsters
         mine = FmField.Living(player).ToList();
-        if (spells && Hand.Contains(337) && mine.Count > 0 && (mine.Count >= 2 || mine.Max(m => SeenAtk(m)) > (Living.Any() ? Living.Max(m => m.Atk) : 0)))
+        if (spells && !MustAnswer && Hand.Contains(337) && mine.Count > 0 && (mine.Count >= 2 || mine.Max(m => SeenAtk(m)) > (Living.Any() ? Living.Max(m => m.Atk) : 0)))
         {
             await UseCard(337);
             Banner($"{Name} plays Raigeki!");
@@ -424,7 +424,7 @@ public static class FmRival
         }
         // Dark Hole only when your field is clearly stronger than his
         mine = FmField.Living(player).ToList();
-        if (spells && Hand.Contains(336) && mine.Count > 0 && mine.Sum(m => SeenAtk(m)) > Living.Sum(m => m.Atk) + 1000)
+        if (spells && !MustAnswer && Hand.Contains(336) && mine.Count > 0 && mine.Sum(m => SeenAtk(m)) > Living.Sum(m => m.Atk) + 1000)
         {
             await UseCard(336);
             Banner($"{Name} plays Dark Hole!");
@@ -454,11 +454,17 @@ public static class FmRival
     }
 
     /// <summary>His strongest summon from hand: a single monster, a 2-3 card fusion, or a fusion onto his field.</summary>
+    /// <summary>
+    /// FM: when you have a face-up monster and he has none, he always answers with a single monster (no fusion,
+    /// and no field-clearing spell first).
+    /// </summary>
+    static bool MustAnswer => !Living.Any() && FmField.Duelist is { } p && FmField.Living(p).Any(m => !m.FaceDown);
+
     static (int atk, int result, List<int> chain, FmSlot? onto)? BestSummon()
     {
         var monsters = Hand.Where(id => FmData.Get(id).IsMonster).ToList();
         var skill = Me;
-        bool fuse = Roll(skill.Fuse);
+        bool fuse = Roll(skill.Fuse) && !MustAnswer;
         // a weaker duelist sometimes just plays whatever monster he picks up
         if (!fuse && monsters.Count > 0 && !Roll(skill.Best))
         {

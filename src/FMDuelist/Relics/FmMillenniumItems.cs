@@ -161,5 +161,7 @@ public static class FmMillenniumItems
     };
 
     /// <summary>The relics a Forbidden Memories run may find: the Millennium Items, plus the mod's starter relics.</summary>
-    public static bool Allowed(RelicModel r) => r is FmMillenniumItem or MillenniumPuzzle or ExodiaCardBox or MagicProtectionKit or DragonTreasure or EquipBoosterPack;
+    /// (Each act's opening Ancient keeps its own starter relics, so Ancient relics stay allowed.)
+    public static bool Allowed(RelicModel r) => r.Rarity == RelicRarity.Ancient
+        || r is FmMillenniumItem or MillenniumPuzzle or ExodiaCardBox or MagicProtectionKit or DragonTreasure or EquipBoosterPack;
 }

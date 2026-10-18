@@ -14,6 +14,24 @@ namespace FMDuelist.Game;
 [HarmonyPatch(typeof(NAncientEventLayout), "InitializeVisuals")]
 static class FmNoNeowPatch
 {
+    /// <summary>Gives the game's own panel back (if FM's dialogue couldn't finish the choice).</summary>
+    public static bool Released;
+
+    /// <summary>Keeps the layout's dialogue and buttons hidden (the layout shows them again as its lines advance).</summary>
+    static void Keep(Control content)
+    {
+        Released = false;
+        if (Engine.GetMainLoop() is not SceneTree tree) return;
+        void Hide()
+        {
+            if (!GodotObject.IsInstanceValid(content) || !content.IsInsideTree()) { tree.ProcessFrame -= Hide; return; }
+            if (Released) { content.Visible = true; tree.ProcessFrame -= Hide; return; }
+            content.Visible = false;
+        }
+        tree.ProcessFrame += Hide;
+        Hide();
+    }
+
     static void Postfix(NAncientEventLayout __instance)
     {
         try
@@ -47,6 +65,8 @@ void fragment(){ vec4 c = texture(TEXTURE, UV) * COLOR; float e = smoothstep(0.0
                 bg.AddChild(place);
             }
             if (t.Field("_ancientNameBanner").GetValue<Control>() is { } banner) banner.Visible = false;
+            // no Slay the Spire dialogue box or buttons: the choice is made in FM's own dialogue (Simon's scene)
+            if (t.Field("_contentContainer").GetValue<Control>() is { } content) Keep(content);
         }
         catch (Exception ex) { Log.Warn("[FMDuelist] hide Neow: " + ex.Message); }
     }

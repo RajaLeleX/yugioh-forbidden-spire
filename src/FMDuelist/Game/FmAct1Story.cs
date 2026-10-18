@@ -87,13 +87,14 @@ static partial class FmAct1Story
     /// </summary>
     static async Task ChooseStarter(FmScene s)
     {
-        if (s.Skipped) return;
+        if (s.Skipped) { FmNoNeowPatch.Released = true; return; }
         var sync = MegaCrit.Sts2.Core.Runs.RunManager.Instance.EventSynchronizer;
         var ev = sync?.GetLocalEvent();
         if (ev == null) return;
-        for (int wait = 0; wait < 50 && ev.CurrentOptions.Count == 0; wait++) await s.Wait(0.1);
+        for (int wait = 0; wait < 10 && ev.CurrentOptions.Count == 0; wait++) await s.Wait(0.1);
         var options = ev.CurrentOptions.Where(o => !o.IsLocked && !o.IsProceed).ToList();
-        if (options.Count == 0) return;
+        if (options.Count == 0) { FmNoNeowPatch.Released = true; return; }
+        Log.Info($"[FMDuelist] starter choice: {options.Count} options");
         static string Plain(MegaCrit.Sts2.Core.Localization.LocString? l)
         {
             if (l == null) return "";
@@ -111,7 +112,18 @@ static partial class FmAct1Story
         await s.Lit("simon", "Now then, Prince. Before you go, choose what you will take with you.");
         int pick = await s.ChooseInfo(names, infos, "CHOOSE YOUR STARTER");
         int index = ev.CurrentOptions.ToList().IndexOf(options[pick]);
-        if (index >= 0) sync!.ChooseLocalOption(index);
+        if (index < 0) return;
+        sync!.ChooseLocalOption(index);
+        // the game's own "proceed" follows straight on (its box is hidden): on to the map
+        for (int wait = 0; wait < 40; wait++)
+        {
+            await s.Wait(0.1);
+            var now = sync.GetLocalEvent();
+            if (now == null) return;
+            var go = now.CurrentOptions.ToList().FindIndex(o => o.IsProceed);
+            if (go >= 0) { sync.ChooseLocalOption(go); return; }
+        }
+        FmNoNeowPatch.Released = true;
     }
 
     // ---------------- the story duels ----------------

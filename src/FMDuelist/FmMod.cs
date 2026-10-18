@@ -239,11 +239,12 @@ static class NeowPatch
 {
     static readonly MethodInfo RelicOption = AccessTools.Method(typeof(AncientEventModel), "RelicOption", new[] { typeof(RelicModel), typeof(string), typeof(string) });
 
-    static void Postfix(Neow __instance, ref IReadOnlyList<EventOption> __result)
+    // Neow's own choices are skipped in FM runs (it would look for relics an FM run doesn't offer, and fail)
+    static bool Prefix(Neow __instance, ref IReadOnlyList<EventOption> __result)
     {
         try
         {
-            if (!FmRules.IsFmPlayer(__instance.Owner)) return;
+            if (!FmRules.IsFmPlayer(__instance.Owner)) return true;
             var opt = (EventOption)RelicOption.Invoke(__instance, new object?[] { ModelDb.Relic<DragonTreasure>().ToMutable(), "INITIAL", "NEOW.pages.DONE.POSITIVE.description" })!;
             var exo = (EventOption)RelicOption.Invoke(__instance, new object?[] { ModelDb.Relic<ExodiaCardBox>().ToMutable(), "INITIAL", "NEOW.pages.DONE.POSITIVE.description" })!;
             // 3 choices; Dragon Treasure (35%) and the Exodia Card Box (15%) roll independently and replace normal choices
@@ -251,8 +252,9 @@ static class NeowPatch
             var kit = (EventOption)RelicOption.Invoke(__instance, new object?[] { ModelDb.Relic<MagicProtectionKit>().ToMutable(), "INITIAL", "NEOW.pages.DONE.POSITIVE.description" })!;
             __result = new List<EventOption> { exo, kit, opt };
             Log.Info("[FMDuelist] Neow: the three FM starters");
+            return false;
         }
-        catch (Exception ex) { Log.Error("[FMDuelist] Neow option: " + ex); }
+        catch (Exception ex) { Log.Error("[FMDuelist] Neow option: " + ex); return true; }
     }
 }
 

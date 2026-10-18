@@ -35,7 +35,7 @@ static partial class FmAct1Story
 {
     const string Name = "K";
     public const int BrightCastle = 668, Umi = 334;
-    const int PlazaTrack = 52, DuelGroundTrack = 15, PalaceTrack = 40, HeishinTrack = 27, SetoNightTrack = 24, LossTrack = 26, PuzzleTrack = 5, HeishinDuelTrack = 35, SimonTrack = 12;
+    const int PlazaTrack = 52, DuelGroundTrack = 15, PalaceTrack = 12, HeishinTrack = 27, SetoNightTrack = 24, LossTrack = 26, PuzzleTrack = 5, HeishinDuelTrack = 35, SimonTrack = 12;
 
     public static readonly FmRival.Duelist Heishin = new(typeof(FmHeishinEncounter), typeof(FmHeishin), "High Mage Heishin", 8, 8000, 0);
 

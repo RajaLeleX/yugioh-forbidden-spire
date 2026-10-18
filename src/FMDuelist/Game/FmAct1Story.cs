@@ -35,7 +35,7 @@ static partial class FmAct1Story
 {
     const string Name = "K";
     public const int BrightCastle = 668, Umi = 334;
-    const int PlazaTrack = 52, DuelGroundTrack = 15, PalaceTrack = 40, HeishinTrack = 27, SetoNightTrack = 24, LossTrack = 26, PuzzleTrack = 5, HeishinDuelTrack = 35;
+    const int PlazaTrack = 52, DuelGroundTrack = 15, PalaceTrack = 40, HeishinTrack = 27, SetoNightTrack = 24, LossTrack = 26, PuzzleTrack = 5, HeishinDuelTrack = 35, SimonTrack = 12;
 
     public static readonly FmRival.Duelist Heishin = new(typeof(FmHeishinEncounter), typeof(FmHeishin), "High Mage Heishin", 8, 8000, 0);
 
@@ -67,7 +67,7 @@ static partial class FmAct1Story
         if (await FmScene.Open() is not { } s) return;
         try
         {
-            Music(PalaceTrack);
+            Music(SimonTrack);
             await s.Bg("bg_palace"); await s.Chr("chr_simon_palace", "simon");
             await s.Say("sm_dear"); await s.Say("sm_royal"); await s.Say("sm_shame");
             // the prince runs away
@@ -120,7 +120,7 @@ static partial class FmAct1Story
         if (await FmScene.Open() is not { } s) return;
         try
         {
-            Music(d.Key == "simon" ? PalaceTrack : DuelGroundTrack);
+            Music(d.Key == "simon" ? SimonTrack : DuelGroundTrack);
             await s.Bg(d.Bg); await s.Chr(d.Chr, d.Key);
             switch (d.Key)
             {

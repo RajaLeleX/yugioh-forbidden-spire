@@ -124,13 +124,13 @@ public sealed class MillenniumPuzzle : RelicModel
         await FmRestDuel.Begin(Owner);
         if (storyDuel != null && FmRival.Priest != null) FmStoryAct1.Dress(FmRival.Priest, storyDuel);
         // the story's boss and Heishin wear their FM pictures too
-        else if (FmRival.Priest != null && FmStoryAct1.StoryRun(Owner.RunState))
+        else if (FmRival.Priest != null && (FmStoryAct1.StoryRun(Owner.RunState) || FmRestDuel.Active))
         {
             if (FmRival.Current == FmRival.Bosses[0]) FmStoryAct1.Dress(FmRival.Priest, FmStoryAct1.SetoLook);
             else if (FmAct1Story.IsHeishin(FmRival.Priest)) FmStoryAct1.Dress(FmRival.Priest, FmStoryAct1.HeishinLook);
         }
         // the secret level: Heishin's unwinnable duel
-        if (Owner.Creature.CombatState!.Enemies.Any(FmAct1Story.IsHeishin))
+        if (!FmRestDuel.Active && Owner.Creature.CombatState!.Enemies.Any(FmAct1Story.IsHeishin))
             await FmAct1Story.StartHeishin(new MegaCrit.Sts2.Core.GameActions.Multiplayer.BlockingPlayerChoiceContext(), Owner);
         // Doom items cast a Shadow Spell instead (see FmShadow)
         try { await FmShadow.CombatStart(Owner, new MegaCrit.Sts2.Core.GameActions.Multiplayer.BlockingPlayerChoiceContext()); }
@@ -190,7 +190,7 @@ public sealed class MillenniumPuzzle : RelicModel
 
     public override decimal ModifyHpLostBeforeOsty(Creature target, decimal amount, ValueProp props, Creature? dealer, CardModel? cardSource)
     {
-        if (FmAct1Story.IsHeishin(target)) return Math.Min(amount, Math.Max(0, target.CurrentHp - 1));
+        if (FmAct1Story.IsHeishin(target) && !FmRestDuel.Active) return Math.Min(amount, Math.Max(0, target.CurrentHp - 1));
         if (FmRival.IsZoneCreature(target)) return 0; // the boss's monster zones only lose monsters in FM battles
         if (amount <= 0 || !IsMineOrOsty(target)) return amount;
         bool enemyHit = dealer != null && dealer.IsEnemy;

@@ -365,6 +365,8 @@ static partial class FmAct1Story
     {
         State = Phase.Lost;
         FmRival.Active = false;
+        // from now on he's in the rest sites' Free Duels as "Heishin 1"
+        FmRestDuel.Unlock(player, Heishin);
         int turns = TurnsIntoDuel(player.Creature.CombatState);
         int comLp = Math.Max(1, FmRival.Priest?.CurrentHp ?? 8000);
         await FmDuelEnd.Show(false, player, comLp, Heishin.Name, turns, spoils: false);

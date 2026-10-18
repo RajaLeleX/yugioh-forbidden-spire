@@ -319,7 +319,7 @@ public static class FmRival
         var combat = Priest?.CombatState;
         if (!Active || Priest == null || Priest.IsDead || player == null || combat == null) return;
         var ctx = new MegaCrit.Sts2.Core.GameActions.Multiplayer.BlockingPlayerChoiceContext();
-        if (Current == FmAct1Story.Heishin && FmAct1Story.TurnsIntoDuel(combat) >= 12 && player.Creature.CurrentHp > 0)
+        if (Current == FmAct1Story.Heishin && !FmRestDuel.Active && FmAct1Story.TurnsIntoDuel(combat) >= 12 && player.Creature.CurrentHp > 0)
         {
             Banner($"{Name} unleashes the forbidden power of darkness!");
             try { await FmSpellVfx.DarkHole(); } catch { }

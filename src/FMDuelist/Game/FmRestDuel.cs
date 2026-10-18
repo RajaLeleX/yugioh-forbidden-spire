@@ -41,13 +41,25 @@ public static class FmRestDuel
     public static IEnumerable<FmRival.Duelist> Beaten(Player p)
     {
         var ids = p.GetRelic<MillenniumPuzzle>()?.BeatenDuelists ?? Array.Empty<int>();
-        return FmRival.AllDuelists.Where(d => d.DuelistIndex > 0 && d != FmAct1Story.Heishin && ids.Contains(d.DuelistIndex))
+        return FmRival.AllDuelists.Where(d => d.DuelistIndex > 0 && ids.Contains(d.DuelistIndex))
             .GroupBy(d => d.DuelistIndex).Select(g => g.First());
     }
 
+    /// <summary>The name in the Free Duel list (Heishin's first duel is known as "Heishin 1").</summary>
+    public static string ListName(FmRival.Duelist d) => d == FmAct1Story.Heishin ? "Heishin 1" : d.Name;
+
+    /// <summary>Heishin's first duel becomes a Free Duel once the story has played it (you can't beat him there).</summary>
+    public static void Unlock(Player p, FmRival.Duelist d) => Add(p, d);
+
     public static void MarkBeaten(Player p, FmRival.Duelist d)
     {
-        if (d.DuelistIndex <= 0 || d == FmAct1Story.Heishin || p.GetRelic<MillenniumPuzzle>() is not { } pz) return;
+        if (d == FmAct1Story.Heishin) return; // unlocked by the story instead
+        Add(p, d);
+    }
+
+    static void Add(Player p, FmRival.Duelist d)
+    {
+        if (d.DuelistIndex <= 0 || p.GetRelic<MillenniumPuzzle>() is not { } pz) return;
         if (pz.BeatenDuelists.Contains(d.DuelistIndex)) return;
         pz.BeatenDuelists = pz.BeatenDuelists.Append(d.DuelistIndex).ToArray();
     }
@@ -78,8 +90,8 @@ public static class FmRestDuel
             s.HideSkip();
             await s.Bg("bg_room");
             await s.Lit("k", $"Free Duel: {Left(player)} left here.\nWho will you duel?");
-            var names = foes.Select(f => f.Name).Append("Back").ToList();
-            var infos = foes.Select(f => $"{f.Name}\nWin to roll a card from {f.Name}'s own drop table. Your rank decides the table: POW ranks, TEC ranks, or B/C/D. LP is 8000; a loss costs only the attempt.")
+            var names = foes.Select(ListName).Append("Back").ToList();
+            var infos = foes.Select(f => $"{ListName(f)}\nWin to roll a card from {f.Name}'s own drop table. Your rank decides the table: POW ranks, TEC ranks, or B/C/D. LP is 8000; a loss costs only the attempt.")
                 .Append("Back to the rest site.").ToList();
             pick = await s.ChooseInfo(names, infos, "FREE DUEL");
         }

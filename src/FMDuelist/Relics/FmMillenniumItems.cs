@@ -73,19 +73,11 @@ public sealed class FmItemScale : FmMillenniumItem
         => player == Owner && Roll(Chance) && SwapOne(player, options, c => Info(c).Type is FmType.Magic or FmType.Equip or FmType.Trap);
 }
 
-/// <summary>Uncommon. Card rewards lean towards Dragons (ones you can play).</summary>
+/// <summary>Uncommon. Your Guardian Star advantage is worth +1000 instead of +500 (see FmStars).</summary>
 public sealed class FmItemRod : FmMillenniumItem
 {
-    public const double Chance = 0.35;
     public override int ArtId => 220;
     public override RelicRarity Rarity => RelicRarity.Uncommon;
-
-    public override bool TryModifyCardRewardOptions(Player player, List<CardCreationResult> options, CardCreationOptions creationOptions)
-    {
-        if (player != Owner || !Roll(Chance)) return false;
-        bool strong = player.GetRelic<DragonTreasure>() != null;
-        return SwapOne(player, options, c => Info(c) is { IsMonster: true, Type: FmType.Dragon } i && (strong || i.Level < FmRules.StrongDragonLevel));
-    }
 }
 
 /// <summary>Uncommon. The plainest card in a reward may come up a rarity higher.</summary>
@@ -129,21 +121,11 @@ public sealed class FmItemEye : FmMillenniumItem
     }
 }
 
-/// <summary>Rare. Elite duels, boss duels and the story's duelists give a second card reward.</summary>
+/// <summary>Rare. A duelist's monster that loses the Guardian Star match also loses 500 ATK/DEF (see FmStars).</summary>
 public sealed class FmItemNecklace : FmMillenniumItem
 {
     public override int ArtId => 260;
     public override RelicRarity Rarity => RelicRarity.Rare;
-
-    public override bool TryModifyRewards(Player player, List<Reward> rewards, AbstractRoom? room)
-    {
-        if (player != Owner || room is not CombatRoom combat) return false;
-        bool duel = combat.RoomType is RoomType.Elite or RoomType.Boss || Game.FmStoryAct1.Duels.Any(d => d.Encounter == combat.Encounter?.GetType());
-        if (!duel || !rewards.Any(r => r is CardReward)) return false;
-        rewards.Add(new CardReward(CardCreationOptions.ForRoom(player, combat.RoomType), 3, player));
-        Flash();
-        return true;
-    }
 }
 
 public static class FmMillenniumItems
@@ -154,10 +136,10 @@ public static class FmMillenniumItems
     {
         [typeof(FmItemKey)] = ("Millennium Key", "Win [gold]25%[/gold] more Star Chips from duels and fights.", "It opens the door to the heart... and the treasury."),
         [typeof(FmItemScale)] = ("Millennium Scale", "Card rewards have a [blue]40%[/blue] chance to offer a Magic, Equip or Trap card.", "It weighs what you hold against what you need."),
-        [typeof(FmItemRod)] = ("Millennium Rod", "Card rewards have a [blue]35%[/blue] chance to offer a Dragon.", "Its power bends the will of beasts."),
+        [typeof(FmItemRod)] = ("Millennium Rod", "When your monster's Guardian Star beats the enemy's, it gets [green]+1000[/green] ATK/DEF for that battle instead of +500.", "Its power bends the stars to your will."),
         [typeof(FmItemRing)] = ("Millennium Ring", "Card rewards have a [blue]35%[/blue] chance that their plainest card comes up a rarity higher.", "It points the way to what is rare."),
         [typeof(FmItemEye)] = ("Millennium Eye", "Card rewards offer [blue]1[/blue] more card to choose from.", "It sees every card in the pile."),
-        [typeof(FmItemNecklace)] = ("Millennium Necklace", "Elite duels, boss duels and story duels give a second card reward.", "It foresees the spoils of victory."),
+        [typeof(FmItemNecklace)] = ("Millennium Necklace", "When an enemy monster's Guardian Star loses to yours, it also loses [red]500[/red] ATK/DEF for that battle.", "It foresees which stars will fall."),
     };
 
     /// <summary>The relics a Forbidden Memories run may find: the Millennium Items, plus the mod's starter relics.</summary>

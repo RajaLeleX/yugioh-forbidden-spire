@@ -26,7 +26,7 @@ namespace FMDuelist.Game;
 public static class FmCardShop
 {
     const string Picture = "bg_cardshop";
-    static readonly string[] Options = { "BUY", "SELL", "SAVE AND QUIT", "LEAVE SHOP" };
+    static readonly string[] Options = { "BUY", "SELL", "DECK", "SAVE AND QUIT", "LEAVE SHOP" };
 
     /// <summary>What a card fetches: half of what the shop asks for it, rounded up (no fractions of a Star Chip).</summary>
     public static int SellPrice(CardModel card)
@@ -94,7 +94,12 @@ public static class FmCardShop
                         sold = true;
                         await sc.Lit("shop", "Thank you! Come again!");
                         break;
-                    case 2: // SAVE AND QUIT, like the pause menu (the run reloads into this shop)
+                    case 2: // Build Deck, then back to the menu
+                        sc.SetVisible(false);
+                        await FmDeckEditor.Open(player);
+                        sc.SetVisible(true);
+                        break;
+                    case 3: // SAVE AND QUIT, like the pause menu (the run reloads into this shop)
                         await sc.Close(); sc = null;
                         NRunMusicController.Instance?.StopMusic();
                         await NGame.Instance!.ReturnToMainMenu();

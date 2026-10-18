@@ -18,6 +18,8 @@ public sealed class FmSlot
     public int MonsterId;
     /// <summary>His monsters are set face down like in FM: you only see them once they battle.</summary>
     public bool FaceDown;
+    /// <summary>The Guardian Star chosen when it was summoned (FM: 1 Mars .. 10 Venus).</summary>
+    public int Star;
     public FmPosition Position;
     public int AtkBonus, DefBonus;
     /// <summary>DEF added until your next turn (block-multiplying items in FM runs).</summary>
@@ -50,7 +52,7 @@ public sealed class FmSlot
 
     public void Clear()
     {
-        MonsterId = 0; FaceDown = false; AtkBonus = DefBonus = TempDef = 0; AttackedThisTurn = false; EquipList.Clear(); TargetCombatId = null; SourceCard = null;
+        MonsterId = 0; FaceDown = false; Star = 0; AtkBonus = DefBonus = TempDef = 0; AttackedThisTurn = false; EquipList.Clear(); TargetCombatId = null; SourceCard = null;
         Position = FmPosition.Attack;
     }
 }
@@ -135,6 +137,8 @@ public static class FmField
         slot.MonsterId = monsterId; slot.Position = pos; slot.AtkBonus = PendingAtkBonus; slot.DefBonus = PendingDefBonus;
         // FM: a monster played in Defense position is set face down; the opponent doesn't know what it is
         slot.FaceDown = pos == FmPosition.Defense;
+        // FM: choose one of its two Guardian Stars
+        try { slot.Star = await FmStars.Choose(monsterId); } catch (Exception ex) { MegaCrit.Sts2.Core.Logging.Log.Warn("[FMDuelist] star: " + ex.Message); slot.Star = FmData.Get(monsterId).GuardianStar1; }
         if (slot.FaceDown && FmRival.Active) FmDuelStats.FaceDown++;
         slot.EquipList.AddRange(PendingEquips);
         PendingAtkBonus = PendingDefBonus = 0; PendingEquips.Clear();

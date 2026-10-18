@@ -196,7 +196,8 @@ public static class FmRival
         Deck.Clear();
         var counts = new Dictionary<int, int>();
         int total = weights.Sum();
-        for (int guard = 0; Deck.Count < 40 && guard < 4000 && total > 0; guard++)
+        int size = FmField.Duelist is { } you ? Math.Clamp(FmDeckBuild.DeckSize(you), 5, 40) : 40;
+        for (int guard = 0; Deck.Count < size && guard < 4000 && total > 0; guard++)
         {
             int r = Rng.Next(total), id = 0;
             for (int k = 0; k < weights.Length; k++) { r -= weights[k]; if (r < 0) { id = k + 1; break; } }
@@ -258,21 +259,29 @@ public static class FmRival
             FmField.NotifyChanged();
             await Wait(0.35);
         }
-        int a = att.Atk;
+        // Guardian Stars: the monster whose star beats the other's gets +500 for this battle
+        var (sa, sd, note) = FmStars.Battle(att, def, player);
+        if (note != null)
+        {
+            Banner($"Guardian Star!  {note}");
+            FmSfx.Play(FmSfx.PowerUp);
+            await Wait(0.6);
+        }
+        int a = att.Atk + sa;
         Creature attOwner = playerAttacks ? player.Creature : Priest!, defOwner = playerAttacks ? Priest! : player.Creature;
-        int defValue = def.Position == FmPosition.Attack ? def.Atk : def.Def, defHp = defOwner.CurrentHp;
+        int defValue = def.Position == FmPosition.Attack ? def.Atk + sd : def.Def + sd, defHp = defOwner.CurrentHp;
         int attId = att.MonsterId, defId = def.MonsterId;
         Task Destroy(FmSlot s) => s.Rival ? DestroyRival(s) : DestroyMine(s, player);
         if (def.Position == FmPosition.Attack)
         {
-            int t = def.Atk;
+            int t = def.Atk + sd;
             if (a > t) { await Destroy(def); await Lp(ctx, defOwner, a - t); }
             else if (a < t) { await Destroy(att); await Lp(ctx, attOwner, t - a); }
             else { await Destroy(def); await Destroy(att); }
         }
         else
         {
-            int d = def.Def;
+            int d = def.Def + sd;
             if (a > d) await Destroy(def);
             else if (a < d) await Lp(ctx, attOwner, d - a);
         }
@@ -531,6 +540,7 @@ public static class FmRival
         // FM: if it can't beat anything of yours it goes into Defense; it's set face down unless a fusion revealed it
         zone.Position = mine.Count == 0 || info.Atk > myBest || info.Atk >= info.Def ? FmPosition.Attack : FmPosition.Defense;
         zone.FaceDown = !fused;
+        zone.Star = FmStars.ForRival(bestResult, FmField.Living(player));
         if (zone.FaceDown) FmDuelStats.ComFaceDown++;
         zone.Visual.Attach(player);
         FmField.NotifyChanged();

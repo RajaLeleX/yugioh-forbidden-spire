@@ -32,8 +32,11 @@ public sealed class FmScene
     public Task<int> Menu(params string[] options)
     {
         _plate.Visible = false;
-        float s = _sw / 1440f;
-        return _text.Menu(_stage, new Rect2(35 * s, 195 * s, 605 * s, 305 * s), options);
+        float s = _sw / 1440f, px = _sh / 240f;
+        // tall enough for every option (FM's menu text is 1.6x the box text: 24 lines of pixels each)
+        float h = Math.Max(240 * s, options.Length * 18 * px + 20 * px);
+        float top = Math.Max(10 * s, Math.Min(195 * s, _imgH - h - 10 * s));
+        return _text.Menu(_stage, new Rect2(35 * s, top, 605 * s, h), options);
     }
     string? _bgKey, _chrKey, _iconKey;
     /// <summary>Who is pictured right now (their lines need no portrait box).</summary>

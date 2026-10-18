@@ -27,6 +27,11 @@ static class NGameInputPatch
                 __instance.GetViewport().SetInputAsHandled();
                 return false;
             }
+            if (FmDeckEditor.IsOpen)
+            {
+                if (FmDeckEditor.HandleInput(inputEvent)) { __instance.GetViewport().SetInputAsHandled(); return false; }
+                return true;
+            }
             if (FmLibraryChoice.Open) return true; // its own buttons
             if (FmLibraryFm.Open)
             {
@@ -459,6 +464,7 @@ void fragment(){
             : _slot.Position == FmPosition.Defense ? "DEF  (right-click: ATK)"
             : _slot.AttackedThisTurn ? "ATK  (attacked - locked)"
             : FmRival.FirstTurnNoAttack ? "ATK  (no attacks on turn 1)" : "ATK  click: attack / right-click: DEF";
+        if (_slot.Star > 0 && !(_slot.Rival && _slot.FaceDown)) _pos.Text = $"{FmStars.Sign(_slot.Star)} {FmStars.Name(_slot.Star)}   " + _pos.Text;
     }
 
     /// <summary>

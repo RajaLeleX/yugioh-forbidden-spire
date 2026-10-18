@@ -49,6 +49,24 @@ public sealed class MillenniumPuzzle : RelicModel
     [MegaCrit.Sts2.Core.Saves.Runs.SavedProperty]
     public int[] BeatenDuelists { get => _beaten; set { AssertMutable(); _beaten = value ?? Array.Empty<int>(); } }
 
+    private int[] _deckSel = Array.Empty<int>(), _newIds = Array.Empty<int>(), _newAt = Array.Empty<int>();
+    private int _combats;
+
+    /// <summary>Your duel Deck (up to 40 FM card numbers chosen from everything you own).</summary>
+    [MegaCrit.Sts2.Core.Saves.Runs.SavedProperty]
+    public int[] DeckSel { get => _deckSel; set { AssertMutable(); _deckSel = value ?? Array.Empty<int>(); } }
+
+    /// <summary>Cards won recently (marked NEW in Build Deck) and the combat count when each was won.</summary>
+    [MegaCrit.Sts2.Core.Saves.Runs.SavedProperty]
+    public int[] NewIds { get => _newIds; set { AssertMutable(); _newIds = value ?? Array.Empty<int>(); } }
+
+    [MegaCrit.Sts2.Core.Saves.Runs.SavedProperty]
+    public int[] NewAt { get => _newAt; set { AssertMutable(); _newAt = value ?? Array.Empty<int>(); } }
+
+    /// <summary>Combats fought this run.</summary>
+    [MegaCrit.Sts2.Core.Saves.Runs.SavedProperty]
+    public int Combats { get => _combats; set { AssertMutable(); _combats = value; } }
+
     /// <summary>The rest site (floor) and the Free Duels left there.</summary>
     [MegaCrit.Sts2.Core.Saves.Runs.SavedProperty]
     public int[] RestDuels { get => _restDuels; set { AssertMutable(); _restDuels = value ?? Array.Empty<int>(); } }
@@ -117,6 +135,14 @@ public sealed class MillenniumPuzzle : RelicModel
         {
             try { await FmAct1Story.PreDuel(storyDuel); } catch (Exception ex) { MegaCrit.Sts2.Core.Logging.Log.Warn("[FMDuelist] pre-duel: " + ex.Message); }
             FmMusic.OnRoomEntered(Owner.RunState.CurrentRoom!, Owner);
+        }
+        FmLifePoints.Show();
+        // Build Deck: before a duel you may change your Deck; every fight uses only your Deck (up to 40 cards)
+        if (!FmPractice.Active)
+        {
+            bool duel = Owner.Creature.CombatState!.Enemies.Any(e => e.Monster != null && FmRival.AllDuelists.Any(b => b.Monster == e.Monster.GetType()));
+            if (duel) { try { await FmDeckBuild.BeforeDuel(Owner); } catch (Exception ex) { MegaCrit.Sts2.Core.Logging.Log.Warn("[FMDuelist] build deck: " + ex.Message); } }
+            await FmDeckBuild.ApplyToCombat(Owner);
         }
         // boss duel: the Kin Priest duels by FM rules
         if (Owner.Creature.CombatState!.Enemies.Any(e => e.Monster != null && FmRival.AllDuelists.Any(b => b.Monster == e.Monster.GetType()))) await FmRival.Begin(Owner, Owner.Creature.CombatState!);
@@ -382,8 +408,9 @@ public sealed class MillenniumPuzzle : RelicModel
         if (!Mine(player)) return false;
         var smith = options.FirstOrDefault(o => o is SmithRestSiteOption);
         if (smith != null) options.Remove(smith);
-        // Free Duels with the duelists you've beaten (in place of Cut)
+        // Free Duels with the duelists you've beaten (in place of Cut), and Build Deck
         options.Add(new FmFreeDuelRestSiteOption(player));
+        options.Add(new FmDeckRestSiteOption(player));
         return true;
     }
 
@@ -395,6 +422,8 @@ public sealed class MillenniumPuzzle : RelicModel
 
     public override async Task AfterCardChangedPiles(CardModel card, PileType oldPileType, AbstractModel? clonedBy)
     {
+        // a card joined your Chest: NEW for 3 combats
+        if (card.Owner == Owner && oldPileType == PileType.None && card.Pile?.Type == PileType.Deck && card is FmCardBase won && !FmPractice.Active) FmDeckBuild.Acquired(Owner, won.FmId);
         if (card.Owner == Owner && card is FmCardBase f && FmExodia.Pieces.Contains(f.FmId) && card.Pile?.Type == PileType.Hand) await FmExodia.CheckAndObliterate(Owner);
     }
 
@@ -575,6 +604,8 @@ public sealed class MillenniumPuzzle : RelicModel
 
     public override async Task AfterCombatEnd(CombatRoom room)
     {
+        if (!FmPractice.Active) FmDeckBuild.CombatDone(Owner);
+        FmLifePoints.Clear();
         await FmRestDuel.AfterCombat(Owner);
         FmField.ResetCombat();
         FmRival.Reset();

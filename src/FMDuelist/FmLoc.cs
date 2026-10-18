@@ -89,6 +89,8 @@ public static class FmLoc
 
             loc.GetTable("rest_site_ui").MergeWith(new Dictionary<string, string>
             {
+                ["OPTION_FMDECK.name"] = "Deck",
+                ["OPTION_FMDECK.description"] = "Build your Deck: choose up to 40 of your cards to duel with. Doesn't use up your rest.",
                 ["OPTION_FMFREEDUEL.name"] = "Free Duel",
                 ["OPTION_FMFREEDUEL.description"] = "Duel someone you've already beaten for a card from their drop table (up to 5 per rest site). LP is 8000 and a loss isn't a game over. Doesn't use up your rest.",
                 ["OPTION_FMCUT.name"] = "Cut",

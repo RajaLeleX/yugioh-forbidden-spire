@@ -234,13 +234,11 @@ public static class FmRestDuel
                 int other = Roll(w);
                 if (Usable(other) && FmData.Get(other).Atk > FmData.Get(id).Atk) id = other;
             }
-            if (player.GetRelic<FmItemRod>() != null && _rng.NextDouble() < FmItemRod.Chance && Roll(w, k => FmData.Get(k) is { IsMonster: true, Type: FmType.Dragon }) is int d and > 0) id = d;
             if (player.GetRelic<FmItemScale>() != null && _rng.NextDouble() < FmItemScale.Chance && Roll(w, k => FmData.Get(k).Type is FmType.Magic or FmType.Equip or FmType.Trap) is int m and > 0) id = m;
             return id;
         }
         var drops = new List<int> { One() };
         if (player.GetRelic<FmItemEye>() != null) drops.Add(One());
-        if (player.GetRelic<FmItemNecklace>() != null) drops.Add(One());
         var result = drops.Where(Usable).Distinct().ToList();
         Log.Info($"[FMDuelist] Free Duel drop vs {foe.Name} ({table}): {string.Join(", ", result.Select(i => FmData.Get(i).Name))}");
         return result;
@@ -255,6 +253,21 @@ public static class FmRestDuel
                 Log.Info($"[FMDuelist] drop table check, Simon {t}: sum {Weights(1, t).Sum()}");
         }
         catch (Exception ex) { Log.Warn("[FMDuelist] drop tables: " + ex.Message); }
+    }
+}
+
+/// <summary>The rest site's Deck option: Build Deck, then the rest site carries on.</summary>
+public sealed class FmDeckRestSiteOption : RestSiteOption
+{
+    public FmDeckRestSiteOption(Player owner) : base(owner) { }
+    public override string OptionId => "FMDECK";
+    public override IEnumerable<string> AssetPaths => new[] { FmCutRestSiteOption.SmithIcon };
+
+    public override async Task<bool> OnSelect()
+    {
+        TaskHelper.RunSafely(FmDeckEditor.Open(Owner));
+        await Task.CompletedTask;
+        return false;
     }
 }
 
@@ -281,7 +294,7 @@ static class FreeDuelIconPatch
 {
     static bool Prefix(RestSiteOption __instance, ref Texture2D __result)
     {
-        if (__instance is not FmFreeDuelRestSiteOption) return true;
+        if (__instance is not (FmFreeDuelRestSiteOption or FmDeckRestSiteOption)) return true;
         __result = PreloadManager.Cache.GetTexture2D(FmCutRestSiteOption.SmithIcon);
         return false;
     }

@@ -70,6 +70,7 @@ public static class FmTutorial
         box.AddChild(tabs);
         tabs.AddChild(Page("Rules", RulesText()));
         tabs.AddChild(Page("Fusing", FusingText(player)));
+        tabs.AddChild(Page("Guardian Stars", FmStars.GuideText()));
         tabs.AddChild(Page("Cheat Sheet", SafeCheatSheet(player)));
         tabs.AddChild(Page("Junk Cards", JunkText(player)));
         tabs.AddChild(Page("Bosses", BossText()));

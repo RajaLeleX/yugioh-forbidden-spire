@@ -245,7 +245,7 @@ public sealed class FmTextBox
     public async Task<int> Menu(Control parent, Rect2 area, IReadOnlyList<string> options)
     {
         if (Engine.GetMainLoop() is not SceneTree tree || options.Count == 0) return 0;
-        float px = _px * 1.6f, lineH = (CellH + 3) * px;
+        float px = _px * 1.2f, lineH = (CellH + 3) * px;
         var panel = new Control { Position = area.Position, Size = area.Size, MouseFilter = Control.MouseFilterEnum.Ignore };
         float cut = area.Size.Y * 0.12f, w = area.Size.X, h = area.Size.Y;
         panel.AddChild(new Polygon2D

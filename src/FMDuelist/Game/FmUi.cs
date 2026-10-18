@@ -453,7 +453,7 @@ void fragment(){
         tween.TweenProperty(_holder, "rotation", _slot.Position == FmPosition.Defense ? -Mathf.Pi / 2 : 0f, 0.2);
         SetFaceDown(_slot.FaceDown);
         _stats.Visible = _pos.Visible = true;
-        _stats.Text = _slot.FaceDown ? "? / ?" : $"{_slot.Atk} / {_slot.Def}";
+        _stats.Text = _slot.FaceDown && _slot.Rival ? "? / ?" : _slot.FaceDown ? $"{_slot.Atk} / {_slot.Def}  (set)" : $"{_slot.Atk} / {_slot.Def}";
         _stats.AddThemeColorOverride("font_color", _slot.Position == FmPosition.Attack ? new Color(1f, 0.85f, 0.4f) : new Color(0.6f, 0.85f, 1f));
         _pos.Text = _slot.Rival ? (_slot.Position == FmPosition.Defense ? "DEF" : "ATK") : FmField.Aiming && !_slot.AttackedThisTurn ? "Choose an enemy"
             : _slot.Position == FmPosition.Defense ? "DEF  (right-click: ATK)"

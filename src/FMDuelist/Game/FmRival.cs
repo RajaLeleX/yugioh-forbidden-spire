@@ -168,6 +168,15 @@ public static class FmRival
         if (FmField.Duelist is { } p) FmDuelLayout.Duel(p);
     }
 
+    /// <summary>
+    /// What he can see of your monsters. Your face-down cards are unknown to him, so he goes by a typical card's
+    /// strength instead of their real ATK and DEF (he finds out when they flip).
+    /// </summary>
+    const int Unknown = 1200;
+    static int SeenAtk(FmSlot m) => m.FaceDown ? Unknown : m.Atk;
+    static int SeenDef(FmSlot m) => m.FaceDown ? Unknown : m.Def;
+    static int SeenValue(FmSlot m) => m.Position == FmPosition.Attack ? SeenAtk(m) : SeenDef(m);
+
     static readonly int[] Usable = { 336, 337, 338, 339, 340, 341, 342, 343, 344, 345, 346, 347, 681, 682, 683, 684, 685, 686 };
     /// <summary>His traps set face down (up to 3): they spring on your attacks.</summary>
     static readonly List<int> Traps = new();
@@ -399,7 +408,7 @@ public static class FmRival
         }
         // Raigeki: wipe your field when you're ahead on monsters
         mine = FmField.Living(player).ToList();
-        if (spells && Hand.Contains(337) && mine.Count > 0 && (mine.Count >= 2 || mine.Max(m => m.Atk) > (Living.Any() ? Living.Max(m => m.Atk) : 0)))
+        if (spells && Hand.Contains(337) && mine.Count > 0 && (mine.Count >= 2 || mine.Max(m => SeenAtk(m)) > (Living.Any() ? Living.Max(m => m.Atk) : 0)))
         {
             await UseCard(337);
             Banner($"{Name} plays Raigeki!");
@@ -409,7 +418,7 @@ public static class FmRival
         }
         // Dark Hole only when your field is clearly stronger than his
         mine = FmField.Living(player).ToList();
-        if (spells && Hand.Contains(336) && mine.Count > 0 && mine.Sum(m => m.Atk) > Living.Sum(m => m.Atk) + 1000)
+        if (spells && Hand.Contains(336) && mine.Count > 0 && mine.Sum(m => SeenAtk(m)) > Living.Sum(m => m.Atk) + 1000)
         {
             await UseCard(336);
             Banner($"{Name} plays Dark Hole!");
@@ -503,7 +512,7 @@ public static class FmRival
         }
         var mine = FmField.Living(player).ToList();
         var info = FmData.Get(bestResult);
-        int myBest = mine.Count == 0 ? 0 : mine.Max(s => s.Position == FmPosition.Attack ? s.Atk : s.Def);
+        int myBest = mine.Count == 0 ? 0 : mine.Max(SeenValue);
         bool fused = bestChain.Count > 1;
         zone.Clear();
         zone.MonsterId = bestResult;
@@ -523,7 +532,7 @@ public static class FmRival
     static async Task<bool> Equip(Player player, bool needWin)
     {
         var mine = FmField.Living(player).ToList();
-        int myTop = mine.Count == 0 ? 0 : mine.Max(m => m.Position == FmPosition.Attack ? m.Atk : m.Def);
+        int myTop = mine.Count == 0 ? 0 : mine.Max(SeenValue);
         foreach (var id in Hand.Where(id => FmData.Get(id).Type == FmType.Equip).ToList())
         {
             if (Spell(id) is not { } sp) continue;
@@ -532,7 +541,7 @@ public static class FmRival
                 .OrderByDescending(s => s.Atk).FirstOrDefault();
             if (target == null) continue;
             await UseCard(id, target.Visual.CardCenter());
-            Banner($"{Name} equips {FmData.Get(id).Name} to {FmData.Get(target.MonsterId).Name}!");
+            Banner(target.FaceDown ? $"{Name} equips {FmData.Get(id).Name} to a face-down monster!" : $"{Name} equips {FmData.Get(id).Name} to {FmData.Get(target.MonsterId).Name}!");
             try { await target.Visual.EquipFx(id, sp.Value); } catch { }
             target.EquipList.Add((id, sp.Value));
             FmField.NotifyChanged();
@@ -578,7 +587,7 @@ public static class FmRival
     static bool HasPrey(FmSlot s, Player player)
     {
         var mine = FmField.Living(player).ToList();
-        return mine.Count == 0 || mine.Any(m => m.Position == FmPosition.Attack ? m.Atk < s.Atk : m.Def < s.Atk);
+        return mine.Count == 0 || mine.Any(m => SeenValue(m) < s.Atk);
     }
 
     /// <summary>FM AI: a monster of his switches position, with a banner.</summary>
@@ -588,7 +597,7 @@ public static class FmRival
         s.Position = to;
         FmSfx.Play(FmSfx.Flip);
         FmField.NotifyChanged();
-        Banner($"{FmData.Get(s.MonsterId).Name} switches to {(to == FmPosition.Attack ? "Attack" : "Defense")} position!");
+        Banner(s.FaceDown ? $"A face-down monster switches to {(to == FmPosition.Attack ? "Attack" : "Defense")} position!" : $"{FmData.Get(s.MonsterId).Name} switches to {(to == FmPosition.Attack ? "Attack" : "Defense")} position!");
         await Wait(0.35);
     }
 
@@ -614,8 +623,8 @@ public static class FmRival
             foreach (var m in mine)
             {
                 double v = m.Position == FmPosition.Attack
-                    ? (s.Atk > m.Atk ? 1000 + (s.Atk - m.Atk) + m.Atk : s.Atk == m.Atk && m.Atk >= s.Atk ? 200 : -1)
-                    : (s.Atk > m.Def ? 600 + m.Atk : -1);
+                    ? (s.Atk > SeenAtk(m) ? 1000 + (s.Atk - SeenAtk(m)) + SeenAtk(m) : s.Atk == SeenAtk(m) ? 200 : -1)
+                    : (s.Atk > SeenDef(m) ? 600 + SeenAtk(m) : -1);
                 if (v > best) { best = v; target = m; }
             }
             if (mine.Count > 0 && target == null) continue; // no battle worth fighting

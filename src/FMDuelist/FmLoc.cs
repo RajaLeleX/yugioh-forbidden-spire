@@ -138,7 +138,7 @@ public static class FmLoc
         {
             case FmEmptyZone: return ("Empty Zone", "Summon into this empty monster zone.");
             case FmAttackPosition: return ("Attack Position", "Click it and choose an enemy to attack for its ATK (once per turn). Attacked by a weaker hit: it isn't destroyed and the enemy takes the difference. An equal hit destroys it as it hits back for its ATK. Once it has attacked, it can't switch to Defense that turn.");
-            case FmDefensePosition: return ("Defense Position", "At the end of each of your turns it gains Block equal to its DEF. Unbroken Block is dealt back to attackers.");
+            case FmDefensePosition: return ("Defense Position", "Set face down: your opponent can't see what it is until it flips face up (when it battles or you switch it to Attack). At the end of each of your turns it gains Block equal to its DEF. Unbroken Block is dealt back to attackers.");
             case FmMonsterCard when FmExodia.Pieces.Contains(m.FmId): return (info.Name, Stats(m.FmId) + "\nHold all 5 pieces of the Forbidden One in your hand: obliterate every enemy.");
             case FmMonsterCard: return (info.Name, Stats(m.FmId) + "\nSummon (1 per turn). Right-click to fuse.");
             case FmRitualCard r: return (info.Name, $"Offer 3 monsters from your hand: summon {FmData.Get(r.ResultId).Name} ({FmData.Get(r.ResultId).Atk}/{FmData.Get(r.ResultId).Def}).");

@@ -133,6 +133,9 @@ public static class FmField
         Duelist = player;
         slot.Clear();
         slot.MonsterId = monsterId; slot.Position = pos; slot.AtkBonus = PendingAtkBonus; slot.DefBonus = PendingDefBonus;
+        // FM: a monster played in Defense position is set face down; the opponent doesn't know what it is
+        slot.FaceDown = pos == FmPosition.Defense;
+        if (slot.FaceDown && FmRival.Active) FmDuelStats.FaceDown++;
         slot.EquipList.AddRange(PendingEquips);
         PendingAtkBonus = PendingDefBonus = 0; PendingEquips.Clear();
         slot.TargetCombatId = target?.CombatId; slot.SourceCard = source;
@@ -181,6 +184,7 @@ public static class FmField
         if (slot.MonsterId == 0) return;
         if (slot.Position == FmPosition.Attack && slot.AttackedThisTurn) return; // attacked: can't go to Defense this turn
         slot.Position = slot.Position == FmPosition.Attack ? FmPosition.Defense : FmPosition.Attack;
+        if (slot.Position == FmPosition.Attack) slot.FaceDown = false; // turning to attack reveals it
         FmSfx.Play(FmSfx.Flip);
         NotifyChanged();
     }

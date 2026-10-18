@@ -61,6 +61,7 @@ public static class FmDuelLayout
             _right = CenterX(him) - HalfWidth(him, true) - 20;
             _step = Math.Clamp((_right - _left - Middle) / 6f, 100f, MaxStep);
             PlaceAll(player);
+            FmLifePoints.Show();
         }
         catch (Exception ex) { MegaCrit.Sts2.Core.Logging.Log.Warn("[FMDuelist] duel layout: " + ex.Message); }
     }

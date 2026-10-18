@@ -114,8 +114,8 @@ public static class FmPractice
             if (right) box.Resized += () => box.Position = new Vector2(view.X - 24 - box.Size.X, 18);
             _ = screen;
         }
-        Tag(me, "YOU", "Duel Master K", new Color(0.75f, 0.05f, 0.05f, 0.9f));
-        Tag(him, "COM", "Duel Master K", new Color(0.1f, 0.2f, 0.75f, 0.9f));
+        // FM's Life Point box (top right) carries the COM / YOU tabs now
+        _ = me; _ = him;
     }
 
     public static void RemoveLabels()

@@ -66,6 +66,9 @@ public static class FmRival
 
     /// <summary>How many traps he has set face down.</summary>
     public static int TrapCount => Traps.Count;
+
+    /// <summary>Cards left in his deck.</summary>
+    public static int DeckCount => Deck.Count;
     static readonly List<int> Deck = new();
     static readonly List<int> Hand = new();
     static readonly Dictionary<int, int[]> _weights = new();
@@ -146,7 +149,7 @@ public static class FmRival
     public static void Reset()
     {
         Active = false; Bound = false; Priest = null; Current = null; Deck.Clear(); Hand.Clear(); Traps.Clear();
-        try { FmFieldHud.Clear(); } catch { }
+        try { FmFieldHud.Clear(); FmLifePoints.Clear(); } catch { }
         FmRivalHand.Hide();
         FmPractice.RemoveLabels();
         foreach (var s in Slots) { s.Clear(); s.RivalCreature = null; }

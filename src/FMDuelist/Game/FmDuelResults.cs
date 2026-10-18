@@ -193,7 +193,17 @@ public static class FmDuelEnd
                 t.Parallel().TweenProperty(letter, "position", home, won ? 0.32 : 0.6).SetTrans(won ? Tween.TransitionType.Bounce : Tween.TransitionType.Sine).SetEase(Tween.EaseType.Out);
             }
         }
-        await Wait(2.4);
+        // FM: the banner stays until you click (or press a key); clicks in the first second don't count
+        bool go = false;
+        var catcher = new Control { Size = view, MouseFilter = Control.MouseFilterEnum.Stop, FocusMode = Control.FocusModeEnum.All };
+        catcher.GuiInput += e => { if (e is InputEventMouseButton { Pressed: true } || e is InputEventKey { Pressed: true, Echo: false }) go = true; };
+        root.AddChild(catcher);
+        await Wait(1.0);
+        go = false;
+        catcher.GrabFocus();
+        if (Engine.GetMainLoop() is SceneTree tree)
+            while (!go && GodotObject.IsInstanceValid(root)) await root.ToSignal(tree, SceneTree.SignalName.ProcessFrame);
+        FmSfx.Play(FmSfx.Mark);
         var ft = root.CreateTween(); ft.TweenProperty(root, "modulate:a", 0f, 0.3);
         await Wait(0.32);
         root.QueueFree();

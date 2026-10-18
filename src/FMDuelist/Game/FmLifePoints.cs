@@ -106,7 +106,7 @@ public static class FmLifePoints
         var me = Me;
         var room = NCombatRoom.Instance;
         var combat = me?.Creature.CombatState;
-        if (me == null || room == null || combat == null) { _box.Visible = false; return; }
+        if (me == null || room == null || combat == null) { Clear(); return; }
         _box.Visible = true;
         // COM: the duelist, or the other enemies' Life Points together
         int comLp = FmRival.Active && FmRival.Priest is { } him ? him.CurrentHp

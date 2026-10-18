@@ -22,6 +22,8 @@ public static class FmFieldHud
 
     public static void Clear()
     {
+        if (_following && Engine.GetMainLoop() is SceneTree t) t.ProcessFrame -= Follow;
+        _following = false;
         if (_layer != null && GodotObject.IsInstanceValid(_layer)) _layer.QueueFree();
         _layer = null; _mine = _his = _field = null;
         _shownMine = _shownHis = _shownField = -1;
@@ -143,10 +145,11 @@ public static class FmFieldHud
     /// <summary>Keeps the rows over the duelists' heads (they move when the duel is laid out) and the field box between them.</summary>
     static void Follow()
     {
-        if (_layer == null || !GodotObject.IsInstanceValid(_layer) || NCombatRoom.Instance is not { } room)
+        if (_layer == null || !GodotObject.IsInstanceValid(_layer) || NCombatRoom.Instance is not { } room || FmField.Duelist?.Creature.CombatState == null)
         {
             if (_following && Engine.GetMainLoop() is SceneTree t) t.ProcessFrame -= Follow;
             _following = false;
+            Clear();
             return;
         }
         var me = FmField.Duelist is { } p ? room.GetCreatureNode(p.Creature) : null;

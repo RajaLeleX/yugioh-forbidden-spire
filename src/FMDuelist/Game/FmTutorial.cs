@@ -70,7 +70,7 @@ public static class FmTutorial
         box.AddChild(tabs);
         tabs.AddChild(Page("Rules", RulesText()));
         tabs.AddChild(Page("Fusing", FusingText(player)));
-        tabs.AddChild(Page("Guardian Stars", FmStars.GuideText()));
+        tabs.AddChild(StarsPage());
         tabs.AddChild(Page("Cheat Sheet", SafeCheatSheet(player)));
         tabs.AddChild(Page("Junk Cards", JunkText(player)));
         tabs.AddChild(Page("Bosses", BossText()));
@@ -119,6 +119,17 @@ public static class FmTutorial
             if (_btn != null && GodotObject.IsInstanceValid(_btn))
                 _btn.Visible = FmRules.RunActive && FmField.Duelist != null && MegaCrit.Sts2.Core.Nodes.Rooms.NCombatRoom.Instance != null && !Open;
         }));
+    }
+
+    static Control StarsPage()
+    {
+        var page = Page("Guardian Stars", FmStars.GuideText());
+        if (FmScene.Tex("guardian_chart") is not { } chart || page.GetChildOrNull<RichTextLabel>(0) is not { } text) return page;
+        // FM's chart at the top of the page, then the rules
+        text.Clear();
+        text.AddImage(chart, 640, (int)(640f * chart.GetHeight() / chart.GetWidth()));
+        text.AppendText("\n\n" + FmStars.GuideText());
+        return page;
     }
 
     static Control Page(string name, string bbcode)

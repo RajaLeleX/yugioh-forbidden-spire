@@ -361,6 +361,8 @@ static class FmLeaveRunCleanupPatch
             FmRival.ClearBanner();
             FmPractice.RemoveLabels();
             FmField.ResetCombat();
+            FmFieldHud.Clear();
+            FmLifePoints.Clear();
         }
         catch (Exception ex) { Log.Warn("[FMDuelist] leave-run cleanup: " + ex.Message); }
     }

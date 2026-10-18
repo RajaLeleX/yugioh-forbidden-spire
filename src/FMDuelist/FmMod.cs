@@ -53,6 +53,7 @@ public static class FmMod
         Log.Info("[FMDuelist] Init");
         RegisterSavedProperties();
         FmData.Load();
+        Game.FmRestDuel.CheckTables();
         Game.FmPractice.Preload();
         ModHelper.AddModelToPool<MegaCrit.Sts2.Core.Models.RelicPools.NecrobinderRelicPool, MillenniumPuzzle>();
         ModHelper.AddModelToPool<MegaCrit.Sts2.Core.Models.RelicPools.EventRelicPool, DragonTreasure>();

@@ -43,12 +43,22 @@ public sealed class MillenniumPuzzle : RelicModel
     [MegaCrit.Sts2.Core.Saves.Runs.SavedProperty]
     public bool StoryMap { get => _storyMap; set { AssertMutable(); _storyMap = value; } }
 
+    private int[] _beaten = Array.Empty<int>(), _restDuels = Array.Empty<int>();
+
+    /// <summary>The duelists you've beaten this run (FM duelist numbers): the rest sites' Free Duels offer them.</summary>
+    [MegaCrit.Sts2.Core.Saves.Runs.SavedProperty]
+    public int[] BeatenDuelists { get => _beaten; set { AssertMutable(); _beaten = value ?? Array.Empty<int>(); } }
+
+    /// <summary>The rest site (floor) and the Free Duels left there.</summary>
+    [MegaCrit.Sts2.Core.Saves.Runs.SavedProperty]
+    public int[] RestDuels { get => _restDuels; set { AssertMutable(); _restDuels = value ?? Array.Empty<int>(); } }
+
     /// <summary>Act 1 is Forbidden Memories' story on one straight path.</summary>
     public override MegaCrit.Sts2.Core.Map.ActMap ModifyGeneratedMap(MegaCrit.Sts2.Core.Runs.IRunState runState, MegaCrit.Sts2.Core.Map.ActMap map, int actIndex)
         => actIndex == 0 && StoryMap && runState.Players.Contains(Owner) ? new FmStoryActMap() : map;
 
     public override bool TryModifyRewards(Player player, List<MegaCrit.Sts2.Core.Rewards.Reward> rewards, AbstractRoom? room)
-        => Mine(player) && (FmAct1Story.HeishinRewards(player, rewards, room) | FmRelicDrops.Apply(player, rewards, room));
+        => Mine(player) && (FmRestDuel.Rewards(player, rewards, room) || (FmAct1Story.HeishinRewards(player, rewards, room) | FmRelicDrops.Apply(player, rewards, room)));
     private readonly List<(Creature attacker, int trapId, decimal hit)> _sprung = new();
 
     private bool Mine(Player? p) => p == Owner;
@@ -103,13 +113,15 @@ public sealed class MillenniumPuzzle : RelicModel
         }
         // Act 1 story duels: the duelist's lines first
         var storyDuel = Owner.Creature.CombatState!.Enemies.Select(e => FmStoryAct1.ForMonster(e.Monster?.GetType())).FirstOrDefault(d => d != null);
-        if (storyDuel != null && !FmPractice.Active)
+        if (storyDuel != null && !FmPractice.Active && !FmRestDuel.Active)
         {
             try { await FmAct1Story.PreDuel(storyDuel); } catch (Exception ex) { MegaCrit.Sts2.Core.Logging.Log.Warn("[FMDuelist] pre-duel: " + ex.Message); }
             FmMusic.OnRoomEntered(Owner.RunState.CurrentRoom!, Owner);
         }
         // boss duel: the Kin Priest duels by FM rules
         if (Owner.Creature.CombatState!.Enemies.Any(e => e.Monster != null && FmRival.AllDuelists.Any(b => b.Monster == e.Monster.GetType()))) await FmRival.Begin(Owner, Owner.Creature.CombatState!);
+        // a rest site's Free Duel: 8000 LP
+        await FmRestDuel.Begin(Owner);
         if (storyDuel != null && FmRival.Priest != null) FmStoryAct1.Dress(FmRival.Priest, storyDuel);
         // the story's boss and Heishin wear their FM pictures too
         else if (FmRival.Priest != null && FmStoryAct1.StoryRun(Owner.RunState))
@@ -370,7 +382,8 @@ public sealed class MillenniumPuzzle : RelicModel
         if (!Mine(player)) return false;
         var smith = options.FirstOrDefault(o => o is SmithRestSiteOption);
         if (smith != null) options.Remove(smith);
-        options.Add(new FmCutRestSiteOption(player));
+        // Free Duels with the duelists you've beaten (in place of Cut)
+        options.Add(new FmFreeDuelRestSiteOption(player));
         return true;
     }
 
@@ -427,6 +440,7 @@ public sealed class MillenniumPuzzle : RelicModel
     {
         // the unwinnable Heishin duel isn't a game over
         if (creature == Owner.Creature && FmAct1Story.State == FmAct1Story.Phase.Lost) return false;
+        if (creature == Owner.Creature && FmRestDuel.Lost) return false;
         if (FmAct1Story.IsHeishin(creature) && FmAct1Story.State != FmAct1Story.Phase.None) return false;
         // the practice duel never ends the run: whoever falls, the results show and you go back to the main menu
         if (!FmPractice.Active || !FmRival.Active) return true;
@@ -452,11 +466,15 @@ public sealed class MillenniumPuzzle : RelicModel
         }
         if (!FmRival.Active || FmPractice.Active || FmRival.Current == null) return;
         if (creature != Owner.Creature && creature != FmRival.Priest) return;
+        // a rest site's Free Duel lost: results, then back to the rest site (not a game over)
+        if (FmRestDuel.Active && creature == Owner.Creature) { await FmRestDuel.OnLoss(Owner); return; }
         bool won = creature == FmRival.Priest;
         int turns = Owner.Creature.CombatState?.RoundNumber ?? 1;
         int comLp = won ? 0 : Math.Max(0, FmRival.Priest?.CurrentHp ?? 0);
         var duel = FmRival.Current;
-        await FmDuelEnd.Show(won, Owner, comLp, duel.Name, turns);
+        await FmDuelEnd.Show(won, Owner, comLp, duel.Name, turns, spoils: !FmRestDuel.Active);
+        if (FmRestDuel.Active) { FmRestDuel.Ranked(FmDuelEnd.LastKind, FmDuelEnd.LastLetter); return; }
+        if (won) FmRestDuel.MarkBeaten(Owner, duel);
         // a story duelist's closing lines
         if (won && FmStoryAct1.ForMonster(duel.Monster) is { } sd) await FmAct1Story.PostDuel(sd);
     }
@@ -555,13 +573,13 @@ public sealed class MillenniumPuzzle : RelicModel
         return Task.CompletedTask;
     }
 
-    public override Task AfterCombatEnd(CombatRoom room)
+    public override async Task AfterCombatEnd(CombatRoom room)
     {
+        await FmRestDuel.AfterCombat(Owner);
         FmField.ResetCombat();
         FmRival.Reset();
         FmAct1Story.Reset();
         FmStoryAct1.ClearBackground();
-        return Task.CompletedTask;
     }
 }
 

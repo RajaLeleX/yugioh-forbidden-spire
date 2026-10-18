@@ -18,6 +18,7 @@ public static class FmLifePoints
     static double _lastTick;
     static AudioStreamWav? _tick;
     static AudioStreamPlayer? _player;
+    static bool _subscribed;
 
     const float Px = 2.6f;           // screen pixels per FM pixel for the box
     const float RollTime = 0.9f;     // a change of any size rolls over about this long
@@ -27,7 +28,8 @@ public static class FmLifePoints
 
     public static void Clear()
     {
-        if (Engine.GetMainLoop() is SceneTree t) t.ProcessFrame -= Tick;
+        if (_subscribed && Engine.GetMainLoop() is SceneTree t) t.ProcessFrame -= Tick;
+        _subscribed = false;
         if (_layer != null && GodotObject.IsInstanceValid(_layer)) _layer.QueueFree();
         _layer = null; _box = null;
         _comShown = _youShown = -1; _comDeckShown = _youDeckShown = -1;
@@ -59,6 +61,7 @@ public static class FmLifePoints
         _player = new AudioStreamPlayer { Stream = Tick0(), VolumeDb = -14 };
         _layer.AddChild(_player);
         tree.ProcessFrame += Tick;
+        _subscribed = true;
         Tick();
     }
 

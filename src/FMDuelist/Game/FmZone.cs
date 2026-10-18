@@ -45,8 +45,7 @@ public static class FmZone
 
         // rebuild the row when its contents change
         var entries = new List<(int id, bool down, string note)>();
-        foreach (var t in FmField.Traps) entries.Add((t, true, "SET"));
-        if (player!.Creature.GetPower<Powers.FmFieldPower>() is { } fp) entries.Add((fp.Amount, false, "FIELD"));
+        if (player!.Creature.GetPower<Powers.FmFieldPower>() is { } fp) _field = fp.Amount; else _field = 0;
         foreach (var z in FmField.Slots)
             foreach (var e in z.Equips) entries.Add((e, false, $"EQUIP {z.Index + 1}"));
         if (FmField.SwordsTurns > 0) entries.Add((348, false, $"{FmField.SwordsTurns} turns"));
@@ -66,6 +65,22 @@ public static class FmZone
             if (GodotObject.IsInstanceValid(box) && box.GetGlobalRect().HasPoint(mouse)) { hover = id; down = fd; note = n; }
         _hoverZone = FmField.Slots.LastOrDefault(z => z.Alive(player) && z.Visual.IsMouseOver(mouse));
         if (hover < 0 && _hoverZone != null) { hover = _hoverZone.MonsterId; note = "MONSTER"; }
+        // his monsters: face-up ones show the card, face-down ones only that they're face down (as in FM)
+        if (hover < 0 && FmRival.Active)
+            foreach (var z in FmRival.Slots)
+                if (z.MonsterId > 0 && z.Visual.IsMouseOverCard(mouse))
+                {
+                    if (z.FaceDown) { hover = FaceDownMonster; note = "A face-down monster"; }
+                    else { hover = z.MonsterId; note = $"COM zone {z.Index + 1} - {(z.Position == FmPosition.Attack ? "Attack" : "Defense")} position\nATK {z.Atk} / DEF {z.Def}"; }
+                }
+        // the trap zones over each head
+        if (hover < 0 && FmFieldHud.HoverAt(mouse) is { } trap)
+        {
+            if (trap.mine) { hover = trap.id; note = "Your set trap"; }
+            else { hover = FaceDownTrap; note = "A face-down card"; }
+        }
+        // the field box (top left)
+        if (hover < 0 && _field > 0 && FmFieldHud.FieldBoxAt(mouse)) { hover = _field; note = "FIELD in play"; }
         if (hover < 0) HidePreview(); else ShowPreview(hover, note, mouse);
     }
 
@@ -121,9 +136,37 @@ public static class FmZone
         return root;
     }
 
+    const int FaceDownMonster = -10, FaceDownTrap = -11;
+    static int _field;
+
     static void ShowPreview(int id, string note, Vector2 mouse)
     {
         if (!Valid) return;
+        if (id < 0)
+        {
+            // a face-down card of his: its back and what it is
+            if (_previewId != id || _preview == null || !GodotObject.IsInstanceValid(_preview))
+            {
+                HidePreview();
+                var panel = new Control { MouseFilter = Control.MouseFilterEnum.Ignore };
+                var back = new TextureRect { ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.Scale, MouseFilter = Control.MouseFilterEnum.Ignore };
+                back.Texture = FmRivalHand.Back();
+                back.Size = FmCardFace.Size * 2;
+                panel.AddChild(back);
+                var l = new Label { Text = note, Position = new Vector2(0, FmCardFace.Size.Y * 2 + 8), Size = new Vector2(FmCardFace.Size.X * 2, 40), MouseFilter = Control.MouseFilterEnum.Ignore };
+                l.AddThemeFontSizeOverride("font_size", 18);
+                l.AddThemeColorOverride("font_outline_color", Colors.Black);
+                l.AddThemeConstantOverride("outline_size", 6);
+                panel.AddChild(l);
+                _layer!.AddChild(panel);
+                _preview = panel;
+                _previewId = id;
+            }
+            var v = _layer!.GetViewport().GetVisibleRect().Size;
+            float px = mouse.X + 40 + FmCardFace.Size.X * 2 > v.X ? mouse.X - 40 - FmCardFace.Size.X * 2 : mouse.X + 40;
+            _preview!.Position = new Vector2(px, Mathf.Clamp(mouse.Y - FmCardFace.Size.Y, 20, v.Y - FmCardFace.Size.Y * 2 - 60));
+            return;
+        }
         if (_previewId != id || _preview == null || !GodotObject.IsInstanceValid(_preview))
         {
             HidePreview();

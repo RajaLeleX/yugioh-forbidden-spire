@@ -89,6 +89,8 @@ public static class FmLoc
 
             loc.GetTable("rest_site_ui").MergeWith(new Dictionary<string, string>
             {
+                ["OPTION_FMFREEDUEL.name"] = "Free Duel",
+                ["OPTION_FMFREEDUEL.description"] = "Duel someone you've already beaten for a card from their drop table (up to 5 per rest site). LP is 8000 and a loss isn't a game over. Doesn't use up your rest.",
                 ["OPTION_FMCUT.name"] = "Cut",
                 ["OPTION_FMCUT.description"] = "Remove cards from your deck: up to 1 in Act 1, 2 in Act 2, 3 in Act 3 (Exodia decks can't go below 15).",
             });

@@ -15,6 +15,7 @@ public static class FmFieldHud
     static CanvasLayer? _layer;
     static Control? _mine, _his, _field;
     static int _shownMine = -1, _shownHis = -1, _shownField = -1;
+    static bool _following;
 
     static readonly Color Navy = new(0.1f, 0.12f, 0.3f, 0.92f), Stone = new(0.62f, 0.6f, 0.55f);
     const float W = 40, H = 56, Gap = 6;
@@ -40,6 +41,7 @@ public static class FmFieldHud
                 _field = new Control { MouseFilter = Control.MouseFilterEnum.Ignore };
                 _layer.AddChild(_field);
                 tree.ProcessFrame += Follow;
+                _following = true;
             }
             int mine = FmField.Traps.Count, his = FmRival.Active ? FmRival.TrapCount : -1, field = FmBackdrop.Current;
             if (mine != _shownMine) { Fill(_mine!, mine); _shownMine = mine; }
@@ -114,12 +116,37 @@ public static class FmFieldHud
         _field.AddChild(tag);
     }
 
+    /// <summary>
+    /// The card in the trap zone under the mouse: your set trap (its id), or the duelist's face-down card (-1).
+    /// Null when the mouse isn't on a filled zone.
+    /// </summary>
+    /// <summary>Is the mouse on the field box?</summary>
+    public static bool FieldBoxAt(Vector2 mouse) =>
+        _field != null && GodotObject.IsInstanceValid(_field) && _field.IsVisibleInTree() && new Rect2(_field.GlobalPosition, _field.Size).HasPoint(mouse);
+
+    public static (int id, bool mine)? HoverAt(Vector2 mouse)
+    {
+        if (_layer == null || !GodotObject.IsInstanceValid(_layer) || !_layer.Visible) return null;
+        foreach (var (row, mine) in new[] { (_mine, true), (_his, false) })
+        {
+            if (row == null || !row.Visible) continue;
+            int set = mine ? FmField.Traps.Count : (FmRival.Active ? FmRival.TrapCount : 0);
+            for (int i = 0; i < Math.Min(set, MiniZones); i++)
+            {
+                var r = new Rect2(row.GlobalPosition + new Vector2(i * (W + Gap), 0), new Vector2(W, H));
+                if (r.HasPoint(mouse)) return (mine ? FmField.Traps[i] : -1, mine);
+            }
+        }
+        return null;
+    }
+
     /// <summary>Keeps the rows over the duelists' heads (they move when the duel is laid out) and the field box between them.</summary>
     static void Follow()
     {
         if (_layer == null || !GodotObject.IsInstanceValid(_layer) || NCombatRoom.Instance is not { } room)
         {
-            if (Engine.GetMainLoop() is SceneTree t) t.ProcessFrame -= Follow;
+            if (_following && Engine.GetMainLoop() is SceneTree t) t.ProcessFrame -= Follow;
+            _following = false;
             return;
         }
         var me = FmField.Duelist is { } p ? room.GetCreatureNode(p.Creature) : null;

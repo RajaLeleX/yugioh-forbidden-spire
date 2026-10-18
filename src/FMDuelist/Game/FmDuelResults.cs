@@ -102,6 +102,9 @@ public static class FmDuelEnd
     /// <summary>FM's own music for the end of a duel: the win jingle, the lose jingle, and the Results of Duel theme.</summary>
     public const int WinJingle = 46, LoseJingle = 47, DuelResultsTheme = 57;
 
+    /// <summary>The rank the last duel earned (POW/TEC and its letter).</summary>
+    public static string LastKind = "POW", LastLetter = "D";
+
     public static async Task Show(bool won, Player player, int comLp, string comName, int turns, bool spoils = true)
     {
         FmMusic.PlayOnce(won ? WinJingle : LoseJingle);
@@ -109,6 +112,7 @@ public static class FmDuelEnd
         int youLp = Math.Max(0, player.Creature.CurrentHp);
         int points = FmDuelStats.SkillPoints(turns, youLp);
         var (kind, letter, stars) = FmDuelStats.Rank(points);
+        LastKind = kind; LastLetter = letter;
         Log.Info($"[FMDuelist] Duel over: {(won ? "WIN" : "LOSE")} vs {comName}, turns {turns}, skill {points} -> {letter}-{kind}");
         int chips = won && spoils ? stars * 10 : 0;
         try { if (chips > 0) await PlayerCmd.GainGold(chips, player); } catch (Exception ex) { Log.Warn("[FMDuelist] spoils: " + ex.Message); }

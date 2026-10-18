@@ -98,13 +98,14 @@ public static class FmTutorial
         _btn = new Button
         {
             Text = " Fusion Guide", TooltipText = "Forbidden Memories rules and your fusion cheat sheet",
-            Icon = FmData.Art(189), ExpandIcon = true, CustomMinimumSize = new Vector2(190, 58), Visible = false,
+            Icon = FmData.Art(189), ExpandIcon = true, CustomMinimumSize = new Vector2(170, 46), Visible = false,
             FocusMode = Control.FocusModeEnum.None,
         };
         _btn.AddThemeFontSizeOverride("font_size", 18);
-        _btn.AddThemeConstantOverride("icon_max_width", 44);
-        _btn.AnchorLeft = _btn.AnchorRight = 1; _btn.AnchorTop = _btn.AnchorBottom = 0;
-        _btn.OffsetLeft = -204; _btn.OffsetRight = -14; _btn.OffsetTop = 92; _btn.OffsetBottom = 150;
+        _btn.AddThemeConstantOverride("icon_max_width", 36);
+        // top centre, clear of the Life Point box (top right) and the field box (top left)
+        _btn.AnchorLeft = _btn.AnchorRight = 0.5f; _btn.AnchorTop = _btn.AnchorBottom = 0;
+        _btn.OffsetLeft = -85; _btn.OffsetRight = 85; _btn.OffsetTop = 8; _btn.OffsetBottom = 54;
         _btn.Connect(BaseButton.SignalName.Pressed, Callable.From(() =>
         {
             if (!Open && FmField.Duelist is { } p) Show(p, startTab: 2);

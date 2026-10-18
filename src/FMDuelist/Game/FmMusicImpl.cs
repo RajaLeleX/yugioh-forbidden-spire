@@ -27,6 +27,8 @@ public static partial class FmMusic
         // the Free Duel with Duel Master K: silent until the duel starts, then track 39 on a loop
         if (FmPractice.Active) { if (room.RoomType == RoomType.Monster) Play(FmPractice.MusicTrack); else Stop(); return; }
         if (room is RestSiteRoom) { Play(FmMedia.RestSiteTrack); return; }
+        // a rest site's Free Duel: FM's Free Duel theme
+        if (room is CombatRoom && FmRestDuel.Active) { Play(FmPractice.MusicTrack); return; }
         // Simon Muran's duel plays his own theme (FM track 12)
         if (room is CombatRoom duel && FmStoryAct1.Duels.FirstOrDefault(d => d.Encounter == duel.Encounter?.GetType()) is { Key: "simon" }) { Play(12); return; }
         // each act's starting room (the Ancient before floor 1)

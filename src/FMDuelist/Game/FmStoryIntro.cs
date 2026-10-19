@@ -101,7 +101,7 @@ public static class FmStoryIntro
             var plate = new PanelContainer { Position = new Vector2(28 * k, boxY - 34 * k), MouseFilter = Control.MouseFilterEnum.Ignore };
             plate.AddThemeStyleboxOverride("panel", new StyleBoxFlat { BgColor = new Color(0.1f, 0.11f, 0.22f, 0.95f), BorderColor = new Color(0.72f, 0.66f, 0.5f), BorderWidthBottom = 3, BorderWidthTop = 3, BorderWidthLeft = 3, BorderWidthRight = 3, ContentMarginLeft = 16 * k, ContentMarginRight = 16 * k, ContentMarginTop = 2 * k, ContentMarginBottom = 2 * k });
             var plateText = new Label { Text = "Heishin", MouseFilter = Control.MouseFilterEnum.Ignore };
-            plateText.AddThemeFontOverride("font", new SystemFont { FontNames = new[] { "Lucida Console", "Consolas", "Courier New" }, FontWeight = 700 });
+            plateText.AddThemeFontOverride("font", new SystemFont { MultichannelSignedDistanceField = true, MsdfPixelRange = 16, FontNames = new[] { "Lucida Console", "Consolas", "Courier New" }, FontWeight = 700 });
             plateText.AddThemeFontSizeOverride("font_size", (int)(30 * k));
             plateText.AddThemeColorOverride("font_color", new Color(1f, 0.86f, 0.35f));
             plate.AddChild(plateText);

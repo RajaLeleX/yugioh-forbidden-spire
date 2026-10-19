@@ -35,7 +35,7 @@ static class FmTitle
                 Text = "CLICK TO START", HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center,
                 MouseFilter = Control.MouseFilterEnum.Ignore, AnchorLeft = 0, AnchorRight = 1, AnchorTop = 0.735f, AnchorBottom = 0.825f,
             };
-            l.AddThemeFontOverride("font", new SystemFont { FontNames = new[] { "Brush Script MT", "Segoe Script", "Georgia" }, FontItalic = true, FontWeight = 800 });
+            l.AddThemeFontOverride("font", new SystemFont { MultichannelSignedDistanceField = true, MsdfPixelRange = 16, FontNames = new[] { "Brush Script MT", "Segoe Script", "Georgia" }, FontItalic = true, FontWeight = 800 });
             l.AddThemeFontSizeOverride("font_size", (int)size);
             l.AddThemeColorOverride("font_color", outline ? new Color(0, 0, 0, 0) : Green);
             if (outline)

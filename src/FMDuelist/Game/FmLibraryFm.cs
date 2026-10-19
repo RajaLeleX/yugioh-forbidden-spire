@@ -312,7 +312,7 @@ public static class FmLibraryFm
         Label Big(string s, float y)
         {
             var l = new Label { Text = s, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, Position = P(0, y), Size = P(PanelW, 62), MouseFilter = Control.MouseFilterEnum.Ignore };
-            l.AddThemeFontOverride("font", new SystemFont { FontNames = new[] { "Arial Black", "Arial", "Verdana" }, FontWeight = 900 });
+            l.AddThemeFontOverride("font", new SystemFont { MultichannelSignedDistanceField = true, MsdfPixelRange = 16, FontNames = new[] { "Arial Black", "Arial", "Verdana" }, FontWeight = 900 });
             l.AddThemeFontSizeOverride("font_size", (int)(60 * _px));
             l.AddThemeConstantOverride("line_spacing", 0);
             l.AddThemeColorOverride("font_color", new Color(0, 0, 0, 0));

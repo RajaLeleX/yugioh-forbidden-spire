@@ -16,7 +16,7 @@ public static class FmCardFace
         _ => new Color("c9923e"),
     };
 
-    static SystemFont Serif(bool bold) => new() { FontNames = new[] { "Times New Roman", "Georgia", "Serif" }, FontWeight = bold ? 700 : 400 };
+    static SystemFont Serif(bool bold) => new() { MultichannelSignedDistanceField = true, MsdfPixelRange = 16, FontNames = new[] { "Times New Roman", "Georgia", "Serif" }, FontWeight = bold ? 700 : 400 };
 
     /// <summary>A label with its own font, size and no extra line spacing (so it sits where it's put).</summary>
     static Label Fixed(string text, int size, Color color, Font font)
@@ -60,7 +60,7 @@ public static class FmCardFace
         if (info.IsMonster)
         {
             var stars = new Label { Text = new string('★', Math.Clamp(info.Level, 0, 12)), Position = new Vector2(8, 24), Size = new Vector2(134, 14), HorizontalAlignment = HorizontalAlignment.Right, MouseFilter = Control.MouseFilterEnum.Ignore };
-            stars.AddThemeFontOverride("font", new SystemFont { FontNames = new[] { "Segoe UI Symbol", "Arial Unicode MS", "Arial" } });
+            stars.AddThemeFontOverride("font", new SystemFont { MultichannelSignedDistanceField = true, MsdfPixelRange = 16, FontNames = new[] { "Segoe UI Symbol", "Arial Unicode MS", "Arial" } });
             stars.AddThemeFontSizeOverride("font_size", 10);
             stars.AddThemeConstantOverride("outline_size", 0);
             stars.AddThemeStyleboxOverride("normal", new StyleBoxEmpty());

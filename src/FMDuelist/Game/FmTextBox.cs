@@ -69,7 +69,7 @@ public sealed class FmTextBox
         if (_sheet == null)
         {
             _fallback = new Label { Position = _origin, Size = new Vector2(box.Size.X - 32 * _px, box.Size.Y), MouseFilter = Control.MouseFilterEnum.Ignore };
-            _fallback.AddThemeFontOverride("font", new SystemFont { FontNames = new[] { "Lucida Console", "Consolas", "Courier New" }, FontWeight = 600 });
+            _fallback.AddThemeFontOverride("font", new SystemFont { MultichannelSignedDistanceField = true, MsdfPixelRange = 16, FontNames = new[] { "Lucida Console", "Consolas", "Courier New" }, FontWeight = 600 });
             _fallback.AddThemeFontSizeOverride("font_size", (int)(10 * _px));
             _root.AddChild(_fallback);
         }
@@ -90,35 +90,38 @@ public sealed class FmTextBox
         // A sharp font instead of the blown-up PSX bitmap: one letter per FM cell (8x12 PSX pixels), centred in it,
         // so every layout measured with TextWidth lines up exactly as before.
         var root = new Control { MouseFilter = Control.MouseFilterEnum.Ignore, Size = new Vector2(s.Length * CellW * px, CellH * px) };
-        var cell = new Vector2(CellW, CellH) * px;
-        int size = Math.Max(8, (int)Math.Round(13 * px));
         for (int i = 0; i < s.Length; i++)
-        {
-            if (s[i] == ' ') continue;
-            var l = new Label
-            {
-                Text = s[i].ToString(), Position = new Vector2(i * cell.X, 0), Size = cell, ClipText = false,
-                HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center,
-                MouseFilter = Control.MouseFilterEnum.Ignore,
-            };
-            l.AddThemeStyleboxOverride("normal", new StyleBoxEmpty());
-            l.AddThemeFontOverride("font", CrispFont);
-            l.AddThemeFontSizeOverride("font_size", size);
-            l.AddThemeColorOverride("font_color", tint ?? Colors.White);
-            l.AddThemeColorOverride("font_outline_color", new Color(0.02f, 0.03f, 0.1f, 0.9f));
-            l.AddThemeConstantOverride("outline_size", Math.Max(2, (int)Math.Round(px * 1.2f)));
-            l.AddThemeColorOverride("font_shadow_color", new Color(0, 0, 0, 0.6f));
-            l.AddThemeConstantOverride("shadow_offset_x", Math.Max(1, (int)(px * 0.6f)));
-            l.AddThemeConstantOverride("shadow_offset_y", Math.Max(1, (int)(px * 0.6f)));
-            root.AddChild(l);
-        }
+            if (s[i] != ' ') root.AddChild(Glyph(s[i], new Vector2(i * CellW * px, 0), px, tint));
         return root;
+    }
+
+    /// <summary>One letter in the sharp font, centred in its FM cell (8x12 PSX pixels at <paramref name="px"/>).</summary>
+    public static Label Glyph(char ch, Vector2 pos, float px, Color? tint = null)
+    {
+        var cell = new Vector2(CellW, CellH) * px;
+        var l = new Label
+        {
+            Text = ch.ToString(), Position = pos, Size = cell, ClipText = false, PivotOffset = cell / 2,
+            HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center,
+            MouseFilter = Control.MouseFilterEnum.Ignore,
+        };
+        l.AddThemeStyleboxOverride("normal", new StyleBoxEmpty());
+        l.AddThemeFontOverride("font", CrispFont);
+        l.AddThemeFontSizeOverride("font_size", Math.Max(8, (int)Math.Round(13 * px)));
+        l.AddThemeColorOverride("font_color", tint ?? Colors.White);
+        l.AddThemeColorOverride("font_outline_color", new Color(0.02f, 0.03f, 0.1f, 0.9f));
+        l.AddThemeConstantOverride("outline_size", Math.Max(2, (int)Math.Round(px * 1.2f)));
+        l.AddThemeColorOverride("font_shadow_color", new Color(0, 0, 0, 0.6f));
+        l.AddThemeConstantOverride("shadow_offset_x", Math.Max(1, (int)(px * 0.6f)));
+        l.AddThemeConstantOverride("shadow_offset_y", Math.Max(1, (int)(px * 0.6f)));
+        return l;
     }
 
     static SystemFont? _crisp;
     /// <summary>The sharp monospaced face used for FM-style labels.</summary>
     public static SystemFont CrispFont => _crisp ??= new SystemFont
     {
+        MultichannelSignedDistanceField = true, MsdfPixelRange = 16,
         FontNames = new[] { "Consolas", "Lucida Console", "Courier New", "monospace" }, FontWeight = 700,
         Antialiasing = TextServer.FontAntialiasing.Gray, Hinting = TextServer.Hinting.Light, SubpixelPositioning = TextServer.SubpixelPositioning.Disabled,
     };
@@ -175,13 +178,9 @@ public sealed class FmTextBox
             if (ch == '\n') { line++; col = 0; continue; }
             var pos = _origin + new Vector2(col * CellW * _px, line * LinePitch * _px);
             col++;
-            if (ch == ' ' || _sheet == null || _glyphs == null || !_glyphs.TryGetValue(ch, out var rect)) continue;
-            var g = new TextureRect
-            {
-                Texture = new AtlasTexture { Atlas = _sheet, Region = rect }, Position = pos, Size = new Vector2(CellW, CellH) * _px,
-                ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.Scale,
-                TextureFilter = CanvasItem.TextureFilterEnum.Nearest, Visible = false, MouseFilter = Control.MouseFilterEnum.Ignore,
-            };
+            if (ch == ' ' || _fallback != null) continue;
+            var g = Glyph(ch, pos, _px);
+            g.Visible = false;
             g.SetMeta("fm_col", col);
             _textLayer.AddChild(g);
             nodes.Add(g);
@@ -301,23 +300,8 @@ public sealed class FmTextBox
     {
         parent ??= _textLayer;
         if (px <= 0) px = _px;
-        if (_sheet == null || _glyphs == null)
-        {
-            var l = new Label { Text = s, Position = at, MouseFilter = Control.MouseFilterEnum.Ignore };
-            l.AddThemeFontSizeOverride("font_size", (int)(10 * px));
-            parent.AddChild(l);
-            return;
-        }
         for (int i = 0; i < s.Length; i++)
-        {
-            if (s[i] == ' ' || !_glyphs.TryGetValue(s[i], out var rect)) continue;
-            parent.AddChild(new TextureRect
-            {
-                Texture = new AtlasTexture { Atlas = _sheet, Region = rect }, Position = at + new Vector2(i * CellW * px, 0), Size = new Vector2(CellW, CellH) * px,
-                ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.Scale,
-                TextureFilter = CanvasItem.TextureFilterEnum.Nearest, MouseFilter = Control.MouseFilterEnum.Ignore,
-            });
-        }
+            if (s[i] != ' ') parent.AddChild(Glyph(s[i], at + new Vector2(i * CellW * px, 0), px));
     }
 
     void Reveal(Control g, bool animate)

@@ -120,7 +120,7 @@ void fragment() {
             ContentMarginLeft = 16 * s, ContentMarginRight = 16 * s, ContentMarginTop = 2 * s, ContentMarginBottom = 2 * s,
         });
         _plateText = new Label { MouseFilter = Control.MouseFilterEnum.Ignore };
-        _plateText.AddThemeFontOverride("font", new SystemFont { FontNames = new[] { "Lucida Console", "Consolas", "Courier New" }, FontWeight = 700 });
+        _plateText.AddThemeFontOverride("font", new SystemFont { MultichannelSignedDistanceField = true, MsdfPixelRange = 16, FontNames = new[] { "Lucida Console", "Consolas", "Courier New" }, FontWeight = 700 });
         _plateText.AddThemeFontSizeOverride("font_size", (int)(30 * s));
         _plateText.AddThemeColorOverride("font_color", new Color(1f, 0.86f, 0.35f));
         _plate.AddChild(_plateText);

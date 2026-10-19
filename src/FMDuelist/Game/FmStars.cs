@@ -23,7 +23,7 @@ public static class FmStars
     /// A font with the planet symbols as plain outlines (not the coloured emoji Windows otherwise substitutes, which
     /// look like gender icons). Use with Plain() for the text-style variant.
     /// </summary>
-    public static readonly SystemFont SymbolFont = new() { FontNames = new[] { "Segoe UI Symbol", "Cambria Math", "DejaVu Sans", "Arial Unicode MS" }, AllowSystemFallback = false };
+    public static readonly SystemFont SymbolFont = new() { MultichannelSignedDistanceField = true, MsdfPixelRange = 16, FontNames = new[] { "Segoe UI Symbol", "Cambria Math", "DejaVu Sans", "Arial Unicode MS" }, AllowSystemFallback = false };
     public static string Plain(string sign) => sign.Length == 0 ? sign : sign + "\uFE0E";
     public static readonly string[] Names = { "", "Mars", "Jupiter", "Saturn", "Uranus", "Pluto", "Neptune", "Mercury", "Sun", "Moon", "Venus" };
     public static readonly string[] Signs = { "", "♂", "♃", "♄", "♅", "♇", "♆", "☿", "☉", "☽", "♀" };

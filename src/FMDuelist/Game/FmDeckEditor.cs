@@ -218,13 +218,14 @@ public static class FmDeckEditor
         if (deck) Hit(_slide, 20, 15, 70, 115, Switch); else Hit(_slide, 1350, 15, 70, 115, Switch);
 
         // the other list's count (FM's small box by the arrow)
-        float bx = deck ? 90 : 1075;
+        // the bar is mirrored between the two lists: [arrow][other count][ORDER][TITLE] / [TITLE][ORDER][other count][arrow]
+        float bx = deck ? 90 : 1150;
         Box(_slide, bx, 20, 195, 105, Navy, Rim);
         Text(_slide, deck ? "CHEST" : "DECK", bx + 14, 28, 2.0f, new Color(0.75f, 0.75f, 0.85f));
         Text(_slide, (deck ? FmDeckBuild.Chest(_player).Count : _deck.Count).ToString(), bx + 100, 72, 2.4f);
 
         // ORDER: FM's sort buttons (the fusion sound when clicked)
-        float ox = deck ? 295 : 290;
+        float ox = deck ? 295 : 375;
         Box(_slide, ox, 20, 765, 105, Navy, Rim);
         Text(_slide, "ORDER", ox + 14, 46, 3.6f, Colors.White);
         int order = deck ? _deckOrder : _chestOrder;
@@ -243,7 +244,7 @@ public static class FmDeckEditor
         }
 
         // the big title: DECK / CHEST and its count
-        float tx = deck ? 1075 : 90;
+        float tx = deck ? 1075 : 70;
         Box(_slide, tx, 5, 295, 135, Navy, Rim, 6);
         string big = deck ? "DECK" : "CHEST";
         Text(_slide, big, tx + (295 - big.Length * 8 * 5f) / 2, 18, 5f, Colors.White);

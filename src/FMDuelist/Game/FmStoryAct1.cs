@@ -96,15 +96,16 @@ public static class FmStoryAct1
             if (node.Visuals.GetCurrentBody() is { } body) body.Visible = false;
             if (FmScene.Tex("duelist_" + d.Key) is { } tex)
             {
-                float h = 330f;
-                var spr = new Sprite2D { Texture = tex, Scale = Vector2.One * (h / tex.GetHeight()), Position = new Vector2(0, -h / 2), Centered = true };
-                HalfWidth = tex.GetWidth() * (h / tex.GetHeight()) * 0.5f;
+                const int h = 250; // small enough that duelist and zones fit on screen
+                var small = FmScene.Sized(tex, h);
+                var spr = new Sprite2D { Texture = small, Position = new Vector2(0, -h / 2f), Centered = true, TextureFilter = CanvasItem.TextureFilterEnum.Linear };
+                HalfWidth = small.GetWidth() * 0.5f;
                 node.Visuals.AddChild(spr);
                 spr.Modulate = new Color(1, 1, 1, 0);
                 var t = spr.CreateTween(); t.TweenProperty(spr, "modulate:a", 1f, 0.5);
             }
             _dressed = true;
-            if (d.Bg.Length > 0) Background(d.Bg);
+            // the fight keeps the game's own background (no FM places behind duels)
             // you at the left and the duelist at the right, each with three evenly spaced zones in front
             if (FmRival.Current is { } cur && FmPractice.Duelist != cur && duelist.CombatState?.Players.FirstOrDefault() is { } p)
             {

@@ -45,6 +45,28 @@ public sealed class FmScene
     static string Dir => System.IO.Path.Combine(System.IO.Path.GetDirectoryName(typeof(FmScene).Assembly.Location) ?? ".", "story");
     static readonly Dictionary<string, Texture2D?> _tex = new();
 
+    static readonly Dictionary<(ulong, int), Texture2D> _sized = new();
+
+    /// <summary>
+    /// A picture resampled (Lanczos) to the height it is drawn at, so it shows at 1:1: smooth edges instead of the
+    /// jaggies a big picture gets when the renderer shrinks it.
+    /// </summary>
+    public static Texture2D Sized(Texture2D tex, int height)
+    {
+        var key = (tex.GetInstanceId(), height);
+        if (_sized.TryGetValue(key, out var t)) return t;
+        try
+        {
+            var img = (Image)tex.GetImage().Duplicate();
+            img.Decompress(); img.Convert(Image.Format.Rgba8);
+            int w = Math.Max(1, img.GetWidth() * height / Math.Max(1, img.GetHeight()));
+            img.Resize(w, height, Image.Interpolation.Lanczos);
+            t = ImageTexture.CreateFromImage(img);
+        }
+        catch { t = tex; }
+        return _sized[key] = t;
+    }
+
     public static Texture2D? Tex(string name)
     {
         if (_tex.TryGetValue(name, out var t)) return t;

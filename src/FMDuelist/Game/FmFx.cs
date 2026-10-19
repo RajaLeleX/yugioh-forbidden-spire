@@ -216,7 +216,6 @@ public static class FmSfx
     {
         try
         {
-            if (key == Mark && !Disc.ContainsKey(Mark)) Disc[Mark] = MakeBeep();
             if (!Disc.TryGetValue(key, out var stream) || Engine.GetMainLoop() is not SceneTree tree) { Play(key); return; }
             if (_soft == null || !GodotObject.IsInstanceValid(_soft))
             {
@@ -233,7 +232,6 @@ public static class FmSfx
     {
         try
         {
-            if (key == Mark && !Disc.ContainsKey(Mark)) Disc[Mark] = MakeBeep();
             if (Disc.TryGetValue(key, out var stream) && Engine.GetMainLoop() is SceneTree tree)
             {
                 if (_player == null || !GodotObject.IsInstanceValid(_player))

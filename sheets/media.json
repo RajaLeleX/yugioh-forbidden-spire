@@ -15,12 +15,10 @@
  "bossAct3_3DDuelTournamentFinal": 41,
  "confirmed": false,
  "sfx": {
-  "mark": 2,
   "slash": 8,
   "destroy": 16,
   "fusion": 14,
   "fail": 13,
-  "flip": 7,
   "draw": 7,
   "summon": 9,
   "trap": 21,

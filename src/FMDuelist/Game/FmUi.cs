@@ -188,7 +188,11 @@ public static class FmInput
             FmField.Attacker = null;
             FmField.NotifyChanged();
             if (node is NCreature target && target.Entity.IsEnemy && target.Entity.IsAlive)
+            {
+                // a Guardian Star exchange: show it and ask first
+                if (FmRival.Active && FmRival.SlotOf(target.Entity) is { MonsterId: > 0 } def && !await FmStarWarning.Confirm(zone, def, player)) return;
                 FmAttackAction.Request(player, zone.Index, target.Entity);
+            }
         }
         catch (Exception ex) { FmField.Aiming = false; Log.Warn("[FMDuelist] aim: " + ex.Message); }
     }

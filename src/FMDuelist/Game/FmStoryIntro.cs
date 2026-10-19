@@ -147,11 +147,11 @@ public static class FmStoryIntro
             var pan = tablet.CreateTween(); pan.TweenProperty(tablet, "position:x", -(tabletW - sw), 5.0).SetTrans(Tween.TransitionType.Linear);
             await Hold(0.25);
             await Say(L(3)); await Say(L(4));
-            // clicking the last line away jumps the pan to the tablet's end, which holds a few seconds (as in FM)
+            // clicking the last line away jumps the pan to the tablet's end
             if (pan.IsRunning()) pan.Kill();
             tablet.Position = new Vector2(-(tabletW - sw), tablet.Position.Y);
             text.Clear(); Fade(speaker, 0, 0.5);
-            await Hold(3.5);
+            await Hold(2.0); // FM: the fade to black starts 2 seconds after the last line
             // 4) a fade to black, then the title on track 02
             if (!_skip) FmMusic.PlayOnce(TitleTrack);
             Fade(tablet, 0, 1.2); Fade(boxBg, 0, 1.2); Fade(text.Root, 0, 1.2);

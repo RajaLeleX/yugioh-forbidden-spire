@@ -29,8 +29,8 @@ public static class FmDeathFx
             }
             if (node.Visuals.GetNodeOrNull("FmPlayerPortrait") != null || FmDuelMasterK.Portrait() is not { } tex) return;
             if (node.Visuals.GetCurrentBody() is { } body) body.Visible = false;
-            float h = 330f;
-            var spr = new Sprite2D { Name = "FmPlayerPortrait", Texture = tex, Scale = Vector2.One * (h / tex.GetHeight()), Position = new Vector2(0, -h / 2), Centered = true };
+            const int h = 230;
+            var spr = new Sprite2D { Name = "FmPlayerPortrait", Texture = FmScene.Sized(tex, h), Position = new Vector2(0, -h / 2f), Centered = true, TextureFilter = CanvasItem.TextureFilterEnum.Linear };
             node.Visuals.AddChild(spr);
             spr.Modulate = new Color(1, 1, 1, 0);
             var t = spr.CreateTween(); t.TweenProperty(spr, "modulate:a", 1f, 0.4);

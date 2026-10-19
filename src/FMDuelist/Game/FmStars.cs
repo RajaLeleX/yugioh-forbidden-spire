@@ -163,3 +163,86 @@ public static class FmStars
         "• [b]Millennium Necklace[/b]: when a duelist's star loses, their monster also [b]loses 500[/b] ATK and DEF for that battle.\n\n" +
         "A face-down monster's star stays hidden from the duelist until it flips face up.";
 }
+
+/// <summary>
+/// Before an attack where the Guardian Stars matter: both monsters with their stars, the boost (or drop) each gets
+/// and "Are you sure you want to attack?" with YES / NO.
+/// </summary>
+public static class FmStarWarning
+{
+    public static async Task<bool> Confirm(FmSlot att, FmSlot def, MegaCrit.Sts2.Core.Entities.Players.Player player)
+    {
+        if (def.FaceDown || att.Star <= 0 || def.Star <= 0) return true;
+        var (a, d, note) = FmStars.Battle(att, def, player);
+        if (note == null) return true;
+        if (MegaCrit.Sts2.Core.Nodes.NGame.Instance is not { } game || Engine.GetMainLoop() is not SceneTree tree) return true;
+        var layer = new CanvasLayer { Layer = 96 };
+        game.AddChild(layer);
+        bool? answer = null;
+        try
+        {
+            var view = layer.GetViewport().GetVisibleRect().Size;
+            layer.AddChild(new ColorRect { Color = new Color(0, 0, 0, 0.55f), Size = view, MouseFilter = Control.MouseFilterEnum.Stop });
+            float px = Math.Max(2f, view.Y / 300f), w = Math.Min(view.X * 0.8f, 46 * 8 * px), h = 150 * px;
+            var box = new Panel { Size = new Vector2(w, h), Position = (view - new Vector2(w, h)) / 2, MouseFilter = Control.MouseFilterEnum.Ignore };
+            box.AddThemeStyleboxOverride("panel", new StyleBoxFlat { BgColor = new Color(0.07f, 0.09f, 0.28f, 0.97f), BorderColor = new Color(0.95f, 0.82f, 0.4f), BorderWidthLeft = 4, BorderWidthRight = 4, BorderWidthTop = 4, BorderWidthBottom = 4 });
+            layer.AddChild(box);
+            void Line(string s, float y, Color? ink = null, float scale = 1f)
+            {
+                var t = FmTextBox.Text(s, px * scale, ink);
+                t.Position = new Vector2((w - FmTextBox.TextWidth(s, px * scale)) / 2, y);
+                box.AddChild(t);
+            }
+            Line("GUARDIAN STAR", 10 * px, new Color(1f, 0.86f, 0.35f), 1.2f);
+            Line(note, 30 * px, Colors.White);
+            // the two monsters side by side: name, star sign and name, then the stat the battle uses
+            void Side(FmSlot s, int change, float x, string who)
+            {
+                var info = FmData.Get(s.MonsterId);
+                string stat = s.Position == FmPosition.Defense ? "DEF" : "ATK";
+                int baseV = s.Position == FmPosition.Defense ? s.Def : s.Atk;
+                var col = new Control { Position = new Vector2(x, 50 * px), MouseFilter = Control.MouseFilterEnum.Ignore };
+                box.AddChild(col);
+                void T(string str, float y, Color? ink = null) { var t = FmTextBox.Text(str, px * 0.85f, ink); t.Position = new Vector2(0, y); col.AddChild(t); }
+                T(who, 0, new Color(0.7f, 0.8f, 1f));
+                T(info.Name.Length > 20 ? info.Name[..20] : info.Name, 13 * px);
+                var sign = new Label { Text = FmStars.Plain(FmStars.Sign(s.Star)), Position = new Vector2(0, 25 * px), MouseFilter = Control.MouseFilterEnum.Ignore };
+                sign.AddThemeFontOverride("font", FmStars.SymbolFont);
+                sign.AddThemeFontSizeOverride("font_size", (int)(14 * px));
+                sign.AddThemeColorOverride("font_color", new Color(1f, 0.9f, 0.5f));
+                col.AddChild(sign);
+                var name = FmTextBox.Text(FmStars.Name(s.Star), px * 0.85f, new Color(1f, 0.9f, 0.5f));
+                name.Position = new Vector2(18 * px, 28 * px); col.AddChild(name);
+                var tint = change > 0 ? new Color(0.45f, 1f, 0.45f) : change < 0 ? new Color(1f, 0.45f, 0.4f) : Colors.White;
+                T($"{stat} {baseV} -> {baseV + change}" + (change != 0 ? $" ({(change > 0 ? "+" : "")}{change})" : ""), 44 * px, tint);
+            }
+            Side(att, a, 14 * px, "YOUR MONSTER");
+            Side(def, d, w / 2 + 6 * px, "ENEMY MONSTER");
+            Line("Are you sure you want to attack?", 108 * px, Colors.White);
+            Button Btn(string label, float x, bool value)
+            {
+                var b = new Button { Flat = true, Position = new Vector2(x, 124 * px), Size = new Vector2(60 * px, 18 * px), FocusMode = Control.FocusModeEnum.None, MouseDefaultCursorShape = Control.CursorShape.PointingHand };
+                var normal = new StyleBoxFlat { BgColor = new Color(0, 0, 0, 0.35f), BorderColor = new Color(0.95f, 0.82f, 0.4f), BorderWidthLeft = 2, BorderWidthRight = 2, BorderWidthTop = 2, BorderWidthBottom = 2 };
+                var hover = (StyleBoxFlat)normal.Duplicate(); hover.BgColor = new Color(0.86f, 0.9f, 0.1f, 0.85f);
+                b.AddThemeStyleboxOverride("normal", normal); b.AddThemeStyleboxOverride("hover", hover); b.AddThemeStyleboxOverride("pressed", hover);
+                var t = FmTextBox.Text(label, px);
+                t.Position = new Vector2((60 * px - FmTextBox.TextWidth(label, px)) / 2, (18 * px - 12 * px) / 2);
+                b.AddChild(t);
+                b.Pressed += () => { FmSfx.Play(FmSfx.Mark); answer = value; };
+                box.AddChild(b);
+                return b;
+            }
+            Btn("YES", w / 2 - 70 * px, true);
+            Btn("NO", w / 2 + 10 * px, false);
+            FmSfx.Play(FmSfx.Mark);
+            while (answer == null && GodotObject.IsInstanceValid(layer))
+            {
+                if (Input.IsActionJustPressed("ui_cancel")) answer = false;
+                await layer.ToSignal(tree, SceneTree.SignalName.ProcessFrame);
+            }
+        }
+        catch (Exception ex) { MegaCrit.Sts2.Core.Logging.Log.Warn("[FMDuelist] star warning: " + ex.Message); answer = true; }
+        finally { if (GodotObject.IsInstanceValid(layer)) layer.QueueFree(); }
+        return answer ?? false;
+    }
+}

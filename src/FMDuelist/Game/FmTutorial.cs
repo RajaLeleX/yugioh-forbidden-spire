@@ -367,7 +367,7 @@ public static class FmTutorial
         "- [b]Attack vs Defense[/b]: if ATK is higher than DEF, the defender is destroyed with no Life Point damage. If DEF is higher, the attacker's owner loses the difference.",
         "- You [b]can't attack Seto directly[/b] while he has monsters, and he can't attack you directly while you have monsters.",
         "- [b]Raigeki[/b] destroys all of his monsters, and [b]Dark Hole[/b] destroys all monsters on the field. Neither damages Life Points.",
-        "- Your traps can spring on his attacks, and he sets traps of his own. Swords of Revealing Light stops him attacking for 3 turns; Spellbinding Circle makes him skip a turn.",
+        "- Your traps can spring on his attacks, and he sets traps of his own. Swords of Revealing Light stops him attacking for 3 turns; Spellbinding Circle takes 500 ATK/DEF off his monsters.",
         "",
         $"{H}Duel tip{HE}",
         "- Watch the gold commentary line at the top of the screen: it calls out every summon, fusion, spell and attack your opponent makes.");

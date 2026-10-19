@@ -66,8 +66,8 @@ public static class FmRival
     public static Creature? Priest;
     /// <summary>Spellbinding Circle: he skips his next turn.</summary>
     public static bool Bound;
-    /// <summary>Spellbinding Circle: his monsters attack for 1000 less while it lasts.</summary>
-    public static int BoundAtk => Priest?.GetPower<Powers.FmSpellboundPower>() != null ? 1000 : 0;
+    /// <summary>Spellbinding Circle: his monsters lose 500 ATK and DEF while it lasts.</summary>
+    public static int BoundAtk => Priest?.GetPower<Powers.FmSpellboundPower>() != null ? 500 : 0;
     public static readonly FmSlot[] Slots = { new(0, true), new(1, true), new(2, true), new(3, true), new(4, true) };
 
     /// <summary>How many traps he has set face down.</summary>

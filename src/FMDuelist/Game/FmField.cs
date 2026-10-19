@@ -47,7 +47,7 @@ public sealed class FmSlot
     public bool Alive(Player? p) => (Rival || p != null) && MonsterId != 0 && Creature(p) is { IsAlive: true };
 
     public int Atk => MonsterId == 0 ? 0 : Rival ? FmData.Get(MonsterId).Atk + AtkBonus + EquipBonus + FmField.FieldBonus(MonsterId) - FmRival.BoundAtk : FmData.Get(MonsterId).Atk + AtkBonus + EquipBonus + FmGuardianStars.TurnAtk + FmField.FieldBonus(MonsterId) + Relics.FmBonus.TypeBonus(FmField.Duelist, MonsterId);
-    public int Def => MonsterId == 0 ? 0 : Rival ? FmData.Get(MonsterId).Def + DefBonus + EquipBonus + FmField.FieldBonus(MonsterId) : FmData.Get(MonsterId).Def + DefBonus + TempDef + EquipBonus + FmGuardianStars.TurnDef + FmPlating.DefBonus(FmField.Duelist) + FmField.FieldBonus(MonsterId) + Relics.FmBonus.TypeBonus(FmField.Duelist, MonsterId)
+    public int Def => MonsterId == 0 ? 0 : Rival ? FmData.Get(MonsterId).Def + DefBonus + EquipBonus + FmField.FieldBonus(MonsterId) - FmRival.BoundAtk : FmData.Get(MonsterId).Def + DefBonus + TempDef + EquipBonus + FmGuardianStars.TurnDef + FmPlating.DefBonus(FmField.Duelist) + FmField.FieldBonus(MonsterId) + Relics.FmBonus.TypeBonus(FmField.Duelist, MonsterId)
         + (Position == FmPosition.Defense ? Relics.FmBonus.DefenseBonus(FmField.Duelist) : 0);
 
     public void Clear()

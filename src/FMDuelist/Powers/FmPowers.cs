@@ -102,8 +102,9 @@ public sealed class FmSpellboundPower : FmPower
     public override PowerStackType StackType => PowerStackType.Counter;
     public override int IconCardId => 349;
 
+    // a monster deals 1000 less; a duelist's attacks come from his monsters, which lose 500 ATK/DEF instead (FmRival.BoundAtk)
     public override decimal ModifyDamageAdditive(Creature? target, decimal amount, ValueProp props, Creature? dealer, CardModel? cardSource)
-        => Owner == dealer && props.IsPoweredAttack() ? -1000m / Game.FmRules.EnemyScale : 0m;
+        => Owner == dealer && props.IsPoweredAttack() && !Game.FmRival.IsDuelist(Owner) ? -1000m / Game.FmRules.EnemyScale : 0m;
 
     public override async Task AfterSideTurnEnd(PlayerChoiceContext ctx, CombatSide side, IEnumerable<Creature> participants)
     {

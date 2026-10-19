@@ -638,10 +638,36 @@ void fragment(){
         t.Parallel().TweenProperty(_holder, "rotation", _slot.Position == FmPosition.Defense ? -Mathf.Pi / 2 : 0f, 0.3);
     }
 
+    /// <summary>Burns the card now (as its monster starts to die), before the zone's creature can take it away.</summary>
+    public void BurnNow()
+    {
+        if (!Valid || _group == null || _shownId == 0) return;
+        BurnAway();
+        if (_stats != null) _stats.Visible = false;
+        if (_pos != null) _pos.Visible = false;
+    }
+
     void BurnAway()
     {
         _shownId = 0;
+        // the card is lifted out of its zone into the room, so it burns to the end even if the zone's creature (and
+        // everything on it) is removed first, as when Raigeki or Dark Hole takes several at once; the zone gets a
+        // fresh, empty card holder
         var group = _group!; var holder = _holder!;
+        if (NCombatRoom.Instance is { } room && GodotObject.IsInstanceValid(group))
+        {
+            var xf = group.GlobalTransform;
+            group.GetParent()?.RemoveChild(group);
+            room.AddChild(group);
+            group.GlobalTransform = xf;
+            group.ZIndex = 5;
+            _group = new Node2D();
+            _holder = new Node2D { Position = Home, Scale = Vector2.One * CardScale };
+            _group.AddChild(_holder);
+            _root!.AddChild(_group);
+            _root.MoveChild(_group, 0);
+            _card = null;
+        }
         // FM-style burn: the card flares orange, chars to black and crumbles away in sparks
         var sparks = new CpuParticles2D
         {
@@ -650,15 +676,14 @@ void fragment(){
             Direction = new Vector2(0, -1), Spread = 35, InitialVelocityMin = 60, InitialVelocityMax = 180, Gravity = new Vector2(0, -60),
             ScaleAmountMin = 3, ScaleAmountMax = 7, Color = new Color(1f, 0.55f, 0.1f),
         };
-        _root!.AddChild(sparks);
+        group.AddChild(sparks);
         sparks.Emitting = true;
-        var t = _root.CreateTween();
+        var t = group.CreateTween();
         t.TweenProperty(group, "modulate", new Color(2.2f, 1.2f, 0.35f, 1f), 0.15);
         t.TweenProperty(group, "modulate", new Color(0.25f, 0.08f, 0.02f, 1f), 0.45);
         t.Parallel().TweenProperty(holder, "scale", Vector2.One * CardScale * 0.92f, 0.45);
         t.TweenProperty(group, "modulate:a", 0f, 0.35);
-        t.TweenCallback(Callable.From(() => { if (_shownId == 0) group.Visible = false; }));
         t.TweenInterval(1.0);
-        t.TweenCallback(Callable.From(sparks.QueueFree));
+        t.TweenCallback(Callable.From(() => { if (GodotObject.IsInstanceValid(group)) group.QueueFree(); }));
     }
 }

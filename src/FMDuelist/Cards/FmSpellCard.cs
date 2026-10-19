@@ -106,7 +106,7 @@ public abstract class FmSpellCard : FmCardBase
                         await PowerCmd.Remove(p);
                 break;
             case FmSpellKind.Stun when FmId == 349:
-                // Spellbinding Circle: every enemy deals 1000 less damage for 2 turns and is stunned for 1 turn
+                // Spellbinding Circle: a monster deals 1000 less for 2 turns and is stunned for 1; a duelist isn't stunned, his monsters lose 500 ATK/DEF
                 foreach (var e in enemies.Where(e => e.IsAlive && !FmRival.IsZoneCreature(e)))
                 {
                     await PowerCmd.Remove<FmSpellboundPower>(e);

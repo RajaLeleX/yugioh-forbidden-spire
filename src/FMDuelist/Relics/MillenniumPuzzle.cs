@@ -497,6 +497,8 @@ public sealed class MillenniumPuzzle : RelicModel
 
     public override async Task BeforeDeath(Creature creature)
     {
+        // one of your monsters: its card starts burning now (before its zone creature is removed)
+        if (creature.PetOwner == Owner && FmField.SlotOf(creature) is { } dying) dying.Visual.BurnNow();
         // a game over outside a duel: Duel Master K burns away
         if (creature == Owner.Creature && !FmRival.Active && FmAct1Story.State != FmAct1Story.Phase.HeishinDuel && !FmPractice.Active)
             await FmDeathFx.Player(creature);
@@ -568,7 +570,7 @@ public sealed class MillenniumPuzzle : RelicModel
 
     /// <summary>
     /// Swords of Revealing Light (3 turns) and Spellbinding Circle (1 turn) stun every enemy for its coming turn.
-    /// A boss duelist isn't stunned by Swords (he still plays cards, he just can't attack); Spellbinding makes him skip his turn.
+    /// A duelist is never stunned: Swords stops his attacks, Spellbinding takes 500 ATK/DEF off his monsters.
     /// </summary>
     private async Task StunForSpells()
     {
@@ -578,7 +580,7 @@ public sealed class MillenniumPuzzle : RelicModel
         foreach (var e in Owner.Creature.CombatState!.Enemies.Where(e => e.IsAlive).ToList())
         {
             if (FmRival.IsZoneCreature(e)) continue;
-            if (e == FmRival.Priest) { if (bind) FmRival.Bound = true; continue; }
+            if (e == FmRival.Priest) continue; // a duelist is never stunned: Spellbinding only weakens his monsters
             try { await CreatureCmd.Stun(e); } catch (Exception ex) { MegaCrit.Sts2.Core.Logging.Log.Warn("[FMDuelist] stun: " + ex.Message); }
         }
     }

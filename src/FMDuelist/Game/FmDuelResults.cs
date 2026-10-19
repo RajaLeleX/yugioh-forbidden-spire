@@ -1,3 +1,6 @@
+using FMDuelist.Data;
+using MegaCrit.Sts2.Core.Models;
+using FMDuelist.Cards;
 using Godot;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Players;
@@ -105,8 +108,32 @@ public static class FmDuelEnd
     /// <summary>The rank the last duel earned (POW/TEC and its letter).</summary>
     public static string LastKind = "POW", LastLetter = "D";
 
-    public static async Task Show(bool won, Player player, int comLp, string comName, int turns, bool spoils = true)
+    /// <summary>The card the last duel dropped (announced under SPOILS, given in the reward window).</summary>
+    public static int PendingDrop { get; private set; }
+    /// <summary>A duel just ended: leaving its reward window fades to black.</summary>
+    public static bool FadeAfterRewards { get; set; }
+
+    /// <summary>Puts the duel's one card in the rewards in place of the usual choice of three (once).</summary>
+    public static bool AddDrop(Player player, List<MegaCrit.Sts2.Core.Rewards.Reward> rewards)
     {
+        if (PendingDrop <= 0) return false;
+        int id = PendingDrop; PendingDrop = 0;
+        rewards.RemoveAll(r => r is MegaCrit.Sts2.Core.Rewards.CardReward);
+        try
+        {
+            var card = player.RunState.CreateCard(ModelDb.GetById<CardModel>(ModelDb.GetId(FmSheet.TypeFor(id))), player);
+            var cards = new List<CardModel> { card };
+            var opts = new MegaCrit.Sts2.Core.Runs.CardCreationOptions(cards, MegaCrit.Sts2.Core.Runs.CardCreationSource.Encounter, MegaCrit.Sts2.Core.Runs.CardRarityOddsType.Uniform);
+            rewards.Add(new MegaCrit.Sts2.Core.Rewards.CardReward(cards, MegaCrit.Sts2.Core.Runs.CardCreationSource.Encounter, player, opts));
+        }
+        catch (Exception ex) { Log.Warn("[FMDuelist] duel drop reward: " + ex.Message); }
+        return true;
+    }
+
+    public static async Task Show(bool won, Player player, int comLp, string comName, int turns, bool spoils = true, int dropFrom = 0)
+    {
+        PendingDrop = 0;
+        FadeAfterRewards = won && dropFrom > 0;
         FmMusic.PlayOnce(won ? WinJingle : LoseJingle);
         if (Engine.GetMainLoop() is not SceneTree tree) return;
         int youLp = Math.Max(0, player.Creature.CurrentHp);
@@ -117,6 +144,8 @@ public static class FmDuelEnd
         LastKind = kind; LastLetter = letter;
         Log.Info($"[FMDuelist] Duel over: {(won ? "WIN" : "LOSE")} vs {comName}, turns {turns}, skill {points} -> {letter}-{kind}");
         int chips = won && spoils ? stars * 10 : 0;
+        // FM: one card per duel, from the duelist's drop table for the rank you earned
+        if (won && dropFrom > 0) PendingDrop = FmRestDuel.Drop(player, dropFrom, comName, FmRestDuel.TableFor(kind, letter));
         try { if (chips > 0) await PlayerCmd.GainGold(chips, player); } catch (Exception ex) { Log.Warn("[FMDuelist] spoils: " + ex.Message); }
 
         var layer = new CanvasLayer { Layer = 85 };
@@ -133,7 +162,7 @@ public static class FmDuelEnd
             // the results screen: FM's Duel Results theme starts exactly as it comes up
             if (FmMusic.HasFileTrack(DuelResultsTheme)) FmMusic.Play(DuelResultsTheme);
             var dt2 = dim.CreateTween(); dt2.TweenProperty(dim, "color:a", 0.88f, 0.3);
-            var page1 = Page1(view, won, youLp, comLp, comName, kind, letter, stars, chips);
+            var page1 = Page1(view, won, youLp, comLp, comName, kind, letter, stars, chips, PendingDrop);
             var pages = new[] { page1, Page2(view, won, turns), Page3(view), Page4(view, won, turns, youLp, points, kind, letter) };
             foreach (var pg in pages) { layer.AddChild(pg); pg.Visible = pg == page1; }
             page1.Modulate = new Color(1, 1, 1, 0);
@@ -292,7 +321,7 @@ public static class FmDuelEnd
         var b = Text(com, 32 * s, Colors.White, Colors.Black, 4 * s); b.Position = new Vector2(w * 0.86f, y + 8 * s); box.AddChild(b);
     }
 
-    static Control Page1(Vector2 view, bool won, int youLp, int comLp, string comName, string kind, string letter, int stars, int chips)
+    static Control Page1(Vector2 view, bool won, int youLp, int comLp, string comName, string kind, string letter, int stars, int chips, int drop)
     {
         var root = Frame(view, out var box, out var s);
         var you = FmDuelStats.You; var com = FmDuelStats.Com;
@@ -314,8 +343,20 @@ public static class FmDuelEnd
             var rkw = Text("Rank", 40 * s, Colors.White, Colors.Black, 6 * s); rkw.Position = new Vector2(box.Size.X * 0.74f + 80 * s, 420 * s); box.AddChild(rkw);
             var st = Text(new string('★', stars), 64 * s, new Color(1f, 0.9f, 0.2f), new Color(0.4f, 0.25f, 0f), 6 * s);
             st.Position = new Vector2(box.Size.X * 0.42f, 535 * s); box.AddChild(st);
-            var chip = Text($"+{chips} Star Chips", 36 * s, Colors.White, Colors.Black, 5 * s);
-            chip.Position = new Vector2(30 * s, 650 * s); box.AddChild(chip);
+            // the card won, then the Star Chips
+            float sy = 640 * s;
+            if (drop > 0)
+            {
+                var info = FmData.Get(drop);
+                var card = Text($"CARD  {info.Name}", 40 * s, new Color(1f, 0.92f, 0.5f), Colors.Black, 5 * s);
+                card.Position = new Vector2(30 * s, sy); box.AddChild(card);
+                sy += 64 * s;
+            }
+            if (chips > 0)
+            {
+                var chip = Text($"+{chips} Star Chips", 36 * s, Colors.White, Colors.Black, 5 * s);
+                chip.Position = new Vector2(30 * s, sy); box.AddChild(chip);
+            }
         }
         else
         {
@@ -388,5 +429,34 @@ public static class FmDuelEnd
         if (Engine.GetMainLoop() is not SceneTree tree) return;
         var t = tree.CreateTimer(sec);
         await t.ToSignal(t, SceneTreeTimer.SignalName.Timeout);
+    }
+}
+
+[HarmonyLib.HarmonyPatch(typeof(MegaCrit.Sts2.Core.Nodes.Screens.NRewardsScreen), "OnProceedButtonPressed")]
+static class FmRewardsFadePatch
+{
+    static bool _going;
+
+    static bool Prefix(MegaCrit.Sts2.Core.Nodes.Screens.NRewardsScreen __instance, MegaCrit.Sts2.Core.Nodes.GodotExtensions.NButton _)
+    {
+        if (_going || !FmDuelEnd.FadeAfterRewards) return true;
+        FmDuelEnd.FadeAfterRewards = false;
+        MegaCrit.Sts2.Core.Helpers.TaskHelper.RunSafely(Go(__instance, _));
+        return false;
+    }
+
+    static async Task Go(MegaCrit.Sts2.Core.Nodes.Screens.NRewardsScreen screen, MegaCrit.Sts2.Core.Nodes.GodotExtensions.NButton button)
+    {
+        await FmFade.Out();
+        try
+        {
+            _going = true;
+            if (GodotObject.IsInstanceValid(screen)) HarmonyLib.AccessTools.Method(screen.GetType(), "OnProceedButtonPressed").Invoke(screen, new object[] { button });
+        }
+        catch (Exception ex) { Log.Warn("[FMDuelist] rewards fade: " + ex.Message); }
+        finally { _going = false; }
+        // give the next screen (map, rest site...) a moment to come up, then fade back in
+        if (Engine.GetMainLoop() is SceneTree tree) { var t = tree.CreateTimer(0.35); await t.ToSignal(t, SceneTreeTimer.SignalName.Timeout); }
+        await FmFade.In();
     }
 }

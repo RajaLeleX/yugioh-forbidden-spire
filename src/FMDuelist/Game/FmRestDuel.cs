@@ -140,15 +140,7 @@ public static class FmRestDuel
     {
         if (!Active || room is not CombatRoom) return false;
         rewards.Clear();
-        if (!_lost && _foe != null && _rank != null)
-        {
-            var cards = Drops(player, _foe, _rank.Value).Select(id => player.RunState.CreateCard(ModelDb.GetById<CardModel>(ModelDb.GetId(FmSheet.TypeFor(id))), player)).ToList();
-            if (cards.Count > 0)
-            {
-                var opts = new CardCreationOptions(cards, CardCreationSource.Encounter, CardRarityOddsType.Uniform);
-                rewards.Add(new CardReward(cards, CardCreationSource.Encounter, player, opts));
-            }
-        }
+        if (!_lost) FmDuelEnd.AddDrop(player, rewards);
         return true;
     }
 
@@ -227,9 +219,16 @@ public static class FmRestDuel
     /// Dragon, the Scale for a Magic/Equip/Trap card (only cards that are in this duelist's table); the Eye rolls a
     /// second card to choose between; the Necklace adds a second drop.
     /// </summary>
-    static List<int> Drops(Player player, FmRival.Duelist foe, Table table)
+    public static Table TableFor(string kind, string letter) => letter is "S" or "A" ? (kind == "POW" ? Table.SaPow : Table.SaTec) : Table.Bcd;
+
+    /// <summary>
+    /// A duel's drop: one card from the duelist's FM table for your rank. The Eye rolls twice and keeps the stronger
+    /// card (FM gives one card per duel).
+    /// </summary>
+    public static int Drop(Player player, int duelistIndex, string name, Table table)
     {
-        var w = Weights(foe.DuelistIndex, table);
+        if (duelistIndex <= 0) return 0;
+        var w = Weights(duelistIndex, table);
         int One()
         {
             int id = Roll(w);
@@ -248,12 +247,15 @@ public static class FmRestDuel
             if (player.GetRelic<FmItemScale>() != null && _rng.NextDouble() < FmItemScale.Chance && Roll(w, k => FmData.Get(k).Type is FmType.Magic or FmType.Equip or FmType.Trap) is int m and > 0) id = m;
             return id;
         }
-        var drops = new List<int> { One() };
-        if (player.GetRelic<FmItemEye>() != null) drops.Add(One());
-        var result = drops.Where(Usable).Distinct().ToList();
-        Log.Info($"[FMDuelist] Free Duel drop vs {foe.Name} ({table}): {string.Join(", ", result.Select(i => FmData.Get(i).Name))}");
-        return result;
+        int drop = 0;
+        for (int tries = 0; tries < 8 && !Usable(drop); tries++) drop = One();
+        if (player.GetRelic<FmItemEye>() != null && One() is int second && Usable(second) && (!Usable(drop) || Strength(second) > Strength(drop))) drop = second;
+        if (!Usable(drop)) drop = 0;
+        Log.Info($"[FMDuelist] Duel drop vs {name} ({table}): {(drop > 0 ? FmData.Get(drop).Name : "none")}");
+        return drop;
     }
+
+    static int Strength(int id) => FmData.Get(id) is { IsMonster: true } c ? Math.Max(c.Atk, c.Def) : 1500;
 
     /// <summary>Checks the drop tables read sensibly from the disc (each sums to 2048 in FM).</summary>
     public static void CheckTables()

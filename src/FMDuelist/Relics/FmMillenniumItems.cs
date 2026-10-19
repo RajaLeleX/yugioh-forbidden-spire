@@ -138,7 +138,7 @@ public static class FmMillenniumItems
         [typeof(FmItemScale)] = ("Millennium Scale", "Card rewards have a [blue]40%[/blue] chance to offer a Magic, Equip or Trap card.", "It weighs what you hold against what you need."),
         [typeof(FmItemRod)] = ("Millennium Rod", "When your monster's Guardian Star beats the enemy's, it gets [green]+1000[/green] ATK/DEF for that battle instead of +500.", "Its power bends the stars to your will."),
         [typeof(FmItemRing)] = ("Millennium Ring", "Card rewards have a [blue]35%[/blue] chance that their plainest card comes up a rarity higher.", "It points the way to what is rare."),
-        [typeof(FmItemEye)] = ("Millennium Eye", "Card rewards offer [blue]1[/blue] more card to choose from.", "It sees every card in the pile."),
+        [typeof(FmItemEye)] = ("Millennium Eye", "Card rewards offer [blue]1[/blue] more card to choose from. A duel's drop is rolled twice and the stronger card kept.", "It sees every card in the pile."),
         [typeof(FmItemNecklace)] = ("Millennium Necklace", "When an enemy monster's Guardian Star loses to yours, it also loses [red]500[/red] ATK/DEF for that battle.", "It foresees which stars will fall."),
     };
 

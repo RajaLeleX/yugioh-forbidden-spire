@@ -82,7 +82,7 @@ public sealed class MillenniumPuzzle : RelicModel
         => actIndex == 0 && StoryMap && runState.Players.Contains(Owner) ? new FmStoryActMap() : map;
 
     public override bool TryModifyRewards(Player player, List<MegaCrit.Sts2.Core.Rewards.Reward> rewards, AbstractRoom? room)
-        => Mine(player) && ((FmRestDuel.Rewards(player, rewards, room) || (FmAct1Story.HeishinRewards(player, rewards, room) | FmRelicDrops.Apply(player, rewards, room)))
+        => Mine(player) && ((FmRestDuel.Rewards(player, rewards, room) || (FmAct1Story.HeishinRewards(player, rewards, room) | FmRelicDrops.Apply(player, rewards, room) | (room is CombatRoom && FmDuelEnd.AddDrop(player, rewards))))
             | rewards.RemoveAll(r => r is MegaCrit.Sts2.Core.Rewards.PotionReward) > 0); // no potions in an FM run
     private readonly List<(Creature attacker, int trapId, decimal hit)> _sprung = new();
 
@@ -510,7 +510,7 @@ public sealed class MillenniumPuzzle : RelicModel
         int turns = Owner.Creature.CombatState?.RoundNumber ?? 1;
         int comLp = won ? 0 : Math.Max(0, FmRival.Priest?.CurrentHp ?? 0);
         var duel = FmRival.Current;
-        await FmDuelEnd.Show(won, Owner, comLp, duel.Name, turns, spoils: !FmRestDuel.Active);
+        await FmDuelEnd.Show(won, Owner, comLp, duel.Name, turns, spoils: !FmRestDuel.Active, dropFrom: duel.DuelistIndex);
         if (FmRestDuel.Active) { FmRestDuel.Ranked(FmDuelEnd.LastKind, FmDuelEnd.LastLetter); return; }
         if (won) FmRestDuel.MarkBeaten(Owner, duel);
         // a story duelist's closing lines

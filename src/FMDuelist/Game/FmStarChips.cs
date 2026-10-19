@@ -242,7 +242,7 @@ static class CardRemovalStarChipPatch
             if (visual?.Texture == null) return;
             if (_tex == null)
             {
-                var file = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(typeof(FmStarChips).Assembly.Location) ?? ".", "star_chip_removal.png");
+                var file = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(typeof(FmStarChips).Assembly.Location) ?? ".", "star_chip.png");
                 var img = Image.LoadFromFile(file);
                 if (img == null) return;
                 var size = visual.Texture.GetSize();

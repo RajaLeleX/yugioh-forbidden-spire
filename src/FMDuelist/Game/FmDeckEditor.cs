@@ -43,6 +43,7 @@ public static class FmDeckEditor
         _done = new TaskCompletionSource();
         _slide = null; _preview = null; _tip = null;
         int music = FmMusic.Current;
+        await FmFade.Out();
         // the Build Deck theme (FM track 14)
         FmMusic.Play(DeckTheme);
         try
@@ -60,7 +61,9 @@ public static class FmDeckEditor
             _layer.AddChild(_stage);
             FmSfx.Play(FmSfx.Mark);
             Render();
+            await FmFade.In();
             await _done.Task;
+            await FmFade.Out();
         }
         catch (Exception ex) { Log.Warn("[FMDuelist] deck editor: " + ex); }
         finally
@@ -72,6 +75,7 @@ public static class FmDeckEditor
             _slide = null; _preview = null; _tip = null;
             // back to what was playing (a duel puts on its own theme as it starts)
             if (music >= 0) FmMusic.Play(music); else FmMusic.Stop();
+            Callable.From(() => { _ = FmFade.In(); }).CallDeferred();
         }
     }
 

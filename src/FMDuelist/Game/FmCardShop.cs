@@ -73,10 +73,14 @@ public static class FmCardShop
                 switch (await sc.Menu(Options))
                 {
                     case 0: // BUY: the game's own shop window
+                        await FmFade.Out();
                         sc.SetVisible(false);
                         room.OpenInventory();
+                        await FmFade.In();
                         while (GodotObject.IsInstanceValid(room) && room.Inventory.IsOpen) await sc.Wait(0.1);
+                        await FmFade.Out();
                         sc.SetVisible(true);
+                        await FmFade.In();
                         break;
                     case 1: // SELL one card
                         if (sold) { await sc.Lit("shop", "I already bought a card from you today. Come back another time!"); break; }

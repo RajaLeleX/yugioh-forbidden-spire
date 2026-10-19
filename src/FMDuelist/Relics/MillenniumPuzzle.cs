@@ -82,7 +82,7 @@ public sealed class MillenniumPuzzle : RelicModel
         => actIndex == 0 && StoryMap && runState.Players.Contains(Owner) ? new FmStoryActMap() : map;
 
     public override bool TryModifyRewards(Player player, List<MegaCrit.Sts2.Core.Rewards.Reward> rewards, AbstractRoom? room)
-        => Mine(player) && ((FmRestDuel.Rewards(player, rewards, room) || (FmAct1Story.HeishinRewards(player, rewards, room) | FmRelicDrops.Apply(player, rewards, room) | (room is CombatRoom && FmDuelEnd.AddDrop(player, rewards))))
+        => Mine(player) && ((FmRestDuel.Rewards(player, rewards, room) || (FmAct1Story.HeishinRewards(player, rewards, room) | FmRelicDrops.Apply(player, rewards, room) | (room is CombatRoom && FmDuelEnd.AddDrop(player, rewards)) | FmWild.Rewards(player, rewards, room)))
             | rewards.RemoveAll(r => r is MegaCrit.Sts2.Core.Rewards.PotionReward) > 0); // no potions in an FM run
     private readonly List<(Creature attacker, int trapId, decimal hit)> _sprung = new();
 
@@ -179,7 +179,7 @@ public sealed class MillenniumPuzzle : RelicModel
 
     private async Task ScaleEnemy(Creature e)
     {
-        if (!_scaled.Add(e)) return;
+        if (!_scaled.Add(e) || e.Monster is FmWildMonster) return; // wild monsters: 10x DEF already
         await CreatureCmd.SetMaxAndCurrentHp(e, (decimal)e.MaxHp * FmRules.EnemyScale);
     }
 

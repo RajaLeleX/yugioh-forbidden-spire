@@ -219,6 +219,20 @@ public static class FmRestDuel
     /// Dragon, the Scale for a Magic/Equip/Trap card (only cards that are in this duelist's table); the Eye rolls a
     /// second card to choose between; the Necklace adds a second drop.
     /// </summary>
+    /// <summary>
+    /// Wild monster rewards: n different cards from the drop tables (B/C/D) of every duelist in the act, together.
+    /// </summary>
+    public static List<int> ActPool(int act, int n)
+    {
+        var duelists = FmRival.AllDuelists.Where(d => d.DuelistIndex > 0 && d.Act == act).Select(d => d.DuelistIndex).Distinct().ToList();
+        var w = new int[FmData.CardCount];
+        foreach (var d in duelists) { var t = Weights(d, Table.Bcd); for (int k = 0; k < w.Length; k++) w[k] += t[k]; }
+        var picks = new List<int>();
+        for (int tries = 0; tries < 60 && picks.Count < n; tries++)
+            if (Roll(w, k => !picks.Contains(k)) is int id && Usable(id) && !picks.Contains(id)) picks.Add(id);
+        return picks;
+    }
+
     public static Table TableFor(string kind, string letter) => letter is "S" or "A" ? (kind == "POW" ? Table.SaPow : Table.SaTec) : Table.Bcd;
 
     /// <summary>

@@ -48,20 +48,20 @@ public static class FmStoryAct1
     /// <summary>The path, row by row after the starting Ancient (Simon's scolding); the boss (Seto) follows.</summary>
     public static readonly (MapPointType Type, string? Story)[] Path =
     {
+        // every two duels, a wild monster (null)
         (MapPointType.Monster, "simon"),
-        (MapPointType.Monster, null),
         (MapPointType.Monster, "teana"),
+        (MapPointType.Monster, null),
         (MapPointType.Shop, null),
         (MapPointType.RestSite, null),
         (MapPointType.Monster, "v1"),
-        (MapPointType.Monster, null),
-        (MapPointType.Shop, null),
         (MapPointType.Monster, "v2"),
         (MapPointType.Monster, null),
+        (MapPointType.Shop, null),
         (MapPointType.Monster, "v3"),
         (MapPointType.Unknown, "festival"),
-        (MapPointType.Monster, null),
         (MapPointType.Monster, "jono"),
+        (MapPointType.Monster, null),
         (MapPointType.RestSite, null),
     };
 

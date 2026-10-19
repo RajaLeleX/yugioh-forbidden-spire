@@ -193,18 +193,23 @@ public static class FmWild
     // ---------------- names ----------------
     public static void ApplyLoc(LocManager loc)
     {
+        try { ApplyLocInner(loc); } catch (Exception ex) { Log.Warn("[FMDuelist] wild loc: " + ex.Message); }
+    }
+
+    static void ApplyLocInner(LocManager loc)
+    {
         var monsters = new Dictionary<string, string>();
         var encounters = new Dictionary<string, string>();
         foreach (var t in typeof(FmWild).Assembly.GetTypes().Where(t => !t.IsAbstract && typeof(FmWildMonster).IsAssignableFrom(t)))
         {
-            var m = (FmWildMonster)ModelDb.GetById<MonsterModel>(ModelDb.GetId(t));
+            var m = (FmWildMonster)System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(t); // its names are constants: no model needed (loc loads before the model database)
             string e = ModelDb.GetEntry(t);
             monsters[e + ".name"] = m.CardName;
             foreach (var (move, title) in m.MoveTitles) monsters[$"{e}.moves.{move}.title"] = title;
         }
         foreach (var t in typeof(FmWild).Assembly.GetTypes().Where(t => !t.IsAbstract && typeof(FmWildEncounter).IsAssignableFrom(t)))
         {
-            var enc = (FmWildEncounter)ModelDb.GetById<EncounterModel>(ModelDb.GetId(t));
+            var enc = (FmWildEncounter)System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(t);
             encounters[ModelDb.GetEntry(t) + ".title"] = "Wild " + enc.Title0;
             encounters[ModelDb.GetEntry(t) + ".loss"] = "Overwhelmed by a wild " + enc.Title0;
         }

@@ -311,11 +311,34 @@ public sealed class FmFreeDuelRestSiteOption : RestSiteOption
 [HarmonyPatch(typeof(RestSiteOption), nameof(RestSiteOption.Icon), MethodType.Getter)]
 static class FreeDuelIconPatch
 {
+    static Texture2D? _card;
+
+    /// <summary>The card back, small and centred in a square the size of the game's own option icons.</summary>
+    static Texture2D? CardIcon()
+    {
+        if (_card != null) return _card;
+        try
+        {
+            var smith = PreloadManager.Cache.GetTexture2D(FmCutRestSiteOption.SmithIcon);
+            if (FmRivalHand.Back()?.GetImage() is not { } back) return null;
+            int side = smith != null ? Math.Max(smith.GetWidth(), smith.GetHeight()) : 256;
+            back = (Image)back.Duplicate();
+            back.Decompress();
+            back.Convert(Image.Format.Rgba8);
+            int h = (int)(side * 0.62f), w = Math.Max(1, h * back.GetWidth() / back.GetHeight());
+            back.Resize(w, h, Image.Interpolation.Lanczos);
+            var img = Image.CreateEmpty(side, side, false, Image.Format.Rgba8);
+            img.BlitRect(back, new Rect2I(0, 0, w, h), new Vector2I((side - w) / 2, (side - h) / 2));
+            return _card = ImageTexture.CreateFromImage(img);
+        }
+        catch (Exception ex) { Log.Warn("[FMDuelist] free duel icon: " + ex.Message); return null; }
+    }
+
     static bool Prefix(RestSiteOption __instance, ref Texture2D __result)
     {
         if (__instance is not (FmFreeDuelRestSiteOption or FmDeckRestSiteOption)) return true;
         // Free Duel: a face-down card
-        if (__instance is FmFreeDuelRestSiteOption && FmRivalHand.Back() is { } back) { __result = back; return false; }
+        if (__instance is FmFreeDuelRestSiteOption && CardIcon() is { } card) { __result = card; return false; }
         __result = PreloadManager.Cache.GetTexture2D(FmCutRestSiteOption.SmithIcon);
         return false;
     }

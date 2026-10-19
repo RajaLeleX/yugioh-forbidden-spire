@@ -32,6 +32,16 @@ public static class FmStarChips
     // original texture (by instance id) -> star chip texture of the same size
     static readonly Dictionary<ulong, Texture2D> Swap = new();
 
+    static ImageTexture? _icon;
+    /// <summary>The Star Chip picture as a texture (used as a relic icon).</summary>
+    public static Texture2D? Icon()
+    {
+        if (_icon != null) return _icon;
+        var file = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(typeof(FmStarChips).Assembly.Location) ?? ".", "star_chip.png");
+        if (!System.IO.File.Exists(file) || Image.LoadFromFile(file) is not { } img) return null;
+        return _icon = ImageTexture.CreateFromImage(img);
+    }
+
     public static void Load()
     {
         try

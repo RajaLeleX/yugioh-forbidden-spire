@@ -229,6 +229,13 @@ public static class FmRestDuel
         int One()
         {
             int id = Roll(w);
+            // Drop Rate Boost: 5% of drops come up Rare and 5% Uncommon (among the cards this duelist can drop)
+            if (Relics.FmDropBoost.Active)
+            {
+                double r = _rng.NextDouble();
+                var want = r < Relics.FmDropBoost.Boost ? CardRarity.Rare : r < 2 * Relics.FmDropBoost.Boost ? CardRarity.Uncommon : CardRarity.None;
+                if (want != CardRarity.None && Roll(w, k => FmSheet.TypeFor(k) != null && FmSheet.RarityFor(k, FmRules.ActIndex) == want) is int b and > 0) id = b;
+            }
             if (player.GetRelic<FmItemRing>() != null && _rng.NextDouble() < FmItemRing.Chance)
             {
                 int other = Roll(w);

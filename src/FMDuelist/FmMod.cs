@@ -59,6 +59,7 @@ public static class FmMod
         ModHelper.AddModelToPool<MegaCrit.Sts2.Core.Models.RelicPools.EventRelicPool, DragonTreasure>();
         ModHelper.AddModelToPool<MegaCrit.Sts2.Core.Models.RelicPools.EventRelicPool, MagicProtectionKit>();
         ModHelper.AddModelToPool<MegaCrit.Sts2.Core.Models.RelicPools.EventRelicPool, EquipBoosterPack>();
+        ModHelper.AddModelToPool<MegaCrit.Sts2.Core.Models.RelicPools.EventRelicPool, FmDropBoost>();
         ModHelper.AddModelToPool<MegaCrit.Sts2.Core.Models.RelicPools.EventRelicPool, ExodiaCardBox>();
         foreach (var t in FmRelicSheet.All) ModHelper.AddModelToPool(typeof(MegaCrit.Sts2.Core.Models.RelicPools.NecrobinderRelicPool), t);
         foreach (var t in FmMillenniumItems.All) ModHelper.AddModelToPool(typeof(MegaCrit.Sts2.Core.Models.RelicPools.NecrobinderRelicPool), t);
@@ -160,7 +161,7 @@ static class PortraitPathPatch
 [HarmonyPatch]
 static class RelicIconPatches
 {
-    static int? ArtFor(RelicModel r) => FmGuardianStars.RelicIcons.ContainsKey(r.Id.Entry) ? 1 : r switch { MillenniumPuzzle => 362, DragonTreasure => 4, FmMillenniumItem m => m.ArtId, MagicProtectionKit => 348, EquipBoosterPack => 657, ExodiaCardBox => 21, FmRelic f => f.ArtId, _ => Game.FmRetheme.RelicArt(r) };
+    static int? ArtFor(RelicModel r) => FmGuardianStars.RelicIcons.ContainsKey(r.Id.Entry) ? 1 : r switch { FmDropBoost => 1, MillenniumPuzzle => 362, DragonTreasure => 4, FmMillenniumItem m => m.ArtId, MagicProtectionKit => 348, EquipBoosterPack => 657, ExodiaCardBox => 21, FmRelic f => f.ArtId, _ => Game.FmRetheme.RelicArt(r) };
 
     [HarmonyPrefix, HarmonyPatch(typeof(RelicModel), nameof(RelicModel.Icon), MethodType.Getter)]
     static bool Icon(RelicModel __instance, ref Texture2D __result) => Swap(__instance, ref __result);
@@ -184,6 +185,7 @@ static class RelicIconPatches
     static bool Swap(RelicModel r, ref Texture2D result)
     {
         if (r is MillenniumPuzzle && PuzzleIcon() is { } pz) { result = pz; return false; }
+        if (r is FmDropBoost && Game.FmStarChips.Icon() is { } chip) { result = chip; return false; }
         // Joey's Trump Card shows Joey (Jono, his FM counterpart) when his portrait is in the local story folder
         if (r is DragonTreasure && Game.FmScene.Tex("icon_jono") is { } joey) { result = joey; return false; }
         if (FmGuardianStars.RelicIcon(r) is { } star) { result = star; return false; }

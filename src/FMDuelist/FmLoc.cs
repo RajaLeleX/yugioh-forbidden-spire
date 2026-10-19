@@ -61,6 +61,9 @@ public static class FmLoc
                 relicText[E(t) + ".description"] = text;
                 relicText[E(t) + ".flavor"] = flavor;
             }
+            relicText[E(typeof(FmDropBoost)) + ".title"] = FmDropBoost.Title;
+            relicText[E(typeof(FmDropBoost)) + ".description"] = FmDropBoost.Text;
+            relicText[E(typeof(FmDropBoost)) + ".flavor"] = FmDropBoost.Flavor;
             loc.GetTable("relics").MergeWith(relicText);
 
             loc.GetTable("powers").MergeWith(new Dictionary<string, string>

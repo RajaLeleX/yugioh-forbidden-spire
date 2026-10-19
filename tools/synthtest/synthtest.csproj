@@ -4,5 +4,6 @@
     <Compile Include="..\..\src\FMDuelist\Audio\PsxSeqSynth.cs" />
     <Compile Include="..\..\src\FMDuelist\Audio\FmMusicBank.cs" />
     <Compile Include="..\..\src\FMDuelist\Audio\FmStr.cs" />
+    <Compile Include="..\..\src\FMDuelist\Audio\FmSfxBank.cs" />
   </ItemGroup>
 </Project>

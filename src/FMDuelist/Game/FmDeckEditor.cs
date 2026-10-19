@@ -41,7 +41,7 @@ public static class FmDeckEditor
         _deck = FmDeckBuild.Deck(player);
         _showDeck = true; _chestTop = _deckTop = 0;
         _done = new TaskCompletionSource();
-        _slide = null; _preview = null; _tip = null;
+        _slide = null; _preview = null; _tip = null; _detail = null; _hoverId = 0; _detailMoving = false;
         int music = FmMusic.Current;
         await FmFade.Out();
         // the Build Deck theme (FM track 14)
@@ -84,6 +84,15 @@ public static class FmDeckEditor
     /// <summary>Esc closes; the wheel and arrow keys scroll (from the game's input hook).</summary>
     public static bool HandleInput(InputEvent e)
     {
+        if (DetailOpen)
+        {
+            if (e is InputEventKey { Pressed: true, Keycode: Key.Escape or Key.Enter or Key.Space or Key.Backspace }
+                || e is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Right }) { CloseDetails(); return true; }
+            if (e is InputEventMouseButton { ButtonIndex: MouseButton.WheelUp or MouseButton.WheelDown }) return true;
+            return e is InputEventKey;
+        }
+        if (e is InputEventKey { Pressed: true, Keycode: Key.Enter or Key.Space } && _hoverId > 0) { Details(_hoverId); return true; }
+        if (e is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Right } && _hoverId > 0) { Details(_hoverId); return true; }
         if (e is InputEventKey { Pressed: true } k)
         {
             switch (k.Keycode)
@@ -193,6 +202,7 @@ public static class FmDeckEditor
         var keep = _slide != null && GodotObject.IsInstanceValid(_slide) ? _slide.Position : Vector2.Zero;
         if (_slide != null && GodotObject.IsInstanceValid(_slide)) _slide.QueueFree();
         _slide = new Control { Size = _stage.Size, Position = keep, MouseFilter = Control.MouseFilterEnum.Ignore };
+        _hoverId = 0;
         _stage.AddChild(_slide);
         bool deck = _showDeck;
         var rows = deck ? DeckRows() : ChestRows();
@@ -283,7 +293,7 @@ public static class FmDeckEditor
                 _slide.AddChild(pic);
             }
             int row = top + r;
-            Hit(_slide, 75, y, 1255, 98, () => Pick(id, deck, row), () => Hover(id, y));
+            Hit(_slide, 75, y, 1255, 98, () => Pick(id, deck, row), () => _hoverId = id).MouseExited += () => { if (_hoverId == id) _hoverId = 0; };
         }
         // scroll bar, and the up/down arrows FM has on the left
         int total = Math.Max(1, rows.Count);
@@ -300,7 +310,7 @@ public static class FmDeckEditor
         Box(_slide, 560, 1015, 320, 58, Navy, Rim);
         Text(_slide, "DONE", 560 + (320 - 4 * 8 * 3.2f) / 2, 1025, 3.2f, new Color(1f, 0.86f, 0.35f));
         Hit(_slide, 560, 1015, 320, 58, Close);
-        string hint = deck ? "Click a card to take it out of your Deck." : "Click a card to put a copy in your Deck.";
+        string hint = (deck ? "Click: take out." : "Click: add to Deck.") + "  Right-click: details.";
         Text(_slide, hint, 70, 1035, 1.9f, new Color(0.15f, 0.1f, 0.05f));
     }
 
@@ -310,14 +320,14 @@ public static class FmDeckEditor
         {
             if (_deck.Count <= FmDeckBuild.MinSize(_player!)) { ShowTip($"Your deck can't have fewer than {FmDeckBuild.MinDeck} cards."); FmSfx.Play(FmSfx.Fail); return; }
             _deck.Remove(id);
-            FmSfx.Play(FmSfx.Destroy);
+            FmSfx.PlaySoft(FmSfx.Mark, -13f, 0.8f);
         }
         else
         {
             if (_deck.Count >= FmDeckBuild.MaxDeck) { ShowTip("Your deck is full (40 cards)."); FmSfx.Play(FmSfx.Fail); return; }
             if (InDeck(id) >= Owned(id)) { ShowTip("Every copy you own is already in your deck."); FmSfx.Play(FmSfx.Fail); return; }
             _deck.Add(id);
-            FmSfx.Play(FmSfx.Summon);
+            FmSfx.PlaySoft(FmSfx.Mark, -13f, 1.12f);
         }
         Render();
     }
@@ -340,6 +350,111 @@ public static class FmDeckEditor
         holder.Position = new Vector2(x, view.Y / 2);
         _layer.AddChild(holder);
         _preview = holder;
+    }
+
+
+    // ---------------- card details (FM: the list dims, the card back slides in from the left and the info panel
+    // from the right with a whoosh, then the card flips face up; any click slides them back out) ----------------
+    static Control? _detail;
+    static int _hoverId;
+    static bool _detailMoving;
+    public static bool DetailOpen => _detail != null && GodotObject.IsInstanceValid(_detail);
+
+    const float CardCX = 322, CardCY = 548, CardH = 880, PanelX = 640, PanelY = 108, PanelW = 780, PanelH = 880;
+
+    static async void Details(int id)
+    {
+        if (_stage == null || _layer == null || DetailOpen || id <= 0 || Engine.GetMainLoop() is not SceneTree tree) return;
+        var info = FmData.Get(id);
+        _detail = new Control { Size = _stage.Size, MouseFilter = Control.MouseFilterEnum.Stop };
+        _stage.AddChild(_detail);
+        var dim = new ColorRect { Size = _stage.Size, Color = new Color(0, 0, 0, 0), MouseFilter = Control.MouseFilterEnum.Ignore };
+        _detail.AddChild(dim);
+
+        // the card, starting as its back, off the left edge
+        float k = CardH * _u / FmCardFace.Size.Y;
+        var card = new Node2D { Position = U(-CardCX, CardCY), Scale = Vector2.One * k };
+        _detail.AddChild(card);
+        var back = new TextureRect { ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.Scale, MouseFilter = Control.MouseFilterEnum.Ignore };
+        back.Texture = FmRivalHand.Back();
+        back.Size = FmCardFace.Size;
+        back.Position = -FmCardFace.Size / 2;
+        card.AddChild(back);
+
+        // the info panel, off the right edge: type, Guardian Stars, description (FM's three boxes)
+        var panel = new Control { Position = U(1440, PanelY), Size = U(PanelW, PanelH), MouseFilter = Control.MouseFilterEnum.Ignore };
+        _detail.AddChild(panel);
+        var fill = new Color(0.07f, 0.1f, 0.25f);
+        var rim = new Color(0.62f, 0.6f, 0.55f);
+        Box(panel, 0, 0, PanelW, 112, fill, rim, 6);
+        string type = FmData.TypeNames[(int)info.Type];
+        Text(panel, type, 34, 56 - 12 * 3.4f / 2, 3.4f, Colors.White);
+        Box(panel, 0, 126, PanelW, 270, fill, rim, 6);
+        if (info.IsMonster)
+        {
+            Text(panel, "GUARDIAN STAR", 34, 146, 3.4f, Colors.White);
+            for (int i = 0; i < 2; i++)
+            {
+                int g = i == 0 ? info.GuardianStar1 : info.GuardianStar2;
+                if (g <= 0 || g >= StarSigns.Length) continue;
+                float cy = 258 + i * 84;
+                var sign = new Label
+                {
+                    Text = StarSigns[g] + "︎", Position = U(40, cy - 40), Size = U(80, 80), MouseFilter = Control.MouseFilterEnum.Ignore,
+                    HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center,
+                };
+                sign.AddThemeStyleboxOverride("normal", new StyleBoxEmpty());
+                sign.AddThemeFontOverride("font", FmStars.SymbolFont);
+                sign.AddThemeFontSizeOverride("font_size", (int)(58 * _u));
+                sign.AddThemeColorOverride("font_color", new Color(0.85f, 0.85f, 0.92f));
+                panel.AddChild(sign);
+                Text(panel, FmStars.Names[g], 136, cy - 12 * 3.4f / 2, 3.4f, Colors.White);
+            }
+        }
+        Box(panel, 0, 410, PanelW, PanelH - 410, fill, rim, 6);
+        var lines = FmTextBox.Wrap(info.Desc.Replace('\n', ' '), 30);
+        for (int i = 0; i < lines.Count && i < 11; i++) Text(panel, lines[i], 34, 436 + i * 40, 3.0f, Colors.White);
+
+        _detailMoving = true;
+        FmLibraryFm.Whoosh(0.5f, _layer);
+        var t = _detail.CreateTween().SetParallel();
+        t.TweenProperty(dim, "color:a", 0.8f, 0.2);
+        t.TweenProperty(card, "position:x", CardCX * _u, 0.24).SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.Out);
+        t.TweenProperty(panel, "position:x", PanelX * _u, 0.24).SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.Out);
+        await _detail.ToSignal(t, Tween.SignalName.Finished);
+        if (!DetailOpen) return;
+        // the flip: edge on, change sides, back to full width
+        FmSfx.Play(FmSfx.Flip);
+        var f = card.CreateTween();
+        f.TweenProperty(card, "scale:x", 0f, 0.13).SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.In);
+        f.TweenCallback(Callable.From(() => { back.QueueFree(); card.AddChild(FmCardFace.Create(id)); }));
+        f.TweenProperty(card, "scale:x", k, 0.13).SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.Out);
+        await card.ToSignal(f, Tween.SignalName.Finished);
+        _detailMoving = false;
+        // any click closes it
+        var close = new Button { Flat = true, Size = _stage.Size, FocusMode = Control.FocusModeEnum.None };
+        foreach (var st in new[] { "normal", "hover", "pressed", "focus" }) close.AddThemeStyleboxOverride(st, new StyleBoxEmpty());
+        close.Pressed += CloseDetails;
+        if (DetailOpen) _detail.AddChild(close);
+    }
+
+    static async void CloseDetails()
+    {
+        if (!DetailOpen || _detailMoving) return;
+        _detailMoving = true;
+        var d = _detail!;
+        FmLibraryFm.Whoosh(0.45f, _layer);
+        var t = d.CreateTween().SetParallel();
+        foreach (var c in d.GetChildren())
+        {
+            if (c is ColorRect dim) t.TweenProperty(dim, "color:a", 0f, 0.2);
+            else if (c is Node2D card) t.TweenProperty(card, "position:x", -CardCX * _u, 0.2).SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.In);
+            else if (c is Control panel and not Button) t.TweenProperty(panel, "position:x", 1440 * _u, 0.2).SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.In);
+        }
+        await d.ToSignal(t, Tween.SignalName.Finished);
+        if (GodotObject.IsInstanceValid(d)) d.QueueFree();
+        _detail = null;
+        _detailMoving = false;
     }
 
     static Label? _tip;

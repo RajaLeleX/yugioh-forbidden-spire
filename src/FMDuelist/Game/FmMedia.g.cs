@@ -20,5 +20,5 @@ public static class FmMedia
     public static readonly int[] ActShopTracks = { 15, 9, 15 };
     public static readonly int[] BattleRandomPool = { 0, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 31, 32, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 45, 49, 50, 51, 52, 55, 56 };
     public const int BattleTrackFloors = 2;
-    public static readonly Dictionary<string, int> Sfx = new() { ["mark"] = 2, ["slash"] = 8, ["destroy"] = 16, ["fusion"] = 14, ["fail"] = 13 };
+    public static readonly Dictionary<string, int> Sfx = new() { ["mark"] = 2, ["slash"] = 8, ["destroy"] = 16, ["fusion"] = 14, ["fail"] = 13, ["flip"] = 7, ["draw"] = 7, ["summon"] = 9, ["trap"] = 21, ["powerup"] = 15, ["counter"] = 10 };
 }

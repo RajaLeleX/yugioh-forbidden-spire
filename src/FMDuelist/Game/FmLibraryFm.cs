@@ -512,7 +512,7 @@ public static class FmLibraryFm
     static AudioStreamWav? _whoosh;
 
     /// <summary>A rushing-air sweep (filtered noise rising then falling), made once in code.</summary>
-    static void Whoosh(float volume = 0.6f)
+    internal static void Whoosh(float volume = 0.6f, Node? parent = null)
     {
         try
         {
@@ -535,9 +535,10 @@ public static class FmLibraryFm
                 }
                 _whoosh = new AudioStreamWav { Format = AudioStreamWav.FormatEnum.Format16Bits, MixRate = rate, Stereo = false, Data = data };
             }
-            if (_layer == null || !GodotObject.IsInstanceValid(_layer)) return;
+            parent ??= _layer;
+            if (parent == null || !GodotObject.IsInstanceValid(parent)) return;
             var player = new AudioStreamPlayer { Stream = _whoosh, VolumeDb = Mathf.LinearToDb(volume) };
-            _layer.AddChild(player);
+            parent.AddChild(player);
             player.Finished += player.QueueFree;
             player.Play();
         }

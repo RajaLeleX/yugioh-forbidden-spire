@@ -84,20 +84,14 @@ public static class FmRestDuel
         var foes = Beaten(player).ToList();
         if (foes.Count == 0 || Left(player) <= 0) return;
         if (await FmScene.Open() is not { } s) return;
-        int pick;
         try
         {
             s.HideSkip();
             await s.Bg("bg_room");
-            await s.Lit("k", $"Free Duel: {Left(player)} left here.\nWho will you duel?");
-            var names = foes.Select(ListName).Append("Back").ToList();
-            var infos = foes.Select(f => $"{ListName(f)}\nWin to roll a card from {f.Name}'s own drop table. Your rank decides the table: POW ranks, TEC ranks, or B/C/D. LP is 8000; a loss costs only the attempt.")
-                .Append("Back to the rest site.").ToList();
-            pick = await s.ChooseInfo(names, infos, "FREE DUEL");
+            await s.Lit("k", $"Free Duel: {Left(player)} left here.\nWin to roll a card from their own drop table. LP is 8000, and a loss costs only the attempt.");
         }
         finally { await s.Close(); }
-        if (pick < 0 || pick >= foes.Count) return;
-        await Start(player, foes[pick]);
+        if (await FmFreeDuelMenu.Pick(player, foes) is { } foe) await Start(player, foe);
     }
 
     static async Task Start(Player player, FmRival.Duelist foe)
@@ -128,6 +122,7 @@ public static class FmRestDuel
     public static async Task OnLoss(Player player)
     {
         _lost = true;
+        Count(player, _foe, false);
         FmRival.Active = false;
         int turns = player.Creature.CombatState?.RoundNumber ?? 1;
         int comLp = Math.Max(1, FmRival.Priest?.CurrentHp ?? 8000);
@@ -169,7 +164,24 @@ public static class FmRestDuel
     public static async Task AfterCombat(Player player)
     {
         if (!Active) return;
+        if (!_lost) Count(player, _foe, true);
         try { await FmRules.Raw(() => CreatureCmd.SetCurrentHp(player.Creature, Math.Max(1, _hpBefore))); } catch (Exception ex) { Log.Warn("[FMDuelist] free duel hp: " + ex.Message); }
+    }
+
+    /// <summary>Your WIN / LOSS record against a duelist in this run's Free Duels.</summary>
+    public static int[] Record(Player p, int duelist)
+    {
+        var r = p.GetRelic<MillenniumPuzzle>()?.FreeRecord ?? Array.Empty<int>();
+        return new[] { duelist * 2 < r.Length ? r[duelist * 2] : 0, duelist * 2 + 1 < r.Length ? r[duelist * 2 + 1] : 0 };
+    }
+
+    static void Count(Player p, FmRival.Duelist? foe, bool win)
+    {
+        if (foe == null || foe.DuelistIndex <= 0 || p.GetRelic<MillenniumPuzzle>() is not { } pz) return;
+        var r = pz.FreeRecord.ToList();
+        while (r.Count <= foe.DuelistIndex * 2 + 1) r.Add(0);
+        r[foe.DuelistIndex * 2 + (win ? 0 : 1)]++;
+        pz.FreeRecord = r.ToArray();
     }
 
     /// <summary>Back at the rest site.</summary>
@@ -302,6 +314,8 @@ static class FreeDuelIconPatch
     static bool Prefix(RestSiteOption __instance, ref Texture2D __result)
     {
         if (__instance is not (FmFreeDuelRestSiteOption or FmDeckRestSiteOption)) return true;
+        // Free Duel: a face-down card
+        if (__instance is FmFreeDuelRestSiteOption && FmRivalHand.Back() is { } back) { __result = back; return false; }
         __result = PreloadManager.Cache.GetTexture2D(FmCutRestSiteOption.SmithIcon);
         return false;
     }

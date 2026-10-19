@@ -209,6 +209,26 @@ public static class FmSfx
         catch (Exception ex) { MegaCrit.Sts2.Core.Logging.Log.Warn("[FMDuelist] thunder: " + ex.Message); }
     }
 
+    static AudioStreamPlayer? _soft;
+
+    /// <summary>A quiet version of a sound (volume in dB, pitch as a factor), for frequent clicks like Build Deck's.</summary>
+    public static void PlaySoft(string key, float volumeDb = -12f, float pitch = 1f)
+    {
+        try
+        {
+            if (key == Mark && !Disc.ContainsKey(Mark)) Disc[Mark] = MakeBeep();
+            if (!Disc.TryGetValue(key, out var stream) || Engine.GetMainLoop() is not SceneTree tree) { Play(key); return; }
+            if (_soft == null || !GodotObject.IsInstanceValid(_soft))
+            {
+                _soft = new AudioStreamPlayer { MaxPolyphony = 4, Bus = "Master" };
+                tree.Root.AddChild(_soft);
+            }
+            _soft.Stream = stream; _soft.VolumeDb = volumeDb; _soft.PitchScale = pitch;
+            _soft.Play();
+        }
+        catch (Exception ex) { MegaCrit.Sts2.Core.Logging.Log.Warn("[FMDuelist] soft sfx " + key + ": " + ex.Message); }
+    }
+
     public static void Play(string key)
     {
         try

@@ -1,4 +1,12 @@
 using FMDuelist.Audio;
+if (args[0] == "se")
+{
+    var se = FmSfxBank.Decode(File.ReadAllBytes(args[1]));
+    Directory.CreateDirectory(args[2]);
+    for (int i = 0; i < se.Count; i++) File.WriteAllBytes(Path.Combine(args[2], $"se{i:00}.wav"), FmMusicBank.ToWav(se[i], FmSfxBank.Rate));
+    Console.WriteLine($"{se.Count} samples");
+    return;
+}
 if (args[0] == "str")
 {
     var movies = FmStr.Read(File.ReadAllBytes(args[1]));

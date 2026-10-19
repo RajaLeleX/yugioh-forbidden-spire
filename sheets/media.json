@@ -19,7 +19,13 @@
   "slash": 8,
   "destroy": 16,
   "fusion": 14,
-  "fail": 13
+  "fail": 13,
+  "flip": 7,
+  "draw": 7,
+  "summon": 9,
+  "trap": 21,
+  "powerup": 15,
+  "counter": 10
  },
  "sfxNote": "Indices into the 23 decoded SD_SE.DAT samples (fm_sfx/sfx_NNN.mp3); defaults chosen by sound profile until confirmed.",
  "restSite_BuildDeck": 14,

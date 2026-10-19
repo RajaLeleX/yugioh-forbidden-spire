@@ -49,6 +49,12 @@ public sealed class MillenniumPuzzle : RelicModel
     [MegaCrit.Sts2.Core.Saves.Runs.SavedProperty]
     public int[] BeatenDuelists { get => _beaten; set { AssertMutable(); _beaten = value ?? Array.Empty<int>(); } }
 
+    private int[] _freeRecord = Array.Empty<int>();
+
+    /// <summary>Free Duel record this run: [duelist*2] wins, [duelist*2+1] losses.</summary>
+    [MegaCrit.Sts2.Core.Saves.Runs.SavedProperty]
+    public int[] FreeRecord { get => _freeRecord; set { AssertMutable(); _freeRecord = value ?? Array.Empty<int>(); } }
+
     private int[] _deckSel = Array.Empty<int>(), _newIds = Array.Empty<int>(), _newAt = Array.Empty<int>();
     private int _combats;
 
@@ -76,7 +82,8 @@ public sealed class MillenniumPuzzle : RelicModel
         => actIndex == 0 && StoryMap && runState.Players.Contains(Owner) ? new FmStoryActMap() : map;
 
     public override bool TryModifyRewards(Player player, List<MegaCrit.Sts2.Core.Rewards.Reward> rewards, AbstractRoom? room)
-        => Mine(player) && (FmRestDuel.Rewards(player, rewards, room) || (FmAct1Story.HeishinRewards(player, rewards, room) | FmRelicDrops.Apply(player, rewards, room)));
+        => Mine(player) && ((FmRestDuel.Rewards(player, rewards, room) || (FmAct1Story.HeishinRewards(player, rewards, room) | FmRelicDrops.Apply(player, rewards, room)))
+            | rewards.RemoveAll(r => r is MegaCrit.Sts2.Core.Rewards.PotionReward) > 0); // no potions in an FM run
     private readonly List<(Creature attacker, int trapId, decimal hit)> _sprung = new();
 
     private bool Mine(Player? p) => p == Owner;

@@ -310,8 +310,9 @@ public static class FmDeckEditor
         Box(_slide, 560, 1015, 320, 58, Navy, Rim);
         Text(_slide, "DONE", 560 + (320 - 4 * 8 * 3.2f) / 2, 1025, 3.2f, new Color(1f, 0.86f, 0.35f));
         Hit(_slide, 560, 1015, 320, 58, Close);
-        string hint = (deck ? "Click: take out." : "Click: add to Deck.") + "  Right-click: details.";
-        Text(_slide, hint, 70, 1035, 1.9f, new Color(0.15f, 0.1f, 0.05f));
+        // the help, in two lines left of DONE (so it never runs under the button)
+        Text(_slide, deck ? "Click: take out" : "Click: add to Deck", 70, 1016, 1.9f, new Color(0.15f, 0.1f, 0.05f));
+        Text(_slide, "Right-click: details", 70, 1046, 1.9f, new Color(0.15f, 0.1f, 0.05f));
     }
 
     static void Pick(int id, bool fromDeck, int row)

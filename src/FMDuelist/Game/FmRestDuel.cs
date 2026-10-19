@@ -83,14 +83,6 @@ public static class FmRestDuel
     {
         var foes = Beaten(player).ToList();
         if (foes.Count == 0 || Left(player) <= 0) return;
-        if (await FmScene.Open() is not { } s) return;
-        try
-        {
-            s.HideSkip();
-            await s.Bg("bg_room");
-            await s.Lit("k", $"Free Duel: {Left(player)} left here.\nWin to roll a card from their own drop table. LP is 8000, and a loss costs only the attempt.");
-        }
-        finally { await s.Close(); }
         if (await FmFreeDuelMenu.Pick(player, foes) is { } foe) await Start(player, foe);
     }
 

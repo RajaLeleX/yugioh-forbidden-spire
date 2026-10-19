@@ -96,11 +96,12 @@ public static class FmStoryAct1
             if (node.Visuals.GetCurrentBody() is { } body) body.Visible = false;
             if (FmScene.Tex("duelist_" + d.Key) is { } tex)
             {
-                const int h = 250; // small enough that duelist and zones fit on screen
+                const int h = 210; // small enough that duelist and zones fit on screen
                 var small = FmScene.Sized(tex, h);
                 var spr = new Sprite2D { Texture = small, Position = new Vector2(0, -h / 2f), Centered = true, TextureFilter = CanvasItem.TextureFilterEnum.Linear };
                 HalfWidth = small.GetWidth() * 0.5f;
                 node.Visuals.AddChild(spr);
+                FmScene.KeepOnScreen(spr);
                 spr.Modulate = new Color(1, 1, 1, 0);
                 var t = spr.CreateTween(); t.TweenProperty(spr, "modulate:a", 1f, 0.5);
             }

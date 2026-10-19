@@ -36,7 +36,15 @@ static class FmHideClutter
     [HarmonyPostfix, HarmonyPatch(typeof(NCreatureStateDisplay), nameof(NCreatureStateDisplay.SetCreature))]
     static void NoBar(NCreatureStateDisplay __instance, Creature creature)
     {
-        if (IsZone(creature)) __instance.Visible = false;
+        if (!IsZone(creature)) return;
+        __instance.Visible = false;
+        // the game shows it again on HP and block changes: keep it hidden for good
+        var d = __instance;
+        if (!d.HasMeta("fm_hidden"))
+        {
+            d.SetMeta("fm_hidden", true);
+            d.VisibilityChanged += () => { if (GodotObject.IsInstanceValid(d) && d.Visible && IsZone(Of(d))) Callable.From(() => { if (GodotObject.IsInstanceValid(d)) d.Visible = false; }).CallDeferred(); };
+        }
     }
 
     [HarmonyPostfix, HarmonyPatch(typeof(NEnergyCounter), nameof(NEnergyCounter._Ready))]

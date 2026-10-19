@@ -617,7 +617,8 @@ public sealed class MillenniumPuzzle : RelicModel
 
     public override Task AfterCombatVictory(CombatRoom room)
     {
-        // the boss duel's win jingle and results music play in FmDuelEnd
+        // the boss duel's win jingle and results music play in FmDuelEnd; a wild monster beaten gets the victory theme too
+        if (room.Encounter is FmWildEncounter) FmMusic.PlayOnce(FmDuelEnd.WinJingle);
         return Task.CompletedTask;
     }
 

@@ -89,6 +89,13 @@ public abstract class FmSpellCard : FmCardBase
                 await PowerCmd.Remove<FmSwordsPower>(me);
                 await PowerCmd.Apply<FmSwordsPower>(ctx, me, Value, me, this);
                 FmVfx.SwordsOfRevealingLight();
+                // FM: the light flips every face-down enemy monster face up (a set Defense monster stays in Defense)
+                if (FmRival.Active && FmRival.Slots.Any(z => z.MonsterId > 0 && z.FaceDown))
+                {
+                    foreach (var z in FmRival.Slots) if (z.MonsterId > 0) z.FaceDown = false;
+                    FmSfx.Play(FmSfx.Flip);
+                    FmField.NotifyChanged();
+                }
                 break;
             case FmSpellKind.StopDefense:
                 if (cardPlay.Target is { } t && t.Block > 0) await CreatureCmd.LoseBlock(t, t.Block);

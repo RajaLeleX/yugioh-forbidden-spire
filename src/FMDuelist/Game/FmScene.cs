@@ -51,6 +51,33 @@ public sealed class FmScene
     /// A picture resampled (Lanczos) to the height it is drawn at, so it shows at 1:1: smooth edges instead of the
     /// jaggies a big picture gets when the renderer shrinks it.
     /// </summary>
+    /// <summary>
+    /// Keeps a portrait wholly on screen while it lives: nudged in from the sides and down below the top bar (the
+    /// duel layout puts duelists near the screen's edges).
+    /// </summary>
+    public static void KeepOnScreen(Sprite2D spr, float top = 90, float margin = 12)
+    {
+        if (Engine.GetMainLoop() is not SceneTree tree) return;
+        var home = spr.Position;
+        void Fit()
+        {
+            if (!GodotObject.IsInstanceValid(spr) || !spr.IsInsideTree()) { tree.ProcessFrame -= Fit; return; }
+            if (spr.Texture == null) return;
+            var view = spr.GetViewportRect().Size;
+            var xf = spr.GetGlobalTransformWithCanvas();
+            var size = spr.Texture.GetSize() * xf.Scale.Abs();
+            // where it would be at home
+            var homeGlobal = xf.Origin - (spr.Position - home) * xf.Scale.Abs();
+            float dx = 0, dy = 0;
+            float left = homeGlobal.X - size.X / 2, right = homeGlobal.X + size.X / 2, up = homeGlobal.Y - size.Y / 2;
+            if (left < margin) dx = margin - left; else if (right > view.X - margin) dx = view.X - margin - right;
+            if (up < top) dy = top - up;
+            var s = xf.Scale.Abs();
+            spr.Position = home + new Vector2(s.X > 0.001f ? dx / s.X : 0, s.Y > 0.001f ? dy / s.Y : 0);
+        }
+        tree.ProcessFrame += Fit;
+    }
+
     public static Texture2D Sized(Texture2D tex, int height)
     {
         var key = (tex.GetInstanceId(), height);

@@ -155,6 +155,8 @@ public static class FmRival
     public static void Reset()
     {
         Active = false; Bound = false; Priest = null; Current = null; Deck.Clear(); Hand.Clear(); Traps.Clear();
+        _emptyChecks = 0; _emptyLimit = 2 + Rng.Next(2);
+        FmDeckBuild.DeckedOut = false;
         try { FmFieldHud.Clear(); FmLifePoints.Clear(); } catch { }
         FmRivalHand.Hide();
         FmPractice.RemoveLabels();
@@ -196,7 +198,7 @@ public static class FmRival
         Deck.Clear();
         var counts = new Dictionary<int, int>();
         int total = weights.Sum();
-        int size = FmField.Duelist is { } you ? Math.Clamp(FmDeckBuild.DeckSize(you), 5, 40) : 40;
+        const int size = 40; // every duelist brings 40 cards
         for (int guard = 0; Deck.Count < size && guard < 4000 && total > 0; guard++)
         {
             int r = Rng.Next(total), id = 0;
@@ -205,6 +207,8 @@ public static class FmRival
             counts[id] = counts.GetValueOrDefault(id) + 1;
             Deck.Add(id);
         }
+        // a sparse drop table can't fill 40 with 3 copies each: fill up with more copies of what it has
+        for (int guard = 0; Deck.Count < size && Deck.Count > 0 && guard < 400; guard++) Deck.Add(Deck[Rng.Next(Deck.Count)]);
         if (Deck.Count < 20) Deck.AddRange(new[] { 2, 3, 6, 9, 24, 30, 46, 58, 61, 75, 103, 114, 130, 151, 160, 172, 180, 191, 210, 242 }); // a basic deck if the table can't be read
     }
 
@@ -222,7 +226,17 @@ public static class FmRival
     {
         while (Hand.Count < PoolSize)
         {
-            if (Deck.Count == 0) BuildDeck();
+            if (Deck.Count == 0)
+            {
+                // FM: a duelist who can't draw a full hand has lost (attrition)
+                if (Priest is { IsAlive: true } him && !FmDuelStats.Attrition)
+                {
+                    FmDuelStats.Attrition = true;
+                    Banner($"{Name} has no cards left to draw!  You win by attrition!");
+                    MegaCrit.Sts2.Core.Helpers.TaskHelper.RunSafely(MegaCrit.Sts2.Core.Commands.CreatureCmd.Kill(him, true));
+                }
+                return;
+            }
             int i = Rng.Next(Deck.Count);
             Hand.Add(Deck[i]); Deck.RemoveAt(i);
         }
@@ -469,11 +483,27 @@ public static class FmRival
     /// </summary>
     static bool MustAnswer => !Living.Any() && FmField.Duelist is { } p && FmField.Living(p).Any(m => !m.FaceDown);
 
+    static int _emptyChecks, _emptyLimit = 2;
+
+    /// <summary>
+    /// Act 1's duelists, when you have no monsters, play a single monster instead of fusing: the first 2 or 3 times
+    /// (Young Priest Seto only the first time), then they have a 50% chance to fuse anyway.
+    /// </summary>
+    static bool EmptyFieldAnswer()
+    {
+        if (FmField.Duelist is not { } you || FmField.Living(you).Any()) return false;
+        bool act1 = Current == Bosses[0] || FmStoryAct1.ForMonster(Current?.Monster) != null;
+        if (!act1) return false;
+        _emptyChecks++;
+        int limit = Current == Bosses[0] ? 1 : _emptyLimit;
+        return _emptyChecks <= limit || Rng.NextDouble() < 0.5;
+    }
+
     static (int atk, int result, List<int> chain, FmSlot? onto)? BestSummon()
     {
         var monsters = Hand.Where(id => FmData.Get(id).IsMonster).ToList();
         var skill = Me;
-        bool fuse = Roll(skill.Fuse) && !MustAnswer;
+        bool fuse = Roll(skill.Fuse) && !MustAnswer && !EmptyFieldAnswer();
         // a weaker duelist sometimes just plays whatever monster he picks up
         if (!fuse && monsters.Count > 0 && !Roll(skill.Best))
         {

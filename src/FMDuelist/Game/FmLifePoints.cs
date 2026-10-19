@@ -122,12 +122,20 @@ public static class FmLifePoints
 
     static float Roll(float shown, int target, float dt, ref bool rolling, Label label)
     {
-        if (shown < 0) { label.Text = Math.Max(0, target).ToString(); return target; }
+        if (shown < 0) { SetNumber(label, target); return target; }
         if (Mathf.IsEqualApprox(shown, target)) return shown;
         float speed = Math.Max(1000f, Math.Abs(target - shown) / RollTime);
         float next = shown < target ? Math.Min(target, shown + speed * dt) : Math.Max(target, shown - speed * dt);
-        if ((int)next != (int)shown) { label.Text = Math.Max(0, (int)Math.Round(next)).ToString(); rolling = true; }
+        if ((int)next != (int)shown) { SetNumber(label, (int)Math.Round(next)); rolling = true; }
         return next;
+    }
+
+    /// <summary>The number, shrunk to fit when it has more than 4 digits.</summary>
+    static void SetNumber(Label label, int value)
+    {
+        string t = Math.Max(0, value).ToString();
+        label.Text = t;
+        label.AddThemeFontSizeOverride("font_size", (int)(44 * S * Math.Min(1f, 4.3f / Math.Max(4, t.Length))));
     }
 
     /// <summary>FM's counter tick: a short bright blip.</summary>

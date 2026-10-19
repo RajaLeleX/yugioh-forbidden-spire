@@ -18,6 +18,13 @@ namespace FMDuelist.Game;
 public static class FmStars
 {
     public const int Bonus = 500;
+
+    /// <summary>
+    /// A font with the planet symbols as plain outlines (not the coloured emoji Windows otherwise substitutes, which
+    /// look like gender icons). Use with Plain() for the text-style variant.
+    /// </summary>
+    public static readonly SystemFont SymbolFont = new() { FontNames = new[] { "Segoe UI Symbol", "Cambria Math", "DejaVu Sans", "Arial Unicode MS" }, AllowSystemFallback = false };
+    public static string Plain(string sign) => sign.Length == 0 ? sign : sign + "\uFE0E";
     public static readonly string[] Names = { "", "Mars", "Jupiter", "Saturn", "Uranus", "Pluto", "Neptune", "Mercury", "Sun", "Moon", "Venus" };
     public static readonly string[] Signs = { "", "♂", "♃", "♄", "♅", "♇", "♆", "☿", "☉", "☽", "♀" };
 
@@ -114,7 +121,8 @@ public static class FmStars
                 var lit = new StyleBoxFlat { BgColor = new Color(0.12f, 0.14f, 0.38f, 0.97f), BorderColor = new Color(0.86f, 0.9f, 0.1f), BorderWidthLeft = 6, BorderWidthRight = 6, BorderWidthTop = 6, BorderWidthBottom = 6 };
                 box.AddThemeStyleboxOverride("panel", idle);
                 layer.AddChild(box);
-                var sign = new Label { Text = Sign(star), HorizontalAlignment = HorizontalAlignment.Center, Size = new Vector2(w, h * 0.7f), MouseFilter = Control.MouseFilterEnum.Ignore };
+                var sign = new Label { Text = Plain(Sign(star)), HorizontalAlignment = HorizontalAlignment.Center, Size = new Vector2(w, h * 0.7f), MouseFilter = Control.MouseFilterEnum.Ignore };
+                sign.AddThemeFontOverride("font", SymbolFont);
                 sign.AddThemeFontSizeOverride("font_size", (int)(h * 0.5f));
                 sign.AddThemeColorOverride("font_color", new Color(0.92f, 0.92f, 0.95f));
                 box.AddChild(sign);
@@ -144,10 +152,10 @@ public static class FmStars
         "In a battle, if your monster's star [b]beats[/b] the other monster's star, your monster gets [color=#7fff7f][b]+500 ATK and DEF[/b][/color] " +
         "for that battle. If their star beats yours, theirs gets it instead. Otherwise nothing changes.\n\n" +
         "[font_size=24][color=#ffd15a][b]The two circles[/b][/color][/font_size]  (each star beats the next one)\n\n" +
-        "[font_size=26][b]☉ Sun  →  ☽ Moon  →  ♀ Venus  →  ☿ Mercury  →  ☉ Sun[/b][/font_size]\n\n" +
-        "[font_size=26][b]♂ Mars  →  ♃ Jupiter  →  ♄ Saturn  →  ♅ Uranus  →  ♇ Pluto  →  ♆ Neptune  →  ♂ Mars[/b][/font_size]\n\n" +
+        "[font_size=26][b]Sun  →  Moon  →  Venus  →  Mercury  →  Sun[/b][/font_size]\n\n" +
+        "[font_size=26][b]Mars  →  Jupiter  →  Saturn  →  Uranus  →  Pluto  →  Neptune  →  Mars[/b][/font_size]\n\n" +
         "[table=3][cell][b]Star[/b]   [/cell][cell][b]Beats[/b]   [/cell][cell][b]Loses to[/b][/cell]" +
-        string.Concat(Enumerable.Range(1, 10).Select(s => $"[cell]{Sign(s)} {Name(s)}   [/cell][cell]{Sign(Beaten(s))} {Name(Beaten(s))}   [/cell][cell]{Sign(BeatenBy(s))} {Name(BeatenBy(s))}[/cell]")) +
+        string.Concat(Enumerable.Range(1, 10).Select(s => $"[cell]{Name(s)}   [/cell][cell]{Name(Beaten(s))}   [/cell][cell]{Name(BeatenBy(s))}[/cell]")) +
         "[/table]\n\n" +
         "Stars from different circles (e.g. Sun against Mars) don't affect each other.\n\n" +
         "[color=#ffd15a][b]Millennium Items[/b][/color]\n" +

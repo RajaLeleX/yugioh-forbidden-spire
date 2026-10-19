@@ -106,7 +106,7 @@ public static class FmTutorial
         _btn.AddThemeConstantOverride("icon_max_width", 36);
         // top centre, clear of the Life Point box (top right) and the field box (top left)
         _btn.AnchorLeft = _btn.AnchorRight = 0.5f; _btn.AnchorTop = _btn.AnchorBottom = 0;
-        _btn.OffsetLeft = -85; _btn.OffsetRight = 85; _btn.OffsetTop = 8; _btn.OffsetBottom = 54;
+        _btn.OffsetLeft = 230; _btn.OffsetRight = 400; _btn.OffsetTop = 8; _btn.OffsetBottom = 54;
         _btn.Connect(BaseButton.SignalName.Pressed, Callable.From(() =>
         {
             if (!Open && FmField.Duelist is { } p) Show(p, startTab: 2);

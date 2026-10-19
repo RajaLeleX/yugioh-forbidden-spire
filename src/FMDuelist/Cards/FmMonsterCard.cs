@@ -86,24 +86,10 @@ public static class FmFusion
     public static async Task<FmSlot?> ChooseZone(PlayerChoiceContext ctx, Player owner, CardModel source, bool canCancel = false)
     {
         FmField.Duelist = owner;
-        if (!FmField.HasMonster(owner)) return FmField.Slots[0];
-        var scope = source.CardScope!;
-        var options = new List<CardModel>();
-        foreach (var slot in FmField.Slots)
-        {
-            if (slot.Alive(owner))
-                options.Add(scope.CreateCard(ModelDb.GetById<CardModel>(ModelDb.GetId(FmSheet.TypeFor(slot.MonsterId))), owner));
-            else
-            {
-                var empty = (FmEmptyZone)scope.CreateCard(ModelDb.Card<FmEmptyZone>(), owner);
-                empty.Zone = slot.Index;
-                options.Add(empty);
-            }
-        }
-        var pick = await CardSelectCmd.FromChooseACardScreen(ctx, options, owner, canSkip: canCancel);
-        if (pick == null && canCancel) return null;
-        int i = pick == null ? -1 : options.IndexOf(pick);
-        return i >= 0 ? FmField.Slots[i] : FmField.Slots.FirstOrDefault(s => !s.Alive(owner)) ?? FmField.Slots[0];
+        FmDuelLayout.PlaceAll(owner);
+        // FM: pick the zone on the field itself (all five, empty or not)
+        int id = source is FmCardBase fm ? fm.FmId : 0;
+        return await Game.FmZonePicker.Pick(owner, id, canCancel);
     }
 
     /// <summary>Returns the monster that ends up summoned. Material cards other than the played one go to the discard pile.</summary>

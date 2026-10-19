@@ -80,8 +80,16 @@ public static class FmDuelLayout
     }
 
     /// <summary>Where a zone's card rests (world coordinates).</summary>
+    /// <summary>Where a zone's card sits (world coordinates), for the zone picker.</summary>
+    public static Vector2? SpotFor(Player player, FmSlot slot)
+    {
+        if (!FmRival.Active && Node(player.Creature) is { } me) { _left = CenterX(me) + HalfWidth(me, false) + 20; _step = 170f; }
+        return Target(player, slot);
+    }
+
     static Vector2? Target(Player player, FmSlot slot)
     {
+        if (!FmRival.Active && !slot.Rival && Node(player.Creature) is { } you) { _left = CenterX(you) + HalfWidth(you, false) + 20; _step = 170f; }
         if (Node(player.Creature) is not { } me) return null;
         var (col, row) = Cell(slot.Index);
         float y = Feet(me) - CardLift + (row == 0 ? -RowGap / 2 : RowGap / 2);

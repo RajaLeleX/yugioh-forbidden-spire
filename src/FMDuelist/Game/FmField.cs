@@ -69,6 +69,8 @@ public static class FmField
     public static readonly List<(int id, int value)> PendingEquips = new();
     public static bool SummonedThisTurn;
     public static bool Aiming;
+    /// <summary>The monster whose attack is being aimed (for the Guardian Star forecast).</summary>
+    public static FmSlot? Attacker;
     public static Player? Duelist;
     public static int SwordsTurns;
     /// <summary>Spellbinding Circle was cast: every enemy is stunned for its next turn.</summary>
@@ -249,5 +251,18 @@ public static class FmField
         NotifyChanged();
         if (burn > 0 && foes is { Count: > 0 })
             await CreatureCmd.Damage(ctx, foes[Random.Shared.Next(foes.Count)], burn, ValueProp.Unpowered, player.Creature, source);
+    }
+}
+
+/// <summary>FM: a fusion chain marked in the hand has to be unmarked before the turn can end.</summary>
+[HarmonyLib.HarmonyPatch(typeof(MegaCrit.Sts2.Core.Nodes.Combat.NEndTurnButton), nameof(MegaCrit.Sts2.Core.Nodes.Combat.NEndTurnButton.CallReleaseLogic))]
+static class FmNoEndTurnWhileMarkedPatch
+{
+    static bool Prefix()
+    {
+        if (FmField.Marked.Count == 0 || FmField.Duelist is not { } p || !FmRules.IsFmPlayer(p)) return true;
+        FmRival.Banner("Unmark your fusion cards (right click them) before ending your turn.");
+        FmSfx.Play(FmSfx.Fail);
+        return false;
     }
 }

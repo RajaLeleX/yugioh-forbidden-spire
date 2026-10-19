@@ -72,6 +72,17 @@ public static class FmZone
                 {
                     if (z.FaceDown) { hover = FaceDownMonster; note = "A face-down monster"; }
                     else { hover = z.MonsterId; note = $"COM zone {z.Index + 1} - {(z.Position == FmPosition.Attack ? "Attack" : "Defense")} position\nATK {z.Atk} / DEF {z.Def}"; }
+                    // aiming an attack: who wins the Guardian Star match
+                    if (FmField.Aiming && FmField.Attacker is { MonsterId: > 0 } att)
+                    {
+                        var (sa, sd, _) = FmStars.Battle(att, z, player);
+                        string mine = FmStars.Name(att.Star), theirs = z.FaceDown ? "?" : FmStars.Name(z.Star);
+                        note += z.FaceDown ? $"\nGuardian Star: {mine} vs ? (hidden until it flips)"
+                            : sa > 0 ? $"\nGuardian Star: {mine} beats {theirs}!  Your monster +{sa}" + (sd < 0 ? $", theirs {sd}" : "")
+                            : sd > 0 ? $"\nGuardian Star: {theirs} beats {mine}...  Their monster +{sd}"
+                            : $"\nGuardian Star: {mine} vs {theirs}: no effect";
+                        hover = z.FaceDown ? hover : z.MonsterId;
+                    }
                 }
         // the trap zones over each head
         if (hover < 0 && FmFieldHud.HoverAt(mouse) is { } trap)

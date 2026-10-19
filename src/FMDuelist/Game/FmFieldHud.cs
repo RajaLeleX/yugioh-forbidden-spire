@@ -157,7 +157,7 @@ public static class FmFieldHud
         if (me != null) Over(_mine!, me);
         if (him != null) Over(_his!, him);
         // the field box sits in the top left, under the top bar and the relics
-        _field!.Position = new Vector2(24, 150);
+        _field!.Position = new Vector2(24, 190);
     }
 
     static void Over(Control row, NCreature who)

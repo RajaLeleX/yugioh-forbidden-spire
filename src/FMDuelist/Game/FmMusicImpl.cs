@@ -29,8 +29,6 @@ public static partial class FmMusic
         if (room is RestSiteRoom) { Play(FmMedia.RestSiteTrack); return; }
         // a rest site's Free Duel: FM's Free Duel theme
         if (room is CombatRoom && FmRestDuel.Active) { Play(FmPractice.MusicTrack); return; }
-        // Simon Muran's duel plays his own theme (FM track 12)
-        if (room is CombatRoom duel && FmStoryAct1.Duels.FirstOrDefault(d => d.Encounter == duel.Encounter?.GetType()) is { Key: "simon" }) { Play(12); return; }
         // each act's starting room (the Ancient before floor 1)
         if (room.RoomType == RoomType.Event && owner.RunState.ActFloor == 0)
         {
@@ -48,22 +46,8 @@ public static partial class FmMusic
         }
         int act = Math.Clamp(owner.RunState.CurrentActIndex, 0, 2);
         if (room.RoomType == RoomType.Boss) { Play(FmMedia.BossTracks[act]); return; }
-        if (room.RoomType == RoomType.Elite) { Play(PickElite(act)); return; }
-        // Act 1 opens with the same track for its first few normal fights
-        if (act == 0 && room.RoomType == RoomType.Monster && FmMedia.Act1OpeningTrack >= 0)
-        {
-            var hist = owner.RunState.MapPointHistory;
-            int fights = hist.Count > 0 ? hist[0].Count(e => e.Rooms.Any(r => r.RoomType == RoomType.Monster)) : 0;
-            if (fights <= FmMedia.Act1OpeningFights) { Play(FmMedia.Act1OpeningTrack); return; }
-        }
-        // normal and elite fights: a random FM track, changed only every BattleTrackFloors floors
-        int floor = owner.RunState.TotalFloor;
-        if (_battleTrack < 0 || floor - _battleTrackFloor >= FmMedia.BattleTrackFloors || floor < _battleTrackFloor)
-        {
-            _battleTrack = FmMedia.BattleRandomPool[_rng.Next(FmMedia.BattleRandomPool.Length)];
-            _battleTrackFloor = floor;
-        }
-        Play(_battleTrack);
+        // every other fight and duel: FM's duel theme (track 32)
+        Play(DuelTheme);
     }
 
     /// <summary>Weighted pick from the act's elite themes (its own theme most likely).</summary>
@@ -121,6 +105,12 @@ public static partial class FmMusic
         for (int i = 0; i < 200 && FmAudio.Bgm == null; i++) await Task.Delay(50);
         Callable.From(() => Play(index)).CallDeferred();
     }
+
+    /// <summary>FM's duel theme: every fight and duel that isn't a boss.</summary>
+    public const int DuelTheme = 32;
+
+    /// <summary>The track playing now (-1: none).</summary>
+    public static int Current => _playing;
 
     public static void Play(int index)
     {
@@ -258,5 +248,22 @@ public static partial class FmAudio
             }
             catch (Exception ex) { Log.Warn("[FMDuelist] music bank: " + ex.Message); }
         });
+    }
+}
+
+[HarmonyLib.HarmonyPatch(typeof(MegaCrit.Sts2.Core.Nodes.Screens.Map.NMapScreen), nameof(MegaCrit.Sts2.Core.Nodes.Screens.Map.NMapScreen.Open))]
+static class FmMapMusicPatch
+{
+    static void Postfix(bool isOpenedFromTopBar)
+    {
+        try
+        {
+            if (isOpenedFromTopBar || MegaCrit.Sts2.Core.Nodes.Rooms.NCombatRoom.Instance != null && FmField.Duelist?.Creature.CombatState != null) return;
+            var state = MegaCrit.Sts2.Core.Runs.RunManager.Instance.DebugOnlyGetState();
+            if (state?.Players.FirstOrDefault(FmRules.IsFmPlayer) is null || FmPractice.Active) return;
+            int a = state.CurrentActIndex;
+            if (a >= 0 && a < FmMedia.ActMapTracks.Length && FmMedia.ActMapTracks[a] >= 0) FmMusic.Play(FmMedia.ActMapTracks[a]);
+        }
+        catch (Exception ex) { MegaCrit.Sts2.Core.Logging.Log.Warn("[FMDuelist] map music: " + ex.Message); }
     }
 }

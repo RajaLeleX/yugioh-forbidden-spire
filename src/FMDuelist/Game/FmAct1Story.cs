@@ -169,6 +169,7 @@ static partial class FmAct1Story
         if (await FmScene.Open() is not { } s) return;
         try
         {
+            Music(d.Key == "simon" ? PalaceTrack : DuelGroundTrack);
             await s.Bg(d.Bg); await s.Chr(d.Chr, d.Key);
             switch (d.Key)
             {
@@ -436,7 +437,7 @@ static partial class FmAct1Story
     public static async Task ComingSoon()
     {
         if (await FmScene.Open() is not { } s) return;
-        try { await s.Caption("World Tournament and Final Arc (Act 2 and 3) coming soon, for now Acts 2 and 3 will not include cutscenes but battles can still be played till the end! Good luck!", 2.0); }
+        try { await s.Caption("The Kaiba Corp Tournament and the Final Arc (Acts 2 and 3) coming soon, for now Acts 2 and 3 will not include cutscenes but battles can still be played till the end! Good luck!", 2.0); }
         catch (Exception ex) { Log.Warn("[FMDuelist] coming soon: " + ex.Message); }
         await s.Close();
     }

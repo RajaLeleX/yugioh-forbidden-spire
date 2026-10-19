@@ -17,7 +17,7 @@ namespace FMDuelist.Game;
 /// </summary>
 public static class FmDeckBuild
 {
-    public const int MaxDeck = 40, NewFor = 3;
+    public const int MaxDeck = 40, MinDeck = 20, NewFor = 3;
 
     static MillenniumPuzzle? Pz(Player p) => p.GetRelic<MillenniumPuzzle>();
 
@@ -44,7 +44,8 @@ public static class FmDeckBuild
         return deck;
     }
 
-    public static int MinSize(Player p) => Math.Max(5, FmRules.MinDeckFor(p));
+    /// <summary>A deck can't go under 20 cards (or under what you own, if you own fewer).</summary>
+    public static int MinSize(Player p) => Math.Min(MinDeck, Chest(p).Count);
 
     public static void Save(Player p, List<int> deck)
     {
@@ -98,6 +99,20 @@ public static class FmDeckBuild
         catch (Exception ex) { Log.Warn("[FMDuelist] duel deck: " + ex.Message); }
     }
 
+    /// <summary>You couldn't draw up to a full hand: the duel (and, outside Free Duels, the run) is lost.</summary>
+    public static bool DeckedOut;
+
+    public static async Task CheckDeckOut(Player p, int handSize)
+    {
+        if (p.PlayerCombatState == null || p.Creature.IsDead) return;
+        if (PileType.Hand.GetPile(p).Cards.Count >= handSize || PileType.Draw.GetPile(p).Cards.Count > 0) return;
+        DeckedOut = true;
+        Log.Info("[FMDuelist] deck out: no cards left to draw");
+        if (FmRival.Active) FmRival.Banner("You have no cards left to draw!  Deck out!");
+        await Task.Delay(900);
+        await CreatureCmd.Kill(p.Creature, true);
+    }
+
     /// <summary>Before a duel: DUEL, or BUILD DECK first.</summary>
     public static async Task BeforeDuel(Player p)
     {
@@ -110,5 +125,17 @@ public static class FmDeckBuild
         }
         finally { await s.Close(); }
         if (pick == 1) await FmDeckEditor.Open(p);
+    }
+}
+
+/// <summary>Forbidden Memories: the used cards don't come back into the deck during a duel.</summary>
+[HarmonyLib.HarmonyPatch(typeof(MegaCrit.Sts2.Core.Commands.CardPileCmd), nameof(MegaCrit.Sts2.Core.Commands.CardPileCmd.ShuffleIfNecessary))]
+static class FmNoReshufflePatch
+{
+    static bool Prefix(Player player, ref Task __result)
+    {
+        if (!FmRules.IsFmPlayer(player) || FmPractice.Active) return true;
+        __result = Task.CompletedTask;
+        return false;
     }
 }

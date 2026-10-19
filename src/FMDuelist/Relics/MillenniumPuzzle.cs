@@ -143,6 +143,8 @@ public sealed class MillenniumPuzzle : RelicModel
             bool duel = Owner.Creature.CombatState!.Enemies.Any(e => e.Monster != null && FmRival.AllDuelists.Any(b => b.Monster == e.Monster.GetType()));
             if (duel) { try { await FmDeckBuild.BeforeDuel(Owner); } catch (Exception ex) { MegaCrit.Sts2.Core.Logging.Log.Warn("[FMDuelist] build deck: " + ex.Message); } }
             await FmDeckBuild.ApplyToCombat(Owner);
+            // whatever the scene or Build Deck played, the duel starts with its own theme
+            if (Owner.RunState.CurrentRoom is { } here) { FmMusic.Stop(); FmMusic.OnRoomEntered(here, Owner); }
         }
         // boss duel: the Kin Priest duels by FM rules
         if (Owner.Creature.CombatState!.Enemies.Any(e => e.Monster != null && FmRival.AllDuelists.Any(b => b.Monster == e.Monster.GetType()))) await FmRival.Begin(Owner, Owner.Creature.CombatState!);
@@ -522,6 +524,12 @@ public sealed class MillenniumPuzzle : RelicModel
     }
 
     // --- turn flow ---
+    public override async Task AfterPlayerTurnStartLate(PlayerChoiceContext ctx, Player player)
+    {
+        // FM: no reshuffle; not being able to draw a full hand is a loss (deck out)
+        if (Mine(player) && !FmPractice.Active) await FmDeckBuild.CheckDeckOut(player, FmBonus.HandSize(player));
+    }
+
     public override Task AfterPlayerTurnStart(PlayerChoiceContext ctx, Player player)
     {
         if (Mine(player))

@@ -27,6 +27,7 @@ static class NGameInputPatch
                 __instance.GetViewport().SetInputAsHandled();
                 return false;
             }
+            if (FmZonePicker.Open) return true; // its own zone buttons
             if (FmDeckEditor.IsOpen)
             {
                 if (FmDeckEditor.HandleInput(inputEvent)) { __instance.GetViewport().SetInputAsHandled(); return false; }
@@ -180,9 +181,11 @@ public static class FmInput
             tm.StartTargeting(MegaCrit.Sts2.Core.Entities.Cards.TargetType.AnyEnemy, zone.Visual.CardCenter(), TargetMode.ClickMouseToTarget,
                 () => !zone.Alive(player), n => n is NCreature c && c.Entity.IsEnemy && c.Entity.IsAlive && (!FmRival.Active || FmRival.CanBeAttacked(c.Entity)));
             FmField.Aiming = true;
+            FmField.Attacker = zone;
             FmField.NotifyChanged();
             var node = await tm.SelectionFinished();
             FmField.Aiming = false;
+            FmField.Attacker = null;
             FmField.NotifyChanged();
             if (node is NCreature target && target.Entity.IsEnemy && target.Entity.IsAlive)
                 FmAttackAction.Request(player, zone.Index, target.Entity);
@@ -276,6 +279,8 @@ public sealed class FmSlotVisual
     int _shownId;
     bool _subscribed;
     const float CardScale = 0.55f;
+    /// <summary>How big zone cards are drawn (for the zone picker's outlines).</summary>
+    public static float CardScaleNow => CardScale;
     static readonly Vector2 Home = new(0, -150);
 
     const string BurnShader = @"shader_type canvas_item;
@@ -464,7 +469,7 @@ void fragment(){
             : _slot.Position == FmPosition.Defense ? "DEF  (right-click: ATK)"
             : _slot.AttackedThisTurn ? "ATK  (attacked - locked)"
             : FmRival.FirstTurnNoAttack ? "ATK  (no attacks on turn 1)" : "ATK  click: attack / right-click: DEF";
-        if (_slot.Star > 0 && !(_slot.Rival && _slot.FaceDown)) _pos.Text = $"{FmStars.Sign(_slot.Star)} {FmStars.Name(_slot.Star)}   " + _pos.Text;
+        if (_slot.Star > 0 && !(_slot.Rival && _slot.FaceDown)) _pos.Text = $"{FmStars.Name(_slot.Star)}   " + _pos.Text;
     }
 
     /// <summary>

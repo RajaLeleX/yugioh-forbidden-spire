@@ -390,7 +390,8 @@ public static class FmLibraryFm
             foreach (int g in new[] { info.GuardianStar1, info.GuardianStar2 })
             {
                 if (g <= 0 || g >= StarNames.Length) continue;
-                var sign = new Label { Text = StarSigns[g], Position = P(158, 49 + row * 16), MouseFilter = Control.MouseFilterEnum.Ignore };
+                var sign = new Label { Text = FmStars.Plain(StarSigns[g]), Position = P(158, 49 + row * 16), MouseFilter = Control.MouseFilterEnum.Ignore };
+                sign.AddThemeFontOverride("font", FmStars.SymbolFont);
                 sign.AddThemeFontSizeOverride("font_size", (int)(13 * _px));
                 sign.AddThemeColorOverride("font_color", new Color(0.92f, 0.92f, 0.92f));
                 _screen.AddChild(sign);

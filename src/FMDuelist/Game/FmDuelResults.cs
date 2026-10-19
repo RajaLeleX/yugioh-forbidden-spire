@@ -323,7 +323,7 @@ public static class FmDuelEnd
         var you = FmDuelStats.You; var com = FmDuelStats.Com;
         string cond = FmDuelStats.Exodia ? "EXODIA" : FmDuelStats.Attrition ? "ATTRITION" : "TOTAL ANNIHILATION";
         var vc = Text("VICTORY CONDITIONS", 28 * s, Colors.White, Colors.Black, 4 * s); vc.Position = new Vector2(30 * s, 110 * s); box.AddChild(vc);
-        var vcv = Text(won ? cond : "-", 30 * s, Colors.White, Colors.Black, 4 * s); vcv.Position = new Vector2(30 * s, 145 * s); box.AddChild(vcv);
+        var vcv = Text(won ? cond : FmDeckBuild.DeckedOut ? "DECK OUT (COM WINS BY ATTRITION)" : "-", 30 * s, Colors.White, Colors.Black, 4 * s); vcv.Position = new Vector2(30 * s, 145 * s); box.AddChild(vcv);
         var tn = Text($"TURNS   {turns}", 30 * s, LabelBlue, Colors.Black, 4 * s); tn.Position = new Vector2(box.Size.X * 0.65f, 125 * s); box.AddChild(tn);
         var off = Text("OFFENSE STATISTICS", 26 * s, Gold, Colors.Black, 4 * s); off.Position = new Vector2(30 * s, 200 * s); box.AddChild(off);
         Row(box, 255 * s, s, "AVERAGE ATK FACTOR", you.AvgAtk.ToString(), com.AvgAtk.ToString());

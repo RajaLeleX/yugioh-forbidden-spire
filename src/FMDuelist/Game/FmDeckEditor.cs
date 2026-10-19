@@ -26,6 +26,7 @@ public static class FmDeckEditor
     static Control? _preview;
 
     public static bool IsOpen => _layer != null && GodotObject.IsInstanceValid(_layer);
+    public const int DeckTheme = 14;
 
     static readonly Color Tan = new(0.6f, 0.5f, 0.34f), Navy = new(0.04f, 0.06f, 0.18f), Rim = new(0.32f, 0.36f, 0.6f), Lime = new(0.25f, 0.85f, 0.2f);
     static readonly string[] Orders = { "NO.", "TYP", "ATK", "DEF", "STR", "NEW", "MAG" };
@@ -40,6 +41,10 @@ public static class FmDeckEditor
         _deck = FmDeckBuild.Deck(player);
         _showDeck = true; _chestTop = _deckTop = 0;
         _done = new TaskCompletionSource();
+        _slide = null; _preview = null; _tip = null;
+        int music = FmMusic.Current;
+        // the Build Deck theme (FM track 14)
+        FmMusic.Play(DeckTheme);
         try
         {
             _layer = new CanvasLayer { Layer = 108 };
@@ -64,6 +69,9 @@ public static class FmDeckEditor
             _layer = null;
             FmDeckBuild.Save(player, _deck);
             Log.Info($"[FMDuelist] deck saved: {_deck.Count} cards");
+            _slide = null; _preview = null; _tip = null;
+            // back to what was playing (a duel puts on its own theme as it starts)
+            if (music >= 0) FmMusic.Play(music); else FmMusic.Stop();
         }
     }
 
@@ -132,8 +140,8 @@ public static class FmDeckEditor
 
     static async void Switch()
     {
-        if (_slide == null || _stage == null) return;
-        FmSfx.Play(FmSfx.Flip);
+        if (_slide == null || _stage == null || !GodotObject.IsInstanceValid(_slide)) return;
+        FmSfx.Play(FmSfx.Mark);
         float dir = _showDeck ? 1 : -1;
         var t = _slide.CreateTween();
         t.TweenProperty(_slide, "position:x", dir * _stage.Size.X, 0.18).SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.In);
@@ -178,8 +186,8 @@ public static class FmDeckEditor
     static void Render()
     {
         if (_stage == null || _player == null) return;
-        var keep = _slide?.Position ?? Vector2.Zero;
-        _slide?.QueueFree();
+        var keep = _slide != null && GodotObject.IsInstanceValid(_slide) ? _slide.Position : Vector2.Zero;
+        if (_slide != null && GodotObject.IsInstanceValid(_slide)) _slide.QueueFree();
         _slide = new Control { Size = _stage.Size, Position = keep, MouseFilter = Control.MouseFilterEnum.Ignore };
         _stage.AddChild(_slide);
         bool deck = _showDeck;
@@ -198,20 +206,20 @@ public static class FmDeckEditor
         // the other list's count (FM's small box by the arrow)
         float bx = deck ? 90 : 1075;
         Box(_slide, bx, 20, 195, 105, Navy, Rim);
-        Text(_slide, deck ? "CHEST" : "DECK", bx + 12, 30, 2.4f, new Color(0.75f, 0.75f, 0.85f));
-        Text(_slide, (deck ? FmDeckBuild.Chest(_player).Count : _deck.Count).ToString(), bx + 120, 80, 2.6f);
+        Text(_slide, deck ? "CHEST" : "DECK", bx + 14, 28, 2.0f, new Color(0.75f, 0.75f, 0.85f));
+        Text(_slide, (deck ? FmDeckBuild.Chest(_player).Count : _deck.Count).ToString(), bx + 100, 72, 2.4f);
 
         // ORDER: FM's sort buttons (the fusion sound when clicked)
         float ox = deck ? 295 : 290;
         Box(_slide, ox, 20, 765, 105, Navy, Rim);
-        Text(_slide, "ORDER", ox + 14, 40, 4.6f, Colors.White);
+        Text(_slide, "ORDER", ox + 14, 46, 3.6f, Colors.White);
         int order = deck ? _deckOrder : _chestOrder;
         for (int i = 0; i < Orders.Length; i++)
         {
             int idx = i;
             float x = ox + 175 + i * 83;
             var cell = Box(_slide, x, 32, 76, 80, new Color(0.08f, 0.1f, 0.12f), i == order ? Lime : new Color(0.2f, 0.22f, 0.18f), i == order ? 6 : 3);
-            Text(_slide, Orders[i], x + (76 - Orders[i].Length * 8 * 2.2f) / 2, 58, 2.2f, i == order ? new Color(0.9f, 1f, 0.6f) : new Color(0.55f, 0.48f, 0.25f));
+            Text(_slide, Orders[i], x + (76 - Orders[i].Length * 8 * 2.0f) / 2, 60, 2.0f, i == order ? new Color(0.9f, 1f, 0.6f) : new Color(0.55f, 0.48f, 0.25f));
             Hit(_slide, x, 32, 76, 80, () =>
             {
                 FmSfx.Play(FmSfx.Fusion);
@@ -223,8 +231,10 @@ public static class FmDeckEditor
         // the big title: DECK / CHEST and its count
         float tx = deck ? 1075 : 90;
         Box(_slide, tx, 5, 295, 135, Navy, Rim, 6);
-        Text(_slide, deck ? "DECK" : "CHEST", tx + 25, 20, 6f, Colors.White);
-        Text(_slide, deck ? $"{_deck.Count}/{FmDeckBuild.MaxDeck}" : FmDeckBuild.Chest(_player).Count.ToString(), tx + 60, 95, 3f);
+        string big = deck ? "DECK" : "CHEST";
+        Text(_slide, big, tx + (295 - big.Length * 8 * 5f) / 2, 18, 5f, Colors.White);
+        string cnt = deck ? $"{_deck.Count}/{FmDeckBuild.MaxDeck}" : FmDeckBuild.Chest(_player).Count.ToString();
+        Text(_slide, cnt, tx + (295 - cnt.Length * 8 * 2.6f) / 2, 92, 2.6f);
 
         // the list
         Box(_slide, 65, 150, 1305, 855, Navy, new Color(0.12f, 0.14f, 0.3f), 6);
@@ -237,30 +247,31 @@ public static class FmDeckEditor
             var ink = full ? new Color(0.45f, 0.45f, 0.5f) : Colors.White;
             foreach (var (cx, cw) in new[] { (75f, 80f), (160f, 120f), (290f, 580f), (880f, 190f), (1078f, 84f), (1168f, 162f) })
                 Box(_slide, cx, y, cw, 98, new Color(0.03f, 0.04f, 0.14f), new Color(0.14f, 0.16f, 0.32f), 2);
-            Text(_slide, $"{top + r + 1:00}", 82, y + 8, 3.4f, ink);
-            Text(_slide, $"{id:000}", 166, y + 8, 3.4f, ink);
-            Text(_slide, info.Name.Length > 17 ? info.Name[..17] : info.Name, 298, y + 26, 4.0f, ink);
+            Text(_slide, $"{top + r + 1:00}", 86, y + 10, 3.0f, ink);
+            Text(_slide, $"{id:000}", 170, y + 10, 3.0f, ink);
+            Text(_slide, info.Name.Length > 18 ? info.Name[..18] : info.Name, 298, y + 32, 3.4f, ink);
             if (!deck)
             {
-                Text(_slide, $"x{Owned(id)}", 780, y + 8, 2.4f, new Color(0.75f, 0.85f, 1f));
-                if (InDeck(id) > 0) Text(_slide, $"in deck {InDeck(id)}", 690, y + 68, 2f, new Color(0.6f, 0.95f, 0.6f));
+                Text(_slide, $"x{Owned(id)}", 800, y + 8, 2.2f, new Color(0.75f, 0.85f, 1f));
+                if (InDeck(id) > 0) Text(_slide, $"in deck {InDeck(id)}", 700, y + 72, 1.8f, new Color(0.6f, 0.95f, 0.6f));
             }
             if (FmDeckBuild.IsNew(_player, id)) Text(_slide, "NEW", 298, y + 4, 2.2f, new Color(1f, 0.85f, 0.2f));
             if (info.IsMonster)
             {
-                Text(_slide, info.Atk.ToString().PadLeft(4), 930, y + 8, 3.2f, ink);
-                Text(_slide, info.Def.ToString().PadLeft(4), 930, y + 52, 3.2f, ink);
+                Text(_slide, info.Atk.ToString().PadLeft(4), 950, y + 10, 2.8f, ink);
+                Text(_slide, info.Def.ToString().PadLeft(4), 950, y + 54, 2.8f, ink);
                 for (int k = 0; k < 2; k++)
                 {
                     int g = k == 0 ? info.GuardianStar1 : info.GuardianStar2;
                     if (g <= 0 || g >= StarSigns.Length) continue;
-                    var l = new Label { Text = StarSigns[g], Position = U(1180 + k * 76, y + 6), MouseFilter = Control.MouseFilterEnum.Ignore };
-                    l.AddThemeFontSizeOverride("font_size", (int)(62 * _u));
+                    var l = new Label { Text = StarSigns[g] + "\uFE0E", Position = U(1180 + k * 76, y + 10), MouseFilter = Control.MouseFilterEnum.Ignore };
+                    l.AddThemeFontOverride("font", FmStars.SymbolFont);
+                    l.AddThemeFontSizeOverride("font_size", (int)(56 * _u));
                     l.AddThemeColorOverride("font_color", full ? new Color(0.5f, 0.5f, 0.55f) : new Color(0.8f, 0.8f, 0.88f));
                     _slide.AddChild(l);
                 }
             }
-            else Text(_slide, FmData.TypeNames[(int)info.Type], 1180, y + 34, 2.6f, new Color(0.85f, 0.75f, 1f));
+            else Text(_slide, FmData.TypeNames[(int)info.Type], 1176, y + 36, 2.2f, new Color(0.85f, 0.75f, 1f));
             if (FmData.Art(id) is { } art)
             {
                 var pic = new TextureRect { ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.KeepAspectCovered, MouseFilter = Control.MouseFilterEnum.Ignore, Modulate = full ? new Color(0.5f, 0.5f, 0.5f) : Colors.White };
@@ -293,16 +304,16 @@ public static class FmDeckEditor
     {
         if (fromDeck)
         {
-            if (_deck.Count <= FmDeckBuild.MinSize(_player!)) { ShowTip($"A deck needs at least {FmDeckBuild.MinSize(_player!)} cards."); FmSfx.Play(FmSfx.Fail); return; }
+            if (_deck.Count <= FmDeckBuild.MinSize(_player!)) { ShowTip($"Your deck can't have fewer than {FmDeckBuild.MinDeck} cards."); FmSfx.Play(FmSfx.Fail); return; }
             _deck.Remove(id);
-            FmSfx.Play(FmSfx.Flip);
+            FmSfx.Play(FmSfx.Destroy);
         }
         else
         {
             if (_deck.Count >= FmDeckBuild.MaxDeck) { ShowTip("Your deck is full (40 cards)."); FmSfx.Play(FmSfx.Fail); return; }
             if (InDeck(id) >= Owned(id)) { ShowTip("Every copy you own is already in your deck."); FmSfx.Play(FmSfx.Fail); return; }
             _deck.Add(id);
-            FmSfx.Play(FmSfx.Draw);
+            FmSfx.Play(FmSfx.Summon);
         }
         Render();
     }

@@ -180,9 +180,14 @@ public static class FmDuelEnd
                         var ghost = Letter(lines[l][i].ToString(), size, new Color(1f, 0.45f + 0.15f * g, 0.1f, 0.35f / g), new Color(1f, 0.7f, 0.1f, 0.3f / g));
                         ghost.Position = new Vector2(x - size * 0.4f, y - g * size * 0.12f - size * 0.6f);
                         root.AddChild(ghost);
-                        var gt = ghost.CreateTween().SetLoops(4);
-                        gt.TweenProperty(ghost, "position:y", ghost.Position.Y - size * 0.1f, 0.25);
-                        gt.TweenProperty(ghost, "position:y", ghost.Position.Y, 0.25);
+                        // the flames rise with the letter's fall, then burn out once it has landed
+                        ghost.Modulate = new Color(1, 1, 1, 0);
+                        var gt = ghost.CreateTween();
+                        gt.TweenInterval(0.08 * (i + l * 3));
+                        gt.TweenProperty(ghost, "modulate:a", 1f, 0.1);
+                        gt.Parallel().TweenProperty(ghost, "position:y", ghost.Position.Y - size * 0.25f, 0.5);
+                        gt.TweenProperty(ghost, "modulate:a", 0f, 0.35);
+                        gt.TweenCallback(Callable.From(ghost.QueueFree));
                     }
                 var letter = Letter(lines[l][i].ToString(), size, fill, edge);
                 var home = new Vector2(x - size * 0.4f, y - size * 0.6f);
@@ -218,8 +223,9 @@ public static class FmDuelEnd
         l.AddThemeColorOverride("font_color", fill);
         l.AddThemeConstantOverride("outline_size", (int)(size * 0.12f));
         l.AddThemeColorOverride("font_outline_color", edge);
-        l.AddThemeColorOverride("font_shadow_color", new Color(0, 0, 0, 0.8f));
-        l.AddThemeConstantOverride("shadow_offset_x", 6); l.AddThemeConstantOverride("shadow_offset_y", 8);
+        // a tight, soft shadow (a big offset one read as a second, trailing letter)
+        l.AddThemeColorOverride("font_shadow_color", new Color(0, 0, 0, 0.45f));
+        l.AddThemeConstantOverride("shadow_offset_x", 2); l.AddThemeConstantOverride("shadow_offset_y", 3);
         return l;
     }
 

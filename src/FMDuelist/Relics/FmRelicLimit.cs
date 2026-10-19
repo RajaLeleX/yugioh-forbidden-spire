@@ -1,3 +1,4 @@
+using MegaCrit.Sts2.Core.Nodes.Rooms;
 using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Commands;
@@ -106,6 +107,8 @@ static class FmNoStsPowersPatch
     {
         var owner = target.Player ?? target.PetOwner;
         if (owner == null || !FmRules.IsFmPlayer(owner) || power.GetType().Assembly == typeof(FmRelicLimit).Assembly) return true;
+        // the game's own machinery for monster zone 1 (Osty) still has to work
+        if (power is MegaCrit.Sts2.Core.Models.Powers.DieForYouPower) return true;
         __result = Task.CompletedTask;
         return false;
     }
@@ -131,5 +134,40 @@ static class FmShopNavSafePatch
     {
         if (__exception != null) Log.Warn("[FMDuelist] shop navigation: " + __exception.Message);
         return null;
+    }
+}
+
+/// <summary>
+/// Monster zone 1 is the game's Osty. Summoning it again after it was destroyed revives it, and the game expects its
+/// creature node to still be in the room: put it back if it's gone, and never let a slip in the game's own summon
+/// code cancel your summon.
+/// </summary>
+[HarmonyPatch(typeof(OstyCmd), nameof(OstyCmd.Summon))]
+static class FmOstySummonSafePatch
+{
+    static void Prefix(Player summoner)
+    {
+        try
+        {
+            if (!FmRules.IsFmPlayer(summoner) || summoner.Creature.CombatState is not { } combat || NCombatRoom.Instance is not { } room) return;
+            var osty = combat.Allies.FirstOrDefault(c => c.Monster is MegaCrit.Sts2.Core.Models.Monsters.Osty && c.PetOwner == summoner);
+            if (osty != null && room.GetCreatureNode(osty) == null) room.AddCreature(osty);
+        }
+        catch (Exception ex) { Log.Warn("[FMDuelist] osty node: " + ex.Message); }
+    }
+
+    static void Postfix(Player summoner, ref Task<SummonResult> __result)
+    {
+        if (FmRules.IsFmPlayer(summoner)) __result = Safe(__result);
+    }
+
+    static async Task<SummonResult> Safe(Task<SummonResult> inner)
+    {
+        try { return await inner; }
+        catch (Exception ex)
+        {
+            Log.Warn("[FMDuelist] osty summon: " + ex.Message);
+            return default!;
+        }
     }
 }

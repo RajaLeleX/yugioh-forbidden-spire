@@ -340,5 +340,11 @@ static class FreeDuelIconPatch
 [HarmonyPatch(typeof(RestSiteRoom), nameof(RestSiteRoom.Resume))]
 static class FreeDuelResumePatch
 {
-    static void Postfix() => FmRestDuel.Finished();
+    static void Postfix()
+    {
+        bool wasDuel = FmRestDuel.Active;
+        FmRestDuel.Finished();
+        // the rest site's own theme again (entering the room played it; coming back from the duel doesn't)
+        if (wasDuel) FmMusic.Play(FmMedia.RestSiteTrack);
+    }
 }

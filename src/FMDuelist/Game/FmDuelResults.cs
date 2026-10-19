@@ -139,6 +139,9 @@ public static class FmDuelEnd
         int youLp = Math.Max(0, player.Creature.CurrentHp);
         // the loser's Life Points roll all the way down to 0 (the game keeps a fallen duelist at 1 HP until it ends)
         if (FmLifePoints.Finish(won)) { var t = tree.CreateTimer(0.8); await t.ToSignal(t, SceneTreeTimer.SignalName.Timeout); }
+        // the loser goes down: the duelist to the Shadow Realm, or Duel Master K in flames
+        if (won && FmRival.Priest is { } rival) await FmDeathFx.Duelist(rival);
+        else if (!won) await FmDeathFx.Player(player.Creature);
         int points = FmDuelStats.SkillPoints(turns, youLp);
         var (kind, letter, stars) = FmDuelStats.Rank(points);
         LastKind = kind; LastLetter = letter;

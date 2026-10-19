@@ -251,6 +251,14 @@ public abstract class FmWildMonster : MonsterModel
         FmWild.Announce(c);
     }
 
+    /// <summary>A wild monster burns away like a destroyed monster card.</summary>
+    public override async Task BeforeDeath(Creature creature)
+    {
+        await base.BeforeDeath(creature);
+        if (creature != Creature) return;
+        if (NCombatRoom.Instance?.GetCreatureNode(creature)?.Visuals.GetNodeOrNull<Node2D>("FmWildArt") is { } art) await FmDeathFx.CardBurn(art, ArtHeight);
+    }
+
     /// <summary>A wild monster fell: the others close ranks once it's gone.</summary>
     public override async Task AfterDeath(MegaCrit.Sts2.Core.GameActions.Multiplayer.PlayerChoiceContext choiceContext, Creature creature, bool wasRemovalPrevented, float deathAnimLength)
     {

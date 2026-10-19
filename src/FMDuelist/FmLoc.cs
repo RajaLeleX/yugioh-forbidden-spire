@@ -44,7 +44,7 @@ public static class FmLoc
                 [E(typeof(MagicProtectionKit)) + ".description"] = "Add Swords of Revealing Light and Spellbinding Circle to your deck.",
                 [E(typeof(MagicProtectionKit)) + ".flavor"] = "A duelist never leaves home without a defense.",
                 [E(typeof(DragonTreasure)) + ".title"] = "Joey's Trump Card",
-                [E(typeof(DragonTreasure)) + ".description"] = "Add Baby Dragon and Thousand Dragon to your deck. Powerful Dragons (level 5+) can be played and fused into.",
+                [E(typeof(DragonTreasure)) + ".description"] = "Add Baby Dragon and Time Wizard to your deck. Powerful Dragons (level 5+) can be played and fused into.",
                 [E(typeof(DragonTreasure)) + ".flavor"] = "\"Baby Dragon, plus Time Wizard... Thousand Dragon!\"",
             });
 

@@ -25,7 +25,8 @@
   "summon": 9,
   "trap": 21,
   "powerup": 15,
-  "counter": 10
+  "counter": 10,
+  "step": 10
  },
  "sfxNote": "Indices into the 23 decoded SD_SE.DAT samples (fm_sfx/sfx_NNN.mp3); defaults chosen by sound profile until confirmed.",
  "restSite_BuildDeck": 14,

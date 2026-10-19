@@ -165,6 +165,21 @@ public sealed class FmTextBox
     /// <summary>Types one box of dialogue, then waits for the player to click on (unless <paramref name="wait"/> is false).</summary>
     public async Task Say(string text, bool wait = true, Func<bool>? skipAll = null)
     {
+        // lines wrap to the box, and a text too long for one box carries on in the next (click to continue)
+        int cols = Math.Max(8, (int)((_root.Size.X - _origin.X * 2) / (CellW * _px)));
+        int rows = Math.Max(1, (int)((_root.Size.Y - _origin.Y - 8 * _px) / (LinePitch * _px)));
+        var lines = string.IsNullOrEmpty(text) ? new List<string>() : Wrap(text, cols);
+        if (lines.Count <= rows) { await SayBox(string.Join("\n", lines), wait, skipAll); return; }
+        for (int i = 0; i < lines.Count; i += rows)
+        {
+            bool last = i + rows >= lines.Count;
+            await SayBox(string.Join("\n", lines.Skip(i).Take(rows)), wait || !last, skipAll);
+            if (skipAll?.Invoke() ?? false) return;
+        }
+    }
+
+    async Task SayBox(string text, bool wait, Func<bool>? skipAll)
+    {
         if (Engine.GetMainLoop() is not SceneTree tree) return;
         Clear();
         _clicked = false;

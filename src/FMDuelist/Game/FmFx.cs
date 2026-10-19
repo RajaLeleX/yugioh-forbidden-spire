@@ -7,7 +7,7 @@ namespace FMDuelist.Game;
 /// <summary>Sound effects: FM's own sounds decoded from the disc when available, otherwise a close game sound.</summary>
 public static class FmSfx
 {
-    public const string Mark = "mark", Fusion = "fusion", Summon = "summon", Flip = "flip", Destroy = "destroy", Trap = "trap", PowerUp = "powerup", Counter = "counter", Draw = "draw", Fail = "fail", Slash = "slash";
+    public const string Mark = "mark", Fusion = "fusion", Summon = "summon", Flip = "flip", Destroy = "destroy", Trap = "trap", PowerUp = "powerup", Counter = "counter", Draw = "draw", Fail = "fail", Slash = "slash", Step = "step";
 
     private static readonly Dictionary<string, string> Fallback = new()
     {

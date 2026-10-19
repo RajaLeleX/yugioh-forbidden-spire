@@ -126,8 +126,9 @@ public static class FmStoryIntro
                 flicker.TweenProperty(c, "self_modulate", Colors.White, 1.2).SetTrans(Tween.TransitionType.Sine);
             }
 
-            // 1) Heishin before the glowing treasure
-            await Hold(3.5); Fade(heishin, 1, 0.4); Flicker(heishin);
+            // 1) Heishin's footsteps echo in the dark, then he stands before the glowing treasure
+            for (int i = 0; i < 5 && !_skip; i++) { FmSfx.PlaySoft(FmSfx.Step, -8f + i * 1.2f, 0.92f + (i % 2) * 0.06f); await Hold(0.62); }
+            await Hold(0.4); Fade(heishin, 1, 0.4); Flicker(heishin);
             await Hold(2.6);
             var red = heishin.CreateTween(); red.TweenProperty(heishin, "modulate", new Color(0.8f, 0.15f, 0.1f, 0f), 0.45);
             await Hold(2.0);
@@ -144,11 +145,15 @@ public static class FmStoryIntro
             var pan = tablet.CreateTween(); pan.TweenProperty(tablet, "position:x", -(tabletW - sw), 5.0).SetTrans(Tween.TransitionType.Linear);
             await Hold(0.25);
             await Say(L(3)); await Say(L(4));
-            // 4) the title, on track 02
+            // clicking the last line away jumps the pan to the tablet's end, which holds a few seconds (as in FM)
+            if (pan.IsRunning()) pan.Kill();
+            tablet.Position = new Vector2(-(tabletW - sw), tablet.Position.Y);
             text.Clear(); Fade(speaker, 0, 0.5);
+            await Hold(3.5);
+            // 4) a fade to black, then the title on track 02
             if (!_skip) FmMusic.PlayOnce(TitleTrack);
-            Fade(tablet, 0, 2.0); Fade(boxBg, 0, 2.0); Fade(text.Root, 0, 2.0);
-            await Hold(4.0);
+            Fade(tablet, 0, 1.2); Fade(boxBg, 0, 1.2); Fade(text.Root, 0, 1.2);
+            await Hold(2.0);
             Fade(title, 1, 1.0);
             await Hold(9.0);
             Fade(title, 0, 1.0);

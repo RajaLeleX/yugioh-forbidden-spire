@@ -24,7 +24,7 @@ public static class FmRelicLimit
     /// <summary>Relics an FM run can get here: the Millennium Items and the Drop Rate Boost anywhere; the starter relics
     /// (the run's own and each act's opening Ancient relics) only in an act's starting room.</summary>
     public static bool Fm(RelicModel r, Player p) => r is FmMillenniumItem or MillenniumPuzzle or FmDropBoost
-        || (p.RunState.ActFloor == 0 && (r is ExodiaCardBox or MagicProtectionKit or DragonTreasure or EquipBoosterPack
+        || (p.RunState.ActFloor <= 1 && (r is ExodiaCardBox or MagicProtectionKit or DragonTreasure or EquipBoosterPack
             // an act's opening relic only when the mod has made it a Forbidden Memories one (its art and name)
             || (r.Rarity is MegaCrit.Sts2.Core.Entities.Relics.RelicRarity.Starter or MegaCrit.Sts2.Core.Entities.Relics.RelicRarity.Ancient
                 && (FmRetheme.RelicArt(r) != null || FmGuardianStars.RelicIcons.ContainsKey(r.Id.Entry)))));

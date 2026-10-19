@@ -124,6 +124,7 @@ public sealed class MillenniumPuzzle : RelicModel
     public override async Task BeforeCombatStart()
     {
         FmField.ResetCombat();
+        { var me = Owner; Godot.Callable.From(() => FmDeathFx.DressPlayer(me)).CallDeferred(); } // Duel Master K's portrait
         await FmEnergyFilter.CleanBelt(Owner);
         FmInput.Ensure();
         _scaled.Clear();
@@ -496,6 +497,9 @@ public sealed class MillenniumPuzzle : RelicModel
 
     public override async Task BeforeDeath(Creature creature)
     {
+        // a game over outside a duel: Duel Master K burns away
+        if (creature == Owner.Creature && !FmRival.Active && FmAct1Story.State != FmAct1Story.Phase.HeishinDuel && !FmPractice.Active)
+            await FmDeathFx.Player(creature);
         // Act 1 story: losing to Heishin leads into the Puzzle
         if (FmAct1Story.State == FmAct1Story.Phase.HeishinDuel && creature == Owner.Creature)
         {
@@ -673,9 +677,10 @@ public sealed class DragonTreasure : RelicModel
 
     public override async Task AfterObtained()
     {
-        // Joey's Trump Card: Baby Dragon and the Thousand Dragon it grows into
-        foreach (int id in new[] { 4, 69 })
+        // Joey's Trump Card: Baby Dragon and Time Wizard (fuse them for Thousand Dragon)
+        foreach (int id in new[] { 4, FmWild.Id("Time Wizard") })
         {
+            if (id <= 0 || FmSheet.TypeFor(id) == null) continue;
             var card = Owner.RunState.CreateCard(ModelDb.GetById<CardModel>(ModelDb.GetId(FmSheet.TypeFor(id))), Owner);
             await CardPileCmd.Add(card, PileType.Deck);
         }

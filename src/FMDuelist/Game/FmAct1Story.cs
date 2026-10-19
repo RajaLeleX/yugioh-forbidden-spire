@@ -114,8 +114,8 @@ static partial class FmAct1Story
         int index = ev.CurrentOptions.ToList().IndexOf(options[pick]);
         if (index < 0) return;
         sync!.ChooseLocalOption(index);
-        // the game's own "proceed" follows straight on (its box is hidden): on to the map
-        for (int wait = 0; wait < 40; wait++)
+        // straight on to the map: the game's own "proceed" if it comes up quickly, otherwise the map is opened directly
+        for (int wait = 0; wait < 12; wait++)
         {
             await s.Wait(0.1);
             var now = sync.GetLocalEvent();
@@ -123,7 +123,8 @@ static partial class FmAct1Story
             var go = now.CurrentOptions.ToList().FindIndex(o => o.IsProceed);
             if (go >= 0) { sync.ChooseLocalOption(go); return; }
         }
-        FmNoNeowPatch.Released = true;
+        Log.Info("[FMDuelist] starter picked: opening the map");
+        MegaCrit.Sts2.Core.Nodes.Screens.Map.NMapScreen.Instance?.Open();
     }
 
     // ---------------- the story duels ----------------

@@ -110,6 +110,16 @@ public static class FmDeckBuild
         Log.Info("[FMDuelist] deck out: no cards left to draw");
         if (FmRival.Active) FmRival.Banner("You have no cards left to draw!  Deck out!");
         await Task.Delay(900);
+        // a Free Duel or the Duel Master K practice: lost, with its results (not a game over)
+        if (FmRestDuel.Active) { await FmRestDuel.OnLoss(p); return; }
+        if (FmPractice.Active)
+        {
+            int turns = p.Creature.CombatState?.RoundNumber ?? 1;
+            int comLp = Math.Max(0, FmRival.Priest?.CurrentHp ?? 0);
+            FmRival.Active = false;
+            await FmPractice.Finish(false, p, comLp, turns);
+            return;
+        }
         await CreatureCmd.Kill(p.Creature, true);
     }
 
@@ -134,7 +144,19 @@ static class FmNoReshufflePatch
 {
     static bool Prefix(Player player, ref Task __result)
     {
-        if (!FmRules.IsFmPlayer(player) || FmPractice.Active) return true;
+        if (!FmRules.IsFmPlayer(player)) return true; // every duel, the Duel Master K practice too
+        __result = Task.CompletedTask;
+        return false;
+    }
+}
+
+/// <summary>...and no direct reshuffle either (a running-out draw shuffles the discard back in through this one).</summary>
+[HarmonyLib.HarmonyPatch(typeof(MegaCrit.Sts2.Core.Commands.CardPileCmd), nameof(MegaCrit.Sts2.Core.Commands.CardPileCmd.Shuffle))]
+static class FmNoShufflePatch
+{
+    static bool Prefix(Player player, ref Task __result)
+    {
+        if (!FmRules.IsFmPlayer(player)) return true; // every duel, the Duel Master K practice too
         __result = Task.CompletedTask;
         return false;
     }

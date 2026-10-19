@@ -540,7 +540,7 @@ public sealed class MillenniumPuzzle : RelicModel
     public override async Task AfterPlayerTurnStartLate(PlayerChoiceContext ctx, Player player)
     {
         // FM: no reshuffle; not being able to draw a full hand is a loss (deck out)
-        if (Mine(player) && !FmPractice.Active) await FmDeckBuild.CheckDeckOut(player, FmBonus.HandSize(player));
+        if (Mine(player)) await FmDeckBuild.CheckDeckOut(player, FmBonus.HandSize(player));
     }
 
     public override Task AfterPlayerTurnStart(PlayerChoiceContext ctx, Player player)

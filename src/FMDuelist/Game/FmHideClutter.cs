@@ -53,3 +53,42 @@ static class FmHideClutter
         if (Traverse.Create(__instance).Field("_player").GetValue<Player>() is { } p && FmRules.IsFmPlayer(p)) __instance.Visible = false;
     }
 }
+
+/// <summary>
+/// Osty never shows in a Forbidden Memories run: monster zone 1 uses the game's Osty underneath (its mechanics keep
+/// working), but its body is hidden from the moment its node exists (summon fade-in, revive and death included) and
+/// for as long as it lives; only the zone's card is ever seen.
+/// </summary>
+[HarmonyPatch(typeof(MegaCrit.Sts2.Core.Nodes.Rooms.NCombatRoom), nameof(MegaCrit.Sts2.Core.Nodes.Rooms.NCombatRoom.AddCreature))]
+static class FmNoOstyPatch
+{
+    static bool FmRun => RunManager.Instance.DebugOnlyGetState()?.Players.Any(FmRules.IsFmPlayer) == true;
+
+    static void Postfix(MegaCrit.Sts2.Core.Nodes.Rooms.NCombatRoom __instance, Creature creature)
+    {
+        try
+        {
+            if (!(creature.Monster is Osty or FmZonePet) || !FmRun) return;
+            if (__instance.GetCreatureNode(creature) is not { } node || Engine.GetMainLoop() is not SceneTree tree) return;
+            void Hide()
+            {
+                if (!GodotObject.IsInstanceValid(node) || !node.IsInsideTree()) { tree.ProcessFrame -= Hide; return; }
+                if (node.Visuals.GetCurrentBody() is { } body && body.Visible) body.Visible = false;
+            }
+            Hide();
+            tree.ProcessFrame += Hide;
+        }
+        catch (Exception ex) { MegaCrit.Sts2.Core.Logging.Log.Warn("[FMDuelist] hide osty: " + ex.Message); }
+    }
+}
+
+/// <summary>...and Osty is never heard: its own sounds and the Necrobinder's summon sound stay silent in FM runs.</summary>
+[HarmonyPatch(typeof(MegaCrit.Sts2.Core.Commands.SfxCmd), nameof(MegaCrit.Sts2.Core.Commands.SfxCmd.Play), new[] { typeof(string), typeof(float) })]
+static class FmNoOstySoundPatch
+{
+    static bool Prefix(string sfx)
+    {
+        if (sfx == null || !(sfx.Contains("/osty/") || sfx.Contains("necrobinder_summon"))) return true;
+        return RunManager.Instance.DebugOnlyGetState()?.Players.Any(FmRules.IsFmPlayer) != true;
+    }
+}

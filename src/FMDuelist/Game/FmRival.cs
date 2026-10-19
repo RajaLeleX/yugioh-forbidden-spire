@@ -400,6 +400,10 @@ public static class FmRival
             };
             foreach (var t in new[] { typeof(FmRivalZone1), typeof(FmRivalZone2), typeof(FmRivalZone3), typeof(FmRivalZone4), typeof(FmRivalZone5) })
                 monsters[ModelDb.GetEntry(t) + ".name"] = "Monster Zone";
+            // your monster zone 1 is the game's Osty underneath: never named as Osty
+            monsters["OSTY.name"] = "Monster Zone";
+            foreach (var t in new[] { typeof(FmZonePet2), typeof(FmZonePet3), typeof(FmZonePet4), typeof(FmZonePet5) })
+                monsters[ModelDb.GetEntry(t) + ".name"] = "Monster Zone";
             loc.GetTable("monsters").MergeWith(monsters);
             loc.GetTable("encounters").MergeWith(new Dictionary<string, string>
             {

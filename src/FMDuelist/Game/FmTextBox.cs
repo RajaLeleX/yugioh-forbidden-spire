@@ -87,29 +87,41 @@ public sealed class FmTextBox
     /// <summary>A line in FM's font as its own control (<paramref name="px"/> screen pixels per PSX pixel).</summary>
     public static Control Text(string s, float px, Color? tint = null)
     {
-        LoadFont();
+        // A sharp font instead of the blown-up PSX bitmap: one letter per FM cell (8x12 PSX pixels), centred in it,
+        // so every layout measured with TextWidth lines up exactly as before.
         var root = new Control { MouseFilter = Control.MouseFilterEnum.Ignore, Size = new Vector2(s.Length * CellW * px, CellH * px) };
-        if (_sheet == null || _glyphs == null)
-        {
-            var l = new Label { Text = s, MouseFilter = Control.MouseFilterEnum.Ignore };
-            l.AddThemeFontOverride("font", new SystemFont { FontNames = new[] { "Lucida Console", "Consolas", "Courier New" }, FontWeight = 600 });
-            l.AddThemeFontSizeOverride("font_size", (int)(10 * px));
-            if (tint is { } c0) l.AddThemeColorOverride("font_color", c0);
-            root.AddChild(l);
-            return root;
-        }
+        var cell = new Vector2(CellW, CellH) * px;
+        int size = Math.Max(8, (int)Math.Round(13 * px));
         for (int i = 0; i < s.Length; i++)
         {
-            if (s[i] == ' ' || !_glyphs.TryGetValue(s[i], out var rect)) continue;
-            root.AddChild(new TextureRect
+            if (s[i] == ' ') continue;
+            var l = new Label
             {
-                Texture = new AtlasTexture { Atlas = _sheet, Region = rect }, Position = new Vector2(i * CellW * px, 0), Size = new Vector2(CellW, CellH) * px,
-                ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.Scale,
-                TextureFilter = CanvasItem.TextureFilterEnum.Nearest, MouseFilter = Control.MouseFilterEnum.Ignore, Modulate = tint ?? Colors.White,
-            });
+                Text = s[i].ToString(), Position = new Vector2(i * cell.X, 0), Size = cell, ClipText = false,
+                HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center,
+                MouseFilter = Control.MouseFilterEnum.Ignore,
+            };
+            l.AddThemeStyleboxOverride("normal", new StyleBoxEmpty());
+            l.AddThemeFontOverride("font", CrispFont);
+            l.AddThemeFontSizeOverride("font_size", size);
+            l.AddThemeColorOverride("font_color", tint ?? Colors.White);
+            l.AddThemeColorOverride("font_outline_color", new Color(0.02f, 0.03f, 0.1f, 0.9f));
+            l.AddThemeConstantOverride("outline_size", Math.Max(2, (int)Math.Round(px * 1.2f)));
+            l.AddThemeColorOverride("font_shadow_color", new Color(0, 0, 0, 0.6f));
+            l.AddThemeConstantOverride("shadow_offset_x", Math.Max(1, (int)(px * 0.6f)));
+            l.AddThemeConstantOverride("shadow_offset_y", Math.Max(1, (int)(px * 0.6f)));
+            root.AddChild(l);
         }
         return root;
     }
+
+    static SystemFont? _crisp;
+    /// <summary>The sharp monospaced face used for FM-style labels.</summary>
+    public static SystemFont CrispFont => _crisp ??= new SystemFont
+    {
+        FontNames = new[] { "Consolas", "Lucida Console", "Courier New", "monospace" }, FontWeight = 700,
+        Antialiasing = TextServer.FontAntialiasing.Gray, Hinting = TextServer.Hinting.Light, SubpixelPositioning = TextServer.SubpixelPositioning.Disabled,
+    };
 
     /// <summary>Width in screen pixels of a line in FM's font.</summary>
     public static float TextWidth(string s, float px) => s.Length * CellW * px;

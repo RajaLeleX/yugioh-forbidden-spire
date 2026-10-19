@@ -56,7 +56,7 @@ void fragment(){
     public static Task In(double seconds = 0.5) => To(0, seconds);
 }
 
-/// <summary>FM's card passwords and their Star Chip prices, read from the player's own disc (SLUS_014.11).</summary>
+/// <summary>FM's card passwords and their Star Chip prices, read from the player's own disc (DATA/WA_MRG.MRG).</summary>
 public static class FmPasswords
 {
     public const int NotForSale = 999999;
@@ -68,7 +68,7 @@ public static class FmPasswords
         if (_byPassword != null) return;
         _byPassword = new();
         _cost = new int[FmData.CardCount + 1];
-        var slus = FmData.Slus;
+        var slus = FmData.Wa; // the table is in WA_MRG.MRG (at 0xFB9808 on the NTSC-U disc)
         if (slus == null) return;
         // the table: 8 bytes per card (Star Chip price, then the password as 8 BCD digits); card 1 is Blue-Eyes
         byte[] first = { 0x3F, 0x42, 0x0F, 0x00, 0x39, 0x11, 0x63, 0x89 };
@@ -174,7 +174,7 @@ public static class FmPasswordScreen
             {
                 foreach (var c in chips.GetChildren()) c.QueueFree();
                 Text(chips, $"★x{player.Gold}".Replace("★", ""), 505, 158, 1.4f);
-                var star = new Label { Text = "★", Position = U(462, 140), MouseFilter = Control.MouseFilterEnum.Ignore };
+                var star = new Label { Text = "★", Position = U(458, 146), MouseFilter = Control.MouseFilterEnum.Ignore };
                 star.AddThemeFontOverride("font", FmStars.SymbolFont);
                 star.AddThemeFontSizeOverride("font_size", (int)(56 * u));
                 star.AddThemeColorOverride("font_color", Yellow);
@@ -194,21 +194,21 @@ public static class FmPasswordScreen
                 foreach (var c in digitRow.GetChildren()) c.QueueFree();
                 for (int i = 0; i < 8; i++) Text(digitRow, digits[i].ToString(), dx + i * dw, dy, 2.0f);
                 // the red circle round the chosen digit, and its up/down arrows
-                var ring = new Line2D { Points = Ring(U(dx + sel * dw + 20, dy + 24), 30 * u), Closed = true, Width = 3 * u, DefaultColor = new Color(0.95f, 0.15f, 0.15f) };
+                var ring = new Line2D { Points = Ring(U(dx + sel * dw + 24, dy + 36), 36 * u), Closed = true, Width = 3 * u, DefaultColor = new Color(0.95f, 0.15f, 0.15f) };
                 digitRow.AddChild(ring);
-                digitRow.AddChild(Arrow(U(dx + sel * dw + 20, dy - 28), 0, u));
-                digitRow.AddChild(Arrow(U(dx + sel * dw + 20, dy + 78), 1, u));
+                digitRow.AddChild(Arrow(U(dx + sel * dw + 24, dy - 22), 0, u));
+                digitRow.AddChild(Arrow(U(dx + sel * dw + 24, dy + 94), 1, u));
             }
             ShowDigits();
-            for (int i = 0; i < 8; i++) { int k = i; Hit(dx + i * dw - 4, dy - 6, dw, 66, () => { sel = k; FmSfx.Play(FmSfx.Flip); ShowDigits(); }); }
-            stage.AddChild(Arrow(U(480, dy + 24), 2, u)); stage.AddChild(Arrow(U(912, dy + 24), 3, u));
-            Hit(458, dy, 44, 50, () => { sel = (sel + 7) % 8; FmSfx.Play(FmSfx.Flip); ShowDigits(); });
-            Hit(890, dy, 44, 50, () => { sel = (sel + 1) % 8; FmSfx.Play(FmSfx.Flip); ShowDigits(); });
+            for (int i = 0; i < 8; i++) { int k = i; Hit(dx + i * dw, dy, dw, 72, () => { sel = k; FmSfx.Play(FmSfx.Flip); ShowDigits(); }); }
+            stage.AddChild(Arrow(U(480, dy + 36), 2, u)); stage.AddChild(Arrow(U(912, dy + 36), 3, u));
+            Hit(458, dy + 11, 44, 50, () => { sel = (sel + 7) % 8; FmSfx.Play(FmSfx.Flip); ShowDigits(); });
+            Hit(890, dy + 11, 44, 50, () => { sel = (sel + 1) % 8; FmSfx.Play(FmSfx.Flip); ShowDigits(); });
             void Bump(int d) { digits[sel] = (digits[sel] + d + 10) % 10; FmSfx.Play(FmSfx.Flip); ShowDigits(); }
             // up/down: the arrows over and under the chosen digit (they follow it)
             var upHit = Hit(0, 0, 44, 40, () => Bump(1));
             var downHit = Hit(0, 0, 44, 40, () => Bump(-1));
-            void PlaceUpDown() { upHit.Position = U(dx + sel * dw - 2, dy - 48); downHit.Position = U(dx + sel * dw - 2, dy + 58); }
+            void PlaceUpDown() { upHit.Position = U(dx + sel * dw + 2, dy - 42); downHit.Position = U(dx + sel * dw + 2, dy + 74); }
 
             // the message / choice panel
             Box(430, 430, 525, 255);
@@ -226,8 +226,8 @@ public static class FmPasswordScreen
                 Text(msg, "'PASSWORD'", 455, 510, 1.25f);
                 Text(msg, "OK", 600, 595, 1.4f);
                 Text(msg, "END", 720, 595, 1.4f);
-                msg.AddChild(new Line2D { Points = Ring(U(578, 612), 16 * u), Closed = true, Width = 3 * u, DefaultColor = new Color(0.4f, 0.55f, 1f) });
-                msg.AddChild(new Line2D { Points = Ring(U(698, 612), 16 * u), Closed = true, Width = 3 * u, DefaultColor = new Color(0.9f, 0.25f, 0.2f) });
+                msg.AddChild(new Line2D { Points = Ring(U(578, 620), 16 * u), Closed = true, Width = 3 * u, DefaultColor = new Color(0.4f, 0.55f, 1f) });
+                msg.AddChild(new Line2D { Points = Ring(U(698, 620), 16 * u), Closed = true, Width = 3 * u, DefaultColor = new Color(0.9f, 0.25f, 0.2f) });
                 buttons.Add(Hit(560, 585, 110, 55, Ok));
                 buttons.Add(Hit(680, 585, 140, 55, () => done = true));
             }

@@ -222,9 +222,31 @@ public static partial class FmAudio
 
     static AudioStreamWav ToStream(short[] pcm)
     {
+        pcm = Soften(pcm);
         var bytes = new byte[pcm.Length * 2];
         Buffer.BlockCopy(pcm, 0, bytes, 0, bytes.Length);
         return new AudioStreamWav { Format = AudioStreamWav.FormatEnum.Format16Bits, MixRate = FmSfxBank.Rate, Data = bytes };
+    }
+
+    /// <summary>
+    /// Takes the edge off a sound effect: a gentle low-pass (~5 kHz) for the harsh highs, the peaks brought down
+    /// from full scale (many samples clip), and 3 ms fades so they start and stop without a click.
+    /// </summary>
+    static short[] Soften(short[] pcm)
+    {
+        if (pcm.Length == 0) return pcm;
+        var o = new float[pcm.Length];
+        float a = 1f - MathF.Exp(-2f * MathF.PI * 5000f / FmSfxBank.Rate), y = 0, peak = 1;
+        for (int i = 0; i < pcm.Length; i++) { y += a * (pcm[i] - y); o[i] = y; peak = Math.Max(peak, Math.Abs(y)); }
+        float gain = Math.Min(1f, 20000f / peak);
+        int fade = Math.Min(pcm.Length / 2, FmSfxBank.Rate * 3 / 1000);
+        var r = new short[pcm.Length];
+        for (int i = 0; i < pcm.Length; i++)
+        {
+            float env = Math.Min(1f, Math.Min((i + 1f) / Math.Max(1, fade), (pcm.Length - i) / (float)Math.Max(1, fade)));
+            r[i] = (short)Math.Clamp(o[i] * gain * env, short.MinValue, short.MaxValue);
+        }
+        return r;
     }
 
     static partial void StartImpl()

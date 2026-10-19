@@ -37,7 +37,7 @@ public static class FmSfx
         {
             double t = (double)i / rate, env = Math.Min(1, (n - i) / (rate * 0.02));
             double f = i < n / 2 ? 1568 : 2093;
-            short v = (short)((Math.Sin(2 * Math.PI * f * t) >= 0 ? 1 : -1) * 6000 * env);
+            short v = (short)(Math.Sin(2 * Math.PI * f * t) * 5000 * env); // a soft sine, not a square
             data[i * 2] = (byte)v; data[i * 2 + 1] = (byte)(v >> 8);
         }
         return new AudioStreamWav { Format = AudioStreamWav.FormatEnum.Format16Bits, MixRate = rate, Data = data };
@@ -242,6 +242,7 @@ public static class FmSfx
                     tree.Root.AddChild(_player);
                 }
                 _player.Stream = stream;
+                _player.VolumeDb = -4f; // a little under the music, like FM
                 _player.Play();
                 return;
             }

@@ -268,13 +268,14 @@ public static class FmLibrary
     {
         if (_attack == null) return;
         foreach (var c in _attack.GetChildren()) c.QueueFree();
-        if (!FmData.Get(id).IsMonster) { _attack.AddChild(Caption("Only monsters attack.", 22)); return; }
+        if (!FmMonsterStage.HasScene(id)) { _attack.AddChild(Caption("Equip cards have no animation.", 22)); return; }
         var stage = new FmMonsterStage(id);
         stage.View.SizeFlagsVertical = Control.SizeFlags.ExpandFill;
         stage.View.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         stage.View.CustomMinimumSize = new Vector2(360, 220);
         _attack.AddChild(stage.View);
-        _attack.AddChild(Caption($"{FmData.Get(id).Name} attacks ({FmAttackVfx.For(id).style})", 18));
+        _attack.AddChild(Caption(FmData.Get(id).IsMonster ? $"{FmData.Get(id).Name} attacks ({FmAttackVfx.For(id).style})"
+            : FmData.Get(id).Type == FmType.Trap ? $"Duel Master K springs {FmData.Get(id).Name}" : $"Duel Master K casts {FmData.Get(id).Name}", 18));
     }
 
     // ---------------- Fusion Calculator tab ----------------

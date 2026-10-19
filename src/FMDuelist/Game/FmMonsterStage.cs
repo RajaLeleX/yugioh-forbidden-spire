@@ -76,8 +76,12 @@ public sealed class FmMonsterStage
     }
 
     // ---------------- who's in it ----------------
+    /// <summary>Cards the stage can show: monsters attack; spells, traps and rituals are cast by Duel Master K (equips aren't shown).</summary>
+    public static bool HasScene(int id) => FmData.Get(id) is var c && (c.IsMonster || c.Type is FmType.Magic or FmType.Trap or FmType.Ritual);
+
     static Node2D Monster(int id)
     {
+        if (!FmData.Get(id).IsMonster) return Caster();
         var root = new Node2D();
         // a shadow on the floor
         root.AddChild(new Polygon2D { Color = new Color(0, 0, 0, 0.75f), Polygon = Ellipse(120, 26), Position = new Vector2(0, 6) });
@@ -96,6 +100,25 @@ public sealed class FmMonsterStage
             t.TweenProperty(body, "position:y", -10f, 0.9).SetTrans(Tween.TransitionType.Sine);
             t.TweenProperty(body, "position:y", 0f, 0.9).SetTrans(Tween.TransitionType.Sine);
         }
+        return root;
+    }
+
+    /// <summary>Duel Master K (his portrait) standing in the room to cast the card.</summary>
+    static Node2D Caster()
+    {
+        var root = new Node2D();
+        root.AddChild(new Polygon2D { Color = new Color(0, 0, 0, 0.75f), Polygon = Ellipse(110, 24), Position = new Vector2(0, 6) });
+        var body = new Node2D { Name = "Body" };
+        root.AddChild(body);
+        if (FmDuelMasterK.Portrait() is { } tex)
+        {
+            const int h = 270;
+            body.AddChild(new Sprite2D { Texture = FmScene.Sized(tex, h), Position = new Vector2(0, -h / 2f - 6), TextureFilter = CanvasItem.TextureFilterEnum.Linear });
+        }
+        else body.AddChild(new Polygon2D { Color = new Color(0.3f, 0.3f, 0.35f), Polygon = Rect(-50, -260, 100, 260) });
+        var t = body.CreateTween().SetLoops();
+        t.TweenProperty(body, "position:y", -6f, 1.1).SetTrans(Tween.TransitionType.Sine);
+        t.TweenProperty(body, "position:y", 0f, 1.1).SetTrans(Tween.TransitionType.Sine);
         return root;
     }
 
@@ -142,7 +165,13 @@ public sealed class FmMonsterStage
             await Wait(tree, 0.7);
             while (Alive)
             {
-                if (View.IsVisibleInTree() && FmData.Get(_id).IsMonster) await Attack(tree);
+                if (View.IsVisibleInTree())
+                {
+                    var info = FmData.Get(_id);
+                    if (info.IsMonster) await Attack(tree);
+                    else if (info.Type == FmType.Trap) await Trap(tree);
+                    else if (info.Type is FmType.Magic or FmType.Ritual) await Cast(tree);
+                }
                 await Wait(tree, 1.8);
             }
         }
@@ -170,6 +199,179 @@ public sealed class FmMonsterStage
             var back = _monster.CreateTween();
             back.TweenProperty(_monster, "position", _monsterHome, 0.35).SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.Out);
         }
+    }
+
+    // ---------------- spells and traps ----------------
+    Node2D CardArt(bool faceDown)
+    {
+        var n = new Node2D();
+        const float h = 120;
+        Texture2D? tex = faceDown ? FmRivalHand.Back() : FmData.Art(_id);
+        if (tex != null)
+        {
+            float k = h / tex.GetHeight(), w = tex.GetWidth() * k;
+            n.AddChild(new Sprite2D { Name = "Pic", Texture = tex, Scale = new Vector2(k, k), TextureFilter = CanvasItem.TextureFilterEnum.Linear });
+            n.AddChild(new Line2D { Width = 3, DefaultColor = new Color(0.95f, 0.85f, 0.45f), Closed = true, Points = new[] { new Vector2(-w / 2, -h / 2), new Vector2(w / 2, -h / 2), new Vector2(w / 2, h / 2), new Vector2(-w / 2, h / 2) } });
+        }
+        _world.AddChild(n);
+        return n;
+    }
+
+    string Name => FmData.Get(_id).Name.ToLowerInvariant();
+    bool Has(params string[] words) => words.Any(w => Name.Contains(w));
+
+    /// <summary>Duel Master K holds the card up, it glows, and its effect lands (on the dummy, or on him for a heal).</summary>
+    async Task Cast(SceneTree tree)
+    {
+        var card = CardArt(false);
+        var start = _monsterHome + new Vector2(70, -150);
+        card.Position = start; card.Modulate = new Color(1, 1, 1, 0);
+        var up = card.CreateTween();
+        up.TweenProperty(card, "modulate:a", 1f, 0.2);
+        up.Parallel().TweenProperty(card, "position", start + new Vector2(0, -150), 0.35).SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.Out);
+        up.TweenProperty(card, "modulate", new Color(2f, 2f, 1.6f, 1f), 0.15);
+        up.TweenProperty(card, "modulate", Colors.White, 0.2);
+        await up.ToSignal(up, Tween.SignalName.Finished);
+        if (!Alive) return;
+        var from = card.Position;
+        var at = _dummyHome + new Vector2(0, -175);
+        if (Has("remedy", "curry", "medicine", "soul of the pure", "dian keto", "recovery", "heal"))
+        {
+            // a heal: green light rains on Duel Master K
+            Burst(_monsterHome + new Vector2(0, -140), new Color(0.4f, 1f, 0.5f), 70, up: true);
+            await Wait(tree, 0.7);
+        }
+        else if (Has("raigeki", "thunder", "lightning", "spark"))
+        {
+            for (int i = 0; i < 3; i++) Bolt(at + new Vector2(-60 + i * 60, 0));
+            await Wait(tree, 0.12); Hit(); await Wait(tree, 0.5);
+        }
+        else if (Has("dark hole", "black hole"))
+        {
+            var hole = new Node2D { Position = at + new Vector2(0, 40), Scale = new Vector2(0.1f, 0.1f) };
+            for (int i = 0; i < 4; i++) hole.AddChild(new Polygon2D { Color = new Color(0.2f + 0.08f * i, 0f, 0.3f + 0.1f * i, 0.45f), Polygon = Ellipse(140 - i * 30, 60 - i * 12) });
+            _world.AddChild(hole);
+            var spin = hole.CreateTween().SetParallel();
+            spin.TweenProperty(hole, "scale", Vector2.One, 0.35).SetTrans(Tween.TransitionType.Back).SetEase(Tween.EaseType.Out);
+            spin.TweenProperty(hole, "rotation", Mathf.Tau, 1.0);
+            await Wait(tree, 0.3); Hit(); await Wait(tree, 0.6);
+            var close = hole.CreateTween(); close.TweenProperty(hole, "scale", new Vector2(0.01f, 0.01f), 0.25); close.TweenCallback(Callable.From(hole.QueueFree));
+        }
+        else if (Has("swords of revealing"))
+        {
+            for (int i = 0; i < 5; i++) Sword(_dummyHome + new Vector2(-150 + i * 75, 0), i * 0.08);
+            await Wait(tree, 0.55); Hit(); await Wait(tree, 0.6);
+        }
+        else
+        {
+            // an orb of the spell's power flies at the dummy (fire for burn spells, green magic otherwise)
+            bool fire = Has("hinotama", "final flame", "ookazi", "fire", "flame", "burn", "tremendous");
+            var c = fire ? new Color(1f, 0.5f, 0.1f) : FmData.Get(_id).Type == FmType.Ritual ? new Color(0.5f, 0.7f, 1f) : new Color(0.45f, 1f, 0.55f);
+            var orb = new Node2D { Position = from };
+            orb.AddChild(new Polygon2D { Color = new Color(c, 0.35f), Polygon = Ellipse(30, 30) });
+            orb.AddChild(new Polygon2D { Color = c, Polygon = Ellipse(16, 16) });
+            _world.AddChild(orb);
+            var fly = orb.CreateTween();
+            fly.TweenProperty(orb, "position", at, 0.35).SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.In);
+            await fly.ToSignal(fly, Tween.SignalName.Finished);
+            orb.QueueFree();
+            if (!Alive) return;
+            Burst(at, c, 50, up: false); Hit();
+            await Wait(tree, 0.5);
+        }
+        var fade = card.CreateTween(); fade.TweenProperty(card, "modulate:a", 0f, 0.3); fade.TweenCallback(Callable.From(card.QueueFree));
+    }
+
+    /// <summary>A trap: the dummy charges, the face-down card in front of Duel Master K flips up, and the dummy is thrown back.</summary>
+    async Task Trap(SceneTree tree)
+    {
+        var card = CardArt(true);
+        card.Position = _monsterHome + new Vector2(140, -70);
+        card.Modulate = new Color(1, 1, 1, 0);
+        var show = card.CreateTween(); show.TweenProperty(card, "modulate:a", 1f, 0.25);
+        await Wait(tree, 0.45);
+        if (!Alive) return;
+        // the dummy attacks
+        var charge = _dummy.CreateTween();
+        charge.TweenProperty(_dummy, "position", _monsterHome + new Vector2(300, 0), 0.3).SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.In);
+        await charge.ToSignal(charge, Tween.SignalName.Finished);
+        if (!Alive) return;
+        // the trap springs: it flips face up with a flash
+        var flip = card.CreateTween();
+        flip.TweenProperty(card, "scale:x", 0f, 0.1);
+        flip.TweenCallback(Callable.From(() =>
+        {
+            if (card.GetNodeOrNull<Sprite2D>("Pic") is { } pic && FmData.Art(_id) is { } art)
+            {
+                pic.Texture = art; pic.Scale = Vector2.One * (120f / art.GetHeight());
+            }
+        }));
+        flip.TweenProperty(card, "scale:x", 1f, 0.1);
+        flip.TweenProperty(card, "modulate", new Color(2f, 1.4f, 2f, 1f), 0.08);
+        flip.TweenProperty(card, "modulate", Colors.White, 0.2);
+        await flip.ToSignal(flip, Tween.SignalName.Finished);
+        if (!Alive) return;
+        var where = _dummy.Position + new Vector2(0, -175);
+        if (Has("hole"))
+        {
+            // Trap Hole: the dummy drops out of sight, then climbs back to its spot
+            var drop = _dummy.CreateTween();
+            drop.TweenProperty(_dummy, "position:y", _dummyHome.Y + 160, 0.25).SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.In);
+            drop.Parallel().TweenProperty(_dummy, "modulate:a", 0f, 0.25);
+            await drop.ToSignal(drop, Tween.SignalName.Finished);
+            _dummy.Position = _dummyHome;
+            var back = _dummy.CreateTween(); back.TweenProperty(_dummy, "modulate:a", 1f, 0.35);
+        }
+        else
+        {
+            Burst(where, new Color(1f, 0.45f, 0.8f), 60, up: false);
+            Hit();
+            var back = _dummy.CreateTween();
+            back.TweenProperty(_dummy, "position", _dummyHome, 0.35).SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.Out);
+        }
+        await Wait(tree, 0.6);
+        var fade = card.CreateTween(); fade.TweenProperty(card, "modulate:a", 0f, 0.3); fade.TweenCallback(Callable.From(card.QueueFree));
+    }
+
+    void Burst(Vector2 at, Color c, int amount, bool up)
+    {
+        var p = new CpuParticles2D
+        {
+            Position = at, Amount = amount, Lifetime = 0.8, OneShot = true, Explosiveness = 0.85f,
+            EmissionShape = CpuParticles2D.EmissionShapeEnum.Sphere, EmissionSphereRadius = 40,
+            Direction = new Vector2(0, -1), Spread = up ? 30 : 180, InitialVelocityMin = 80, InitialVelocityMax = 240, Gravity = new Vector2(0, up ? -120 : 200),
+            ScaleAmountMin = 3, ScaleAmountMax = 7, Color = c,
+        };
+        _world.AddChild(p);
+        p.Emitting = true;
+        var t = p.CreateTween(); t.TweenInterval(1.2); t.TweenCallback(Callable.From(p.QueueFree));
+    }
+
+    void Bolt(Vector2 to)
+    {
+        var rng = new Random();
+        var pts = new List<Vector2>();
+        for (float y = 0; y < to.Y; y += 40) pts.Add(new Vector2(to.X + rng.Next(-28, 28), y));
+        pts.Add(to);
+        var l = new Line2D { Points = pts.ToArray(), Width = 6, DefaultColor = new Color(1f, 1f, 0.6f), Antialiased = true };
+        _world.AddChild(l);
+        var t = l.CreateTween(); t.TweenProperty(l, "modulate:a", 0f, 0.45); t.TweenCallback(Callable.From(l.QueueFree));
+    }
+
+    void Sword(Vector2 ground, double delay)
+    {
+        var s = new Node2D { Position = ground + new Vector2(0, -420) };
+        s.AddChild(new Polygon2D { Color = new Color(1f, 0.95f, 0.6f), Polygon = new[] { new Vector2(0, 60), new Vector2(-7, 0), new Vector2(-7, -60), new Vector2(7, -60), new Vector2(7, 0) } });
+        s.AddChild(new Polygon2D { Color = new Color(0.85f, 0.7f, 0.2f), Polygon = Rect(-18, -66, 36, 8) });
+        s.Modulate = new Color(1, 1, 1, 0);
+        _world.AddChild(s);
+        var t = s.CreateTween();
+        t.TweenInterval(delay);
+        t.TweenProperty(s, "modulate:a", 1f, 0.05);
+        t.Parallel().TweenProperty(s, "position", ground + new Vector2(0, -40), 0.3).SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.In);
+        t.TweenInterval(0.6);
+        t.TweenProperty(s, "modulate:a", 0f, 0.35);
+        t.TweenCallback(Callable.From(s.QueueFree));
     }
 
     /// <summary>The dummy rocks back and flashes.</summary>

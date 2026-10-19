@@ -138,7 +138,7 @@ public static class FmLibraryFm
         switch (_page)
         {
             case Page.Table: _page = Page.Card; _intro = true; Render(); break;
-            case Page.Card: if (FmData.Get(_cursor).IsMonster) OpenModel(); break;
+            case Page.Card: if (FmMonsterStage.HasScene(_cursor)) OpenModel(); break;
             default: Back(); break;
         }
     }

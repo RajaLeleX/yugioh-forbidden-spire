@@ -55,19 +55,25 @@ static class FmShopNoPotionsPatch
     static bool Prefix(MerchantInventory __instance) => !FmRules.IsFmPlayer(__instance.Player);
 }
 
-/// <summary>The shop's empty relic and potion slots are hidden.</summary>
+/// <summary>
+/// The shop's unused relic and potion slots are taken out before it's set up (left empty, the game's controller
+/// navigation trips over them and the whole shop fails to open).
+/// </summary>
 [HarmonyPatch(typeof(NMerchantInventory), nameof(NMerchantInventory.Initialize))]
 static class FmShopHideEmptyPatch
 {
-    static void Postfix(NMerchantInventory __instance, MerchantInventory inventory)
+    static void Prefix(NMerchantInventory __instance, MerchantInventory inventory)
     {
         try
         {
             if (!FmRules.IsFmPlayer(inventory.Player)) return;
             if (Traverse.Create(__instance).Field("_relicContainer").GetValue() is Node relics)
-                for (int i = 0; i < relics.GetChildCount(); i++)
-                    if (relics.GetChild(i) is CanvasItem c) c.Visible = i < inventory.RelicEntries.Count;
-            if (Traverse.Create(__instance).Field("_potionContainer").GetValue() is CanvasItem potions) potions.Visible = false;
+                for (int i = relics.GetChildCount() - 1; i >= inventory.RelicEntries.Count; i--) { var c = relics.GetChild(i); relics.RemoveChild(c); c.QueueFree(); }
+            if (Traverse.Create(__instance).Field("_potionContainer").GetValue() is Node potions)
+            {
+                for (int i = potions.GetChildCount() - 1; i >= inventory.PotionEntries.Count; i--) { var c = potions.GetChild(i); potions.RemoveChild(c); c.QueueFree(); }
+                if (potions is CanvasItem ci) ci.Visible = inventory.PotionEntries.Count > 0;
+            }
         }
         catch (Exception ex) { Log.Warn("[FMDuelist] shop slots: " + ex.Message); }
     }
@@ -114,5 +120,16 @@ static class FmNoPotionsPatch
         if (!FmRules.IsFmPlayer(player)) return true;
         __result = Task.FromResult(new MegaCrit.Sts2.Core.Entities.Potions.PotionProcureResult { success = false });
         return false;
+    }
+}
+
+/// <summary>A shop with fewer slots than the game expects must still open: its navigation setup can't stop it.</summary>
+[HarmonyPatch(typeof(NMerchantInventory), "UpdateNavigation")]
+static class FmShopNavSafePatch
+{
+    static Exception? Finalizer(Exception? __exception)
+    {
+        if (__exception != null) Log.Warn("[FMDuelist] shop navigation: " + __exception.Message);
+        return null;
     }
 }

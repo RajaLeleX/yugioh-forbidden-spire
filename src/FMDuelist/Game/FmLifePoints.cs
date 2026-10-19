@@ -22,6 +22,14 @@ public static class FmLifePoints
     static AudioStreamWav? _tick;
     static AudioStreamPlayer? _player;
     static bool _subscribed;
+    static bool _youZero, _comZero;
+
+    /// <summary>The duel is over: the loser's counter goes to 0. Returns true when it was showing.</summary>
+    public static bool Finish(bool won)
+    {
+        if (won) _comZero = true; else _youZero = true;
+        return _layer != null && GodotObject.IsInstanceValid(_layer);
+    }
 
     const float S = 1.0f;          // overall size
     const float RollTime = 0.9f;   // a change of any size rolls over about this long
@@ -37,6 +45,7 @@ public static class FmLifePoints
         if (_layer != null && GodotObject.IsInstanceValid(_layer)) _layer.QueueFree();
         _layer = null; _box = null;
         _comShown = _youShown = -1;
+        _youZero = _comZero = false;
     }
 
     static Player? Me => RunManager.Instance.DebugOnlyGetState()?.Players.FirstOrDefault(FmRules.IsFmPlayer);
@@ -113,8 +122,8 @@ public static class FmLifePoints
             : combat.Enemies.Where(e => e.IsAlive && !FmRival.IsZoneCreature(e)).Sum(e => e.CurrentHp);
         float dt = (float)_layer.GetProcessDeltaTime();
         bool rolling = false;
-        _youShown = Roll(_youShown, me.Creature.CurrentHp, dt, ref rolling, _youLp!);
-        _comShown = Roll(_comShown, comLp, dt, ref rolling, _comLp!);
+        _youShown = Roll(_youShown, _youZero ? 0 : me.Creature.CurrentHp, dt, ref rolling, _youLp!);
+        _comShown = Roll(_comShown, _comZero ? 0 : comLp, dt, ref rolling, _comLp!);
         if (rolling && Time.GetTicksMsec() / 1000.0 - _lastTick > 0.045) { _lastTick = Time.GetTicksMsec() / 1000.0; _player?.Play(); }
         _youDeck!.Text = PileType.Draw.GetPile(me).Cards.Count.ToString();
         _comDeck!.Text = FmRival.Active ? FmRival.DeckCount.ToString() : "";

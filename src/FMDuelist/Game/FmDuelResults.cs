@@ -110,6 +110,8 @@ public static class FmDuelEnd
         FmMusic.PlayOnce(won ? WinJingle : LoseJingle);
         if (Engine.GetMainLoop() is not SceneTree tree) return;
         int youLp = Math.Max(0, player.Creature.CurrentHp);
+        // the loser's Life Points roll all the way down to 0 (the game keeps a fallen duelist at 1 HP until it ends)
+        if (FmLifePoints.Finish(won)) { var t = tree.CreateTimer(0.8); await t.ToSignal(t, SceneTreeTimer.SignalName.Timeout); }
         int points = FmDuelStats.SkillPoints(turns, youLp);
         var (kind, letter, stars) = FmDuelStats.Rank(points);
         LastKind = kind; LastLetter = letter;

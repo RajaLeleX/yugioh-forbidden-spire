@@ -67,6 +67,9 @@ void fragment(){ vec4 c = texture(TEXTURE, UV) * COLOR; float e = smoothstep(0.0
             if (t.Field("_ancientNameBanner").GetValue<Control>() is { } banner) banner.Visible = false;
             // no Slay the Spire dialogue box or buttons: the choice is made in FM's own dialogue (Simon's scene)
             if (t.Field("_contentContainer").GetValue<Control>() is { } content) Keep(content);
+            // the starter was already picked (a reload after it): straight on to the map
+            if (neow.IsFinished)
+                Callable.From(() => { Released = true; _ = MegaCrit.Sts2.Core.Nodes.Rooms.NEventRoom.Proceed(); }).CallDeferred();
         }
         catch (Exception ex) { Log.Warn("[FMDuelist] hide Neow: " + ex.Message); }
     }

@@ -123,8 +123,8 @@ static partial class FmAct1Story
             var go = now.CurrentOptions.ToList().FindIndex(o => o.IsProceed);
             if (go >= 0) { sync.ChooseLocalOption(go); return; }
         }
-        Log.Info("[FMDuelist] starter picked: opening the map");
-        MegaCrit.Sts2.Core.Nodes.Screens.Map.NMapScreen.Instance?.Open();
+        Log.Info("[FMDuelist] starter picked: on to the map");
+        await MegaCrit.Sts2.Core.Nodes.Rooms.NEventRoom.Proceed(); // travel on, map open (the game's own proceed)
     }
 
     // ---------------- the story duels ----------------

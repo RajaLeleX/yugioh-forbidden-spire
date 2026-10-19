@@ -127,8 +127,10 @@ public static class FmStoryIntro
             }
 
             // 1) Heishin's footsteps echo in the dark, then he stands before the glowing treasure
-            for (int i = 0; i < 5 && !_skip; i++) { FmSfx.PlaySoft(FmSfx.Step, -8f + i * 1.2f, 0.92f + (i % 2) * 0.06f); await Hold(0.62); }
-            await Hold(0.4); Fade(heishin, 1, 0.4); Flicker(heishin);
+            // his footsteps, as recorded from the real game (local only; nothing plays without the file)
+            await Hold(2.9);
+            PlaySteps(layer);
+            await Hold(0.6); Fade(heishin, 1, 0.4); Flicker(heishin);
             await Hold(2.6);
             var red = heishin.CreateTween(); red.TweenProperty(heishin, "modulate", new Color(0.8f, 0.15f, 0.1f, 0f), 0.45);
             await Hold(2.0);
@@ -172,6 +174,22 @@ public static class FmStoryIntro
             if (_skip) FmMusic.Stop();
             RestoreRoomMusic();
         }
+    }
+
+    /// <summary>Heishin's footsteps from the player's own recording of FM (sfx/heishin_steps.pcm next to the mod).</summary>
+    static void PlaySteps(Node parent)
+    {
+        try
+        {
+            var file = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(typeof(FmStoryIntro).Assembly.Location) ?? ".", "sfx", "heishin_steps.pcm");
+            if (!System.IO.File.Exists(file)) return;
+            var stream = new AudioStreamWav { Format = AudioStreamWav.FormatEnum.Format16Bits, MixRate = 22050, Stereo = false, Data = System.IO.File.ReadAllBytes(file) };
+            var p = new AudioStreamPlayer { Stream = stream, Bus = "Master" };
+            parent.AddChild(p);
+            p.Finished += p.QueueFree;
+            p.Play();
+        }
+        catch (Exception ex) { Log.Warn("[FMDuelist] heishin steps: " + ex.Message); }
     }
 
     static void RestoreRoomMusic()
